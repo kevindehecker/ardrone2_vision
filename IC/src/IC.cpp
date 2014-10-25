@@ -9,7 +9,7 @@
 #ifdef FILECAM
 #include "Filecam.h"
 #endif
-#ifdef DuoWebcam
+#ifdef DUOWEBCAM
 #include "DuoWebcam.h"
 #endif
 #ifdef DELFLY_WIFI
@@ -48,7 +48,7 @@ Socket tcp_test;
 #ifdef FILECAM
 FileCam svcam;
 #else
-#ifdef DuoWebcam
+#ifdef DUOWEBCAM
 DuoWebCam svcam;
 #endif
 #ifdef DELFLY_WIFI
@@ -315,7 +315,7 @@ int main( int argc, char **argv )
 {
 
     /*****init the camera*****/
-#ifdef DuoWebCam
+#ifdef DUOWEBCAM
     int cam_left_id;
     int cam_right_id;
 
@@ -323,8 +323,8 @@ int main( int argc, char **argv )
         std::cout << "Usage: DisplayImage cam_left, cam_right\n";
         std::cout << "Now using default values.\n";
 
-        cam_left_id=1;
-        cam_right_id=0;
+        cam_left_id=0;
+        cam_right_id=2;
 
         //return -1;
     } else {
@@ -365,7 +365,7 @@ int main( int argc, char **argv )
     g_lockComm.unlock();
 #endif
 #if defined(HASSCREEN) || defined(VIDEORESULTS)
-#ifdef DuoWebCam
+#ifdef DUOWEBCAM
     resFrame = cv::Mat::zeros(svcam.im_height, svcam.im_width*1.5,CV_8UC3);
 #else
     resFrame = cv::Mat::zeros(4*svcam.im_height, 6*svcam.im_width,CV_8UC3);

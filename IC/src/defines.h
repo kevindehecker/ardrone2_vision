@@ -4,14 +4,14 @@
 //#define ARDRONEFRONTCAM
 //#define DELFLY_COLORMODE
 
-#define RUNMODE stereo_only
+#define RUNMODE none
 
 #ifdef _PC
 
-#define DELFLY
-//#define DuoWebCam
+//#define DELFLY
+#define DUOWEBCAM
 
-#define DELFLY_WIFI
+//#define DELFLY_WIFI
 //#define FILECAM
 
 #ifndef DELFLY_COLORMODE
