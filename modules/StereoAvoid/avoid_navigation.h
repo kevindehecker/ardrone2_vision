@@ -27,21 +27,16 @@
 
 struct AvoidNavigationStruct {
   uint8_t mode; ///< 0 = nothing, 1 =  climb, 2 = sideways, ...
-  //float meters_climbed;
-  int climb_extra_when_clear_timer;
-
-  // settings
-  int setting_climb_extra_climb_timer;
-  int setting_climb_bin_threshold;
-  float setting_climb_speed;
+  uint8_t stereo_bin[8];
 };
 
 /** global VIDEO state */
 extern struct AvoidNavigationStruct avoid_navigation_data;
-
+extern bool_t obstacle_detected;
 
 void init_avoid_navigation(void);
 void run_avoid_navigation_onvision(void);
+extern void increase_nav_heading(int32_t *heading, int32_t increment);
 
 
 #endif /* AVOID_NAVIGATION_H_ */

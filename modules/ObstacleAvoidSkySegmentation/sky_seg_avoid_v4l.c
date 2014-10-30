@@ -40,14 +40,14 @@
 struct UdpSocket *sock;
 struct gst2ppz_message_struct gst2ppz;
 struct ppz2gst_message_struct ppz2gst;
-int obstacle_avoid_adjust_factor;
+int sky_seg_avoid_vision_adjust_factor;
 
 
 void sky_seg_avoid_init(void) {
   // Give unique ID's to messages TODO: check that received messages are correct (not from an incompatable gst plugin)
   ppz2gst.ID = 0x0003;
   gst2ppz.ID = 0x0004;
-  obstacle_avoid_adjust_factor = 4;
+  sky_seg_avoid_vision_adjust_factor = 4;
 
   // Navigation Code
   init_avoid_navigation();
@@ -63,7 +63,7 @@ void sky_seg_avoid_run(void) {
   ppz2gst.counter++; // 512 Hz
   ppz2gst.roll = att->phi;
   ppz2gst.pitch = att->theta;
-  ppz2gst.adjust_factor = obstacle_avoid_adjust_factor;
+  ppz2gst.adjust_factor = sky_seg_avoid_vision_adjust_factor;
 
 
 

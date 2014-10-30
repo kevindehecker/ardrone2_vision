@@ -1,0 +1,38 @@
+<!DOCTYPE module SYSTEM "../module.dtd">
+
+<module name="StereoAvoid">
+  <doc>
+    <description>Video ARDone 2</description>
+  </doc>
+
+  <header>
+    <file name="stereo_avoid.h"/>
+  </header>
+
+  <init fun="stereo_avoid_init()"/>
+
+  <periodic fun="stereo_avoid_run()" freq="20" start="stereo_avoid_start()" stop="stereo_avoid_stop()" autorun="TRUE"/>
+  <makefile>
+      <raw>
+
+include $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/Makefile.paths
+          
+VISION_MODULE_FOLDER = $(DIR_MODULES)/StereoAvoid
+
+$(TARGET).srcs += $(VISION_MODULE_FOLDER)/avoid_navigation.c
+$(TARGET).CFLAGS += -I$(DIR_MODULES) -I$(DIR_CV) -I$(DIR_LIB)
+$(TARGET).LDFLAGS += -lrt
+
+ifeq ($(TARGET),ap)
+$(TARGET).srcs += $(VISION_MODULE_FOLDER)/stereo_avoid.c
+$(TARGET).CFLAGS +=  -DUSE_UART1 -DUART1_BAUD=B9600
+endif
+
+ifneq ($(TARGET),ap)
+$(TARGET).srcs += $(VISION_MODULE_FOLDER)/stereo_avoid_sim.c
+endif
+
+    </raw>
+  </makefile>
+</module>
+

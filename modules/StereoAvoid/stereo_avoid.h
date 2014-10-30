@@ -19,29 +19,27 @@
  * Boston, MA 02111-1307, USA.
  */
 
+/**
+ * @file obstacle_avoid.h
+ * Outdoor obstacle avoidance for ardrone2.
+ *
+ * Use the tcp output of a custom GStreamer framework plugin to receive
+ */
 
-#ifndef AVOID_NAVIGATION_H_
-#define AVOID_NAVIGATION_H_
-
-#include <std.h>
-
-struct AvoidNavigationStruct {
-  uint8_t mode; ///< 0 = nothing, 1 =  climb, 2 = sideways, ...
-  //float meters_climbed;
-  int climb_extra_when_clear_timer;
-
-  // settings
-  int setting_climb_extra_climb_timer;
-  int setting_climb_bin_threshold;
-  float setting_climb_speed;
-};
-
-/** global VIDEO state */
-extern struct AvoidNavigationStruct avoid_navigation_data;
+#ifndef STEREO_AVOID_H
+#define STEREO_AVOID_H
 
 
-void init_avoid_navigation(void);
-void run_avoid_navigation_onvision(void);
+// Settings
+extern int stereo_avoid_vision_adjust_factor;
 
 
-#endif /* AVOID_NAVIGATION_H_ */
+// Module functions
+extern void stereo_avoid_init(void);
+extern void stereo_avoid_run(void);
+extern void stereo_avoid_start(void);
+extern void stereo_avoid_stop(void);
+
+
+
+#endif /* OBSTACLE_AVOID_H */

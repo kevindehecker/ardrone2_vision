@@ -31,7 +31,7 @@
 
 
 // Settings
-extern int obstacle_avoid_adjust_factor;
+extern int sky_seg_avoid_vision_adjust_factor;
 
 
 // Module functions

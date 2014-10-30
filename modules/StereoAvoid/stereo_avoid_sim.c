@@ -21,11 +21,7 @@
 
 
 // Own header
-#include "sky_seg_avoid.h"
-
-// UDP Message with GST vision
-#include "udp/socket.h"
-#include "video_message_structs.h"
+#include "stereo_avoid.h"
 
 // Navigate Based On Vision
 #include "avoid_navigation.h"
@@ -35,19 +31,11 @@
 
 #include "std.h"
 
-struct gst2ppz_message_struct gst2ppz;
-struct ppz2gst_message_struct ppz2gst;
-int sky_seg_avoid_vision_adjust_factor;
 
-
-void sky_seg_avoid_init(void) {
+void stereo_avoid_init(void) {
   // Simulated vision: obstacle at 0,0
-  gst2ppz.ID = 0x0004;
-  for (int i=0; i<N_BINS; i++)
-  {
-    gst2ppz.obstacle_bins[i] = 0;
-  }
-  sky_seg_avoid_vision_adjust_factor = 4;
+  avoid_navigation_data.stereo_bin[0] = 0;
+  avoid_navigation_data.stereo_bin[1] = 0;
 
   // Navigation Code
   init_avoid_navigation();
@@ -56,21 +44,22 @@ void sky_seg_avoid_init(void) {
 /** Normalize a degree angle between 0 and 359 */
 #define NormAngleRad(x) { \
   int dont_loop_forever = 0;  \
-  while ((x < (- M_PI)) && ++dont_loop_forever) x += (2 * M_PI); \
+  while ((x < (-M_PI)) && ++dont_loop_forever) x += (2 * M_PI); \
   while ((x >= (M_PI)) && ++dont_loop_forever) x -= (2 * M_PI); \
 }
 
 
-void sky_seg_avoid_run(void) {
+void stereo_avoid_run(void) {
   static int counter = 0;
 
   counter++;
   // Read Latest GST Module Results
-  if (counter >= (512/15))
+  if (counter >= (2))
   {
     // Vertical
     float dx = sqrt ( (stateGetPositionEnu_f()->x * stateGetPositionEnu_f()->x) + (stateGetPositionEnu_f()->y * stateGetPositionEnu_f()->y) );
 
+    /*
     float dh = (17.0f - stateGetPositionEnu_f()->z);
     float vang = atan2(dh,dx) * 80.9F * 2.0f; // 255 / PI
 
@@ -78,6 +67,8 @@ void sky_seg_avoid_run(void) {
       vang = 0.0f;
     if (vang > 255.0f)
       vang = 255.0f;
+*/
+
 
     // Horizontal
     float bearing = atan2(- stateGetPositionEnu_f()->x, - stateGetPositionEnu_f()->y );
@@ -86,29 +77,28 @@ void sky_seg_avoid_run(void) {
     NormAngleRad(diff);
     diff = DegOfRad(diff);
 
-    float hang = DegOfRad(atan2(10,dx)); // 255 / PI
+    //float hang = DegOfRad(atan2(10,dx)); // 255 / PI
 
 
     float viewangle = 50; // degrees
     float range = viewangle/2.0f;
-    float deg_per_bin = viewangle/ ((float) N_BINS);
+    float deg_per_bin = viewangle/ ((float) 2);
 
-    float bin_nr_mid = range/deg_per_bin;
-    float bin_nr_start = bin_nr_mid + diff/deg_per_bin - hang/deg_per_bin;
-    float bin_nr_stop  = bin_nr_mid + diff/deg_per_bin + hang/deg_per_bin;
+    float disperity = 0;
 
+    if(fabs(diff) > range)
+      disperity = 0;
+    else if(dx > 2)
+      disperity = 0;
+    else
+      disperity = 30;
 
-    for (int i=0; i<N_BINS; i++)
-    {
-      if ((i > bin_nr_start) && (i <= (bin_nr_stop)))
-      {
-        gst2ppz.obstacle_bins[i] = vang;
-      }
-      else
-      {
-        gst2ppz.obstacle_bins[i] = 0.0f;
-      }
-    }
+    //float bin_nr_mid = range/deg_per_bin;
+    //float bin_nr_start = bin_nr_mid + diff/deg_per_bin - hang/deg_per_bin;
+    //float bin_nr_stop  = bin_nr_mid + diff/deg_per_bin + hang/deg_per_bin;
+
+    avoid_navigation_data.stereo_bin[0] = disperity;
+    avoid_navigation_data.stereo_bin[1] = diff;
 
     counter = 0;
     run_avoid_navigation_onvision();
@@ -116,9 +106,9 @@ void sky_seg_avoid_run(void) {
 }
 
 
-void sky_seg_avoid_start(void) {
+void stereo_avoid_start(void) {
 }
 
 
-void sky_seg_avoid_stop(void) {
+void stereo_avoid_stop(void) {
 }
