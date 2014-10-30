@@ -2,14 +2,14 @@
 #define DEFINES_H
 
 //#define ARDRONEFRONTCAM
-//#define DELFLY_COLORMODE
+#define DELFLY_COLORMODE
 
 #define RUNMODE none
 
 #ifdef _PC
 
-//#define DELFLY
-#define DUOWEBCAM
+#define DELFLY
+//#define DUOWEBCAM
 
 //#define DELFLY_WIFI
 //#define FILECAM

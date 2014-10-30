@@ -120,6 +120,28 @@ void DelFly::workerThread() {
 
                     if (copyNewImage) { // if the main thread asks for a new image
 #ifdef DELFLY_COLORMODE
+
+                  /*
+                        uint32_t totU = 0;
+                        uint32_t totV = 0;
+                        uint32_t totY = 0;
+                        uint32_t totYY = 0;
+
+                        for (int jjj = 0; jjj < 2*im_width-4; jjj+=4) {
+                            for (int iii = 0; iii < im_height; iii++) {
+                                totY+= frameYUYV.at<uint8_t>(iii,jjj+0);
+                                totU+= frameYUYV.at<uint8_t>(iii,jjj+1);
+                                totYY+= frameYUYV.at<uint8_t>(iii,jjj+2);
+                                totV+= frameYUYV.at<uint8_t>(iii,jjj+3);
+                            }
+                        }
+
+                        std::cout << "TotU: " << totU/(128*48) << std::endl;
+                        std::cout << "TotV: " << totV/(128*48) << std::endl;
+                        std::cout << "TotY: " << totY/(128*48) << std::endl;
+                        std::cout << "TotYY: " << totYY/(128*48) << std::endl;
+                        */
+
                         cv::cvtColor(frameYUYV,frameC_mat,  CV_YUV2RGB_YVYU );
 #else
                         frameL.copyTo(frameL_mat);
