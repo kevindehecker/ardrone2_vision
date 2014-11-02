@@ -189,7 +189,7 @@ void stereoAlg::performLongSec(cv::Mat grayframe,cv::Mat * DisparityMat)
     uint disparity_min, disparity_max, disparity_range;
     uint thr1;
     disparity_min=0;
-    disparity_range=16;
+    disparity_range=16; // do not change this without also changing the array bounds below
     disparity_max =  disparity_range - disparity_min-1;	// TODO: check this
     thr1 = 7;
 

@@ -3,8 +3,9 @@
 
 //#define ARDRONEFRONTCAM
 #define DELFLY_COLORMODE
+//#define DELFLY_DISPMODE
 
-#define RUNMODE none
+#define RUNMODE stereo_only
 
 #ifdef _PC
 
@@ -17,10 +18,10 @@
 #ifndef DELFLY_COLORMODE
 
 
-#define GEIGER
+//#define GEIGER
 //#define SGM
 //#define BM currently not completely implemented
-//#define LONGSEC
+#define LONGSEC
 #endif
 
 #define HASSCREEN // dont disable in qt debugger!
