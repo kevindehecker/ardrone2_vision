@@ -8,7 +8,7 @@
 #define HEADERDISPARITY 2
 
 //#define ARDRONEFRONTCAM
-//#define DELFLY_COLORMODE
+#define DELFLY_COLORMODE
 //#define DELFLY_DISPMODE
 
 #define RUNMODE stereo_only
@@ -24,10 +24,10 @@
 #ifndef DELFLY_COLORMODE
 
 #define HEADERBYTE HEADERSTEREO
-//#define GEIGER
+#define GEIGER
 //#define SGM
 //#define BM currently not completely implemented
-#define LONGSEC
+//#define LONGSEC
 #else
 #define HEADERBYTE HEADERCOLOR
 #endif

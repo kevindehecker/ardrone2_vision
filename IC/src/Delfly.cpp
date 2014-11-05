@@ -47,6 +47,14 @@ void DelFly::workerThread() {
     stopwatch_c stopWatch_comportAlive;
     stopWatch_comportAlive.Start();
 
+
+    /* perfect red detector */
+    const uint8_t min_U = 0;
+    const uint8_t min_V = 131;
+    const uint8_t max_U = 125;
+    const uint8_t max_V = 255;
+
+
 #ifdef DELFLY_COLORMODE
     cv::Mat frameYUYV = cv::Mat::zeros(im_height,im_width, CV_8UC2);
 #else
@@ -137,26 +145,31 @@ void DelFly::workerThread() {
                     if (copyNewImage ) { // if the main thread asks for a new image
 #ifdef DELFLY_COLORMODE
 
-                  /*
-                        uint32_t totU = 0;
-                        uint32_t totV = 0;
-                        uint32_t totY = 0;
-                        uint32_t totYY = 0;
-
+                        uint32_t cocnt = 0;
                         for (int jjj = 0; jjj < 2*im_width-4; jjj+=4) {
                             for (int iii = 0; iii < im_height; iii++) {
-                                totY+= frameYUYV.at<uint8_t>(iii,jjj+0);
-                                totU+= frameYUYV.at<uint8_t>(iii,jjj+1);
-                                totYY+= frameYUYV.at<uint8_t>(iii,jjj+2);
-                                totV+= frameYUYV.at<uint8_t>(iii,jjj+3);
+                                uint8_t u = frameYUYV.at<uint8_t>(iii,jjj+1);
+                                uint8_t v = frameYUYV.at<uint8_t>(iii,jjj+3);
+                                //uint8_t y1 = frameYUYV.at<uint8_t>(iii,jjj+0);
+                                //uint8_t y2 = frameYUYV.at<uint8_t>(iii,jjj+2);
+
+                                // Color Check:
+                                if ( (u >= min_U)
+                                     && (u <= max_U)
+                                     && (v >= min_V)
+                                     && (v <= max_V)
+                                   ) {
+                                    cocnt ++;
+
+                                    //make it blue:
+                                    frameYUYV.at<uint8_t>(iii,jjj+1) = 255;       // U
+                                   // frameYUYV.at<uint8_t>(iii,jjj+0);  // Y
+                                    frameYUYV.at<uint8_t>(iii,jjj+3) = 64;  // V
+                                    //frameYUYV.at<uint8_t>(iii,jjj+2);  // Y
+                                }
                             }
                         }
-
-                        std::cout << "TotU: " << totU/(128*48) << std::endl;
-                        std::cout << "TotV: " << totV/(128*48) << std::endl;
-                        std::cout << "TotY: " << totY/(128*48) << std::endl;
-                        std::cout << "TotYY: " << totYY/(128*48) << std::endl;
-                        */
+                        std::cout << "cnt: " << cocnt << std::endl;
 
                         cv::cvtColor(frameYUYV,frameC_mat,  CV_YUV2RGB_YVYU );
 #else
