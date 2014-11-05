@@ -91,8 +91,8 @@ void DelFly::workerThread() {
         //loop through the buffer in search of hearders, and handle them accordingly
         for (i=0;i < bufsize-sv_width-4;i++) {
 
-            if (prevbuf3 == 255 && prevbuf2 == 0 && prevbuf1 <3) { //detect a start of frame header
-                //uint8_t headerbyte = prevbuf1;
+            if (prevbuf3 == 255 && prevbuf2 == 0 && prevbuf1==HEADERBYTE) { //detect a start of frame header
+               // uint8_t headerbyte = prevbuf1;
 
                 if ((buffer[i] == 0x80 || buffer[i] == 0xc7) && (buffer[i+4+sv_width] == 0x9d || buffer[i+4+sv_width] == 0xda)) { //Start of Line && End of Line (not checking for header of EOL)
 
@@ -101,15 +101,17 @@ void DelFly::workerThread() {
                         for (int j = 0; j< im_width;j++) {
                             int jj = j * 2 + i+1;
 
-                            /*
-                            if (headerbyte == 0) {
 
-                            } else if (headerbyte==1) {
+//                            if (headerbyte == HEADERCOLOR) {
+//                                frameYUYV.at<uint8_t>(current_line,j*2+1) = buffer[jj];
+//                                frameYUYV.at<uint8_t>(current_line,j*2) = buffer[jj+1];
+//                            } else if (headerbyte==HEADERSTEREO) {
+//                                frameL.at<uint8_t>(current_line,j) = buffer[jj++];
+//                                frameR.at<uint8_t>(current_line,j) = buffer[jj];
+//                            } else if (headerbyte==HEADERDISPARITY){
 
-                            } else if (headerbyte==2){
+//                            }
 
-                            }
-                            */
 
 
 #ifdef DELFLY_COLORMODE
@@ -132,7 +134,7 @@ void DelFly::workerThread() {
                     // at the start of the program, of just after a stream corruption, i will vary
                     //std::cout << "current_line: " << current_line << ", at " << i << "\n";
 
-                    if (copyNewImage) { // if the main thread asks for a new image
+                    if (copyNewImage ) { // if the main thread asks for a new image
 #ifdef DELFLY_COLORMODE
 
                   /*
@@ -277,6 +279,19 @@ void DelFly::workerThread() {
                     std::cout << "current_line: " << current_line << ", at " << i << "\n";
 
                     if (copyNewImage) { // if the main thread asks for a new image
+
+                        int cnt = 0;
+                        for (int y = 0; y < im_height;y++) {
+                            for (int x = 0; x < im_width;x++) {
+                                if (frameDisp.at<uint8_t>(y,x) > 5*12) {
+                                    cnt++;
+                                }
+                            }
+                        }
+
+                        std::cout << "dispcnt: " << (cnt>>8) << std::endl;
+
+
 
                         cv::applyColorMap(frameDisp,frameC_mat,2);
 

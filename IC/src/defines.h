@@ -1,8 +1,14 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
+
+
+#define HEADERCOLOR  0
+#define HEADERSTEREO 1
+#define HEADERDISPARITY 2
+
 //#define ARDRONEFRONTCAM
-#define DELFLY_COLORMODE
+//#define DELFLY_COLORMODE
 //#define DELFLY_DISPMODE
 
 #define RUNMODE stereo_only
@@ -17,11 +23,13 @@
 
 #ifndef DELFLY_COLORMODE
 
-
+#define HEADERBYTE HEADERSTEREO
 //#define GEIGER
 //#define SGM
 //#define BM currently not completely implemented
 #define LONGSEC
+#else
+#define HEADERBYTE HEADERCOLOR
 #endif
 
 #define HASSCREEN // dont disable in qt debugger!
