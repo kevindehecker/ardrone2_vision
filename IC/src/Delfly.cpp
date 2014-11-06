@@ -49,10 +49,10 @@ void DelFly::workerThread() {
 
 
     /* perfect red detector */
-    const uint8_t min_U = 0;
-    const uint8_t min_V = 131;
-    const uint8_t max_U = 125;
-    const uint8_t max_V = 255;
+    const uint8_t min_U = 123; // u=pink, v=yellow, u+v = blue
+    const uint8_t min_V = 140;
+    const uint8_t max_U = 138;
+    const uint8_t max_V = 170;
 
 
 #ifdef DELFLY_COLORMODE
@@ -145,32 +145,95 @@ void DelFly::workerThread() {
                     if (copyNewImage ) { // if the main thread asks for a new image
 #ifdef DELFLY_COLORMODE
 
+                        uint32_t mean_u = 0;
+                        uint32_t mean_v = 0;
+                        uint32_t mean_y = 0;
+
+                        uint32_t min_u = 0;
+                        uint32_t min_v = 0;
+                        uint32_t min_y = 0;
+                        uint32_t max_u = 0;
+                        uint32_t max_v = 0;
+                        uint32_t max_y = 0;
+                        min_u--;
+                        min_v--;
+
+
+
+/*
                         uint32_t cocnt = 0;
                         for (int jjj = 0; jjj < 2*im_width-4; jjj+=4) {
                             for (int iii = 0; iii < im_height; iii++) {
                                 uint8_t u = frameYUYV.at<uint8_t>(iii,jjj+1);
                                 uint8_t v = frameYUYV.at<uint8_t>(iii,jjj+3);
-                                //uint8_t y1 = frameYUYV.at<uint8_t>(iii,jjj+0);
+                                uint8_t y1 = frameYUYV.at<uint8_t>(iii,jjj+0);
                                 //uint8_t y2 = frameYUYV.at<uint8_t>(iii,jjj+2);
 
+
+                                if (u<min_u) {
+                                    min_u = u;
+                                }
+                                if (v<min_v) {
+                                    min_v = v;
+                                }
+                                if (y1<min_y) {
+                                    min_y = y1;
+                                }
+
+                                if (u>max_u) {
+                                    max_u = u;
+                                }
+                                if (v>max_v) {
+                                    max_v = v;
+                                }
+                                if (y1>max_y) {
+                                    max_y = y1;
+                                }
+
+                                mean_u+=u;
+                                mean_v+=v;
+                                mean_y+=y1;
+
+
+
                                 // Color Check:
-                                if ( (u >= min_U)
-                                     && (u <= max_U)
-                                     && (v >= min_V)
-                                     && (v <= max_V)
-                                   ) {
+                                if ( (u >= min_U) && (u <= max_U)
+                                     && (v >= min_V) && (v <= max_V)) {
                                     cocnt ++;
 
                                     //make it blue:
-                                    frameYUYV.at<uint8_t>(iii,jjj+1) = 255;       // U
-                                   // frameYUYV.at<uint8_t>(iii,jjj+0);  // Y
+                                    frameYUYV.at<uint8_t>(iii,jjj+1) = 255; // U
+                                   // frameYUYV.at<uint8_t>(iii,jjj+0);     // Y1
                                     frameYUYV.at<uint8_t>(iii,jjj+3) = 64;  // V
-                                    //frameYUYV.at<uint8_t>(iii,jjj+2);  // Y
+                                    //frameYUYV.at<uint8_t>(iii,jjj+2);     // Y1
+                                } else if ((u >= min_U) && (u <= max_U)) {
+                                    //make it pink:
+                                    frameYUYV.at<uint8_t>(iii,jjj+1) = 255; // U
+                                    frameYUYV.at<uint8_t>(iii,jjj+0) = 50;  // Y1
+                                    frameYUYV.at<uint8_t>(iii,jjj+3) = 255; // V
+                                    frameYUYV.at<uint8_t>(iii,jjj+2) = 50;  // Y2
+
+
+                                } else if((v >= min_V) && (v <= max_V)) {
+                                    //make it yellow:
+                                    frameYUYV.at<uint8_t>(iii,jjj+1) = 0;      // U
+                                    frameYUYV.at<uint8_t>(iii,jjj+0) = 255;    // Y1
+                                    frameYUYV.at<uint8_t>(iii,jjj+3) = 255;    // V
+                                    frameYUYV.at<uint8_t>(iii,jjj+2) = 255;    // Y2
                                 }
                             }
                         }
-                        std::cout << "cnt: " << cocnt << std::endl;
 
+
+                        mean_u /= (128*46);
+                        mean_v /= (128*46);
+                        mean_y /= (128*46);
+
+                        std::cout << "cnt: " << cocnt << std::endl;
+                        std::cout << "Y; min: " << min_y << "\tmax: " << max_y << "\tmean: " << mean_y << "\trange: " << max_y-min_y << std::endl;
+                        std::cout << "U; min: " << min_u << "\tmax: " << max_u << "\tmean: " << mean_u << "\trange: " << max_y-min_u << std::endl;
+                        std::cout << "V; min: " << min_v << "\tmax: " << max_v << "\tmean: " << mean_v << "\trange: " << max_y-min_v << std::endl;
+*/
                         cv::cvtColor(frameYUYV,frameC_mat,  CV_YUV2RGB_YVYU );
 #else
                         frameL.copyTo(frameL_mat);
