@@ -8,7 +8,7 @@
 #define HEADERDISPARITY 2
 
 //#define ARDRONEFRONTCAM
-#define DELFLY_COLORMODE
+//#define DELFLY_COLORMODE
 //#define DELFLY_DISPMODE
 
 #define RUNMODE stereo_only

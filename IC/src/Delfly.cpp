@@ -49,9 +49,9 @@ void DelFly::workerThread() {
 
 
     /* perfect red detector */
-    const uint8_t min_U = 123; // u=pink, v=yellow, u+v = blue
+    const uint8_t min_U = 120; // u=pink, v=yellow, u+v = blue
     const uint8_t min_V = 140;
-    const uint8_t max_U = 138;
+    const uint8_t max_U = 150;
     const uint8_t max_V = 170;
 
 
@@ -160,7 +160,7 @@ void DelFly::workerThread() {
 
 
 
-/*
+
                         uint32_t cocnt = 0;
                         for (int jjj = 0; jjj < 2*im_width-4; jjj+=4) {
                             for (int iii = 0; iii < im_height; iii++) {
@@ -196,31 +196,31 @@ void DelFly::workerThread() {
 
 
 
-                                // Color Check:
-                                if ( (u >= min_U) && (u <= max_U)
-                                     && (v >= min_V) && (v <= max_V)) {
-                                    cocnt ++;
+//                                // Color Check:
+//                                if ( (u >= min_U) && (u <= max_U)
+//                                     && (v >= min_V) && (v <= max_V)) {
+//                                    cocnt ++;
 
-                                    //make it blue:
-                                    frameYUYV.at<uint8_t>(iii,jjj+1) = 255; // U
-                                   // frameYUYV.at<uint8_t>(iii,jjj+0);     // Y1
-                                    frameYUYV.at<uint8_t>(iii,jjj+3) = 64;  // V
-                                    //frameYUYV.at<uint8_t>(iii,jjj+2);     // Y1
-                                } else if ((u >= min_U) && (u <= max_U)) {
-                                    //make it pink:
-                                    frameYUYV.at<uint8_t>(iii,jjj+1) = 255; // U
-                                    frameYUYV.at<uint8_t>(iii,jjj+0) = 50;  // Y1
-                                    frameYUYV.at<uint8_t>(iii,jjj+3) = 255; // V
-                                    frameYUYV.at<uint8_t>(iii,jjj+2) = 50;  // Y2
+//                                    //make it blue:
+//                                    frameYUYV.at<uint8_t>(iii,jjj+1) = 255; // U
+//                                   // frameYUYV.at<uint8_t>(iii,jjj+0);     // Y1
+//                                    frameYUYV.at<uint8_t>(iii,jjj+3) = 64;  // V
+//                                    //frameYUYV.at<uint8_t>(iii,jjj+2);     // Y1
+//                                } else if ((u >= min_U) && (u <= max_U)) {
+//                                    //make it pink:
+//                                    frameYUYV.at<uint8_t>(iii,jjj+1) = 255; // U
+//                                    frameYUYV.at<uint8_t>(iii,jjj+0) = 50;  // Y1
+//                                    frameYUYV.at<uint8_t>(iii,jjj+3) = 255; // V
+//                                    frameYUYV.at<uint8_t>(iii,jjj+2) = 50;  // Y2
 
 
-                                } else if((v >= min_V) && (v <= max_V)) {
-                                    //make it yellow:
-                                    frameYUYV.at<uint8_t>(iii,jjj+1) = 0;      // U
-                                    frameYUYV.at<uint8_t>(iii,jjj+0) = 255;    // Y1
-                                    frameYUYV.at<uint8_t>(iii,jjj+3) = 255;    // V
-                                    frameYUYV.at<uint8_t>(iii,jjj+2) = 255;    // Y2
-                                }
+//                                } else if((v >= min_V) && (v <= max_V)) {
+//                                    //make it yellow:
+//                                    frameYUYV.at<uint8_t>(iii,jjj+1) = 0;      // U
+//                                    frameYUYV.at<uint8_t>(iii,jjj+0) = 255;    // Y1
+//                                    frameYUYV.at<uint8_t>(iii,jjj+3) = 255;    // V
+//                                    frameYUYV.at<uint8_t>(iii,jjj+2) = 255;    // Y2
+//                                }
                             }
                         }
 
@@ -233,7 +233,7 @@ void DelFly::workerThread() {
                         std::cout << "Y; min: " << min_y << "\tmax: " << max_y << "\tmean: " << mean_y << "\trange: " << max_y-min_y << std::endl;
                         std::cout << "U; min: " << min_u << "\tmax: " << max_u << "\tmean: " << mean_u << "\trange: " << max_y-min_u << std::endl;
                         std::cout << "V; min: " << min_v << "\tmax: " << max_v << "\tmean: " << mean_v << "\trange: " << max_y-min_v << std::endl;
-*/
+
                         cv::cvtColor(frameYUYV,frameC_mat,  CV_YUV2RGB_YVYU );
 #else
                         frameL.copyTo(frameL_mat);
