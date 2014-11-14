@@ -52,6 +52,7 @@
 #define VIDEORAW
 
 #ifndef DELFLY_COLORMODE
+#define HEADERBYTE HEADERSTEREO
 //#define VIDEORESULTS
 
 //#define SGM
