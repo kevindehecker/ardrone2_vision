@@ -12,8 +12,8 @@ bool stereoAlg::init (int im_width,int im_height ) {
 
 #ifdef SGM
     #ifdef DELFLY
-    	SGBM = cv::StereoSGBM (5, 32, 5) ; // ,50,500,10,100,10,0,0,false);
-		dispScale = 512.0;
+        SGBM = cv::StereoSGBM (5, 32, 0) ; // ,50,500,10,100,10,0,0,false);
+        dispScale = 512.0;
 	#else
 	    SGBM = cv::StereoSGBM (5, 256, 5) ; // ,50,500,10,100,10,0,0,false);
 		dispScale = 4096.0;
@@ -67,8 +67,8 @@ bool stereoAlg::init (int im_width,int im_height ) {
 void stereoAlg::initGeigerParam() {
 #if defined(DELFLY)
 	param.subsampling = false;
-	param.disp_min = 1;
-	param.disp_max = 64;
+    param.disp_min = 5;
+    param.disp_max = 64;
     darksize = 0;
 #else
 	param.subsampling = true;
