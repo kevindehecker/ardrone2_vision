@@ -4,12 +4,49 @@
 
 #include "stopwatch.h"
 
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/contrib/contrib.hpp>
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include <cv.h>
 
 bool DelFly::init () {
     int res = RS232_OpenComport(3000000);  //3000000 is the maximum of the usb bus ftdi serial port
 	if (res != 0) {
 		std::cerr << "Error opening COM port. Is the camera connected?\n";
-	} else {return true;}
+    }
+
+
+    const char* calibDir = "../calib10_2b/";
+
+    char mx1fn[256];
+    strcpy(mx1fn,calibDir);
+    strcat(mx1fn,"mx1.xml");
+    char mx2fn[256];
+    strcpy(mx2fn,calibDir);
+    strcat(mx2fn,"mx2.xml");
+    char my1fn[256];
+    strcpy(my1fn,calibDir);
+    strcat(my1fn,"my1.xml");
+    char my2fn[256];
+    strcpy(my2fn,calibDir);
+    strcat(my2fn,"my2.xml");
+
+    _mx1 =	(CvMat *)cvLoad(mx1fn,NULL,NULL,NULL);
+    _mx2 =	(CvMat *)cvLoad(mx2fn,NULL,NULL,NULL);
+    _my1 =	(CvMat *)cvLoad(my1fn,NULL,NULL,NULL);
+    _my2 =	(CvMat *)cvLoad(my2fn,NULL,NULL,NULL);
+
+    if (_mx1 != 0 && _mx2 != 0 && _my1 != 0 && _my2 != 0) {
+        std::cout << "finished loading\n";
+        return true;
+    }
+    else {
+        fprintf(stderr,"\nError loading calib matrices!");
+        return false;
+    }
+
+
 }
 
 void DelFly::start () {
@@ -56,13 +93,13 @@ void DelFly::workerThread() {
     */
 
     //perfect blue
-    const uint8_t min_U = 130; // u=pink, v=yellow, u+v = blue // 131
-    const uint8_t min_V = 100; // 0
-    const uint8_t max_U = 200; // 255
-    const uint8_t max_V = 140; // 125
+//    const uint8_t min_U = 130; // u=pink, v=yellow, u+v = blue // 131
+//    const uint8_t min_V = 100; // 0
+//    const uint8_t max_U = 200; // 255
+//    const uint8_t max_V = 140; // 125
 
-    const uint8_t min_Y = 0; // 110
-    const uint8_t max_Y = 200; // 160
+//    const uint8_t min_Y = 0; // 110
+//    const uint8_t max_Y = 200; // 160
 
 
 
@@ -138,8 +175,8 @@ void DelFly::workerThread() {
                             frameYUYV.at<uint8_t>(current_line,j*2+1) = buffer[jj];
                             frameYUYV.at<uint8_t>(current_line,j*2) = buffer[jj+1];
 #else
-                            int caliblineR = current_line+3; // for sv cam 10, this seems to work ok
-                            int caliblineL = current_line-2;
+                            int caliblineR = current_line +3; // for sv cam 10, this seems to work ok
+                            int caliblineL = current_line -2;
 
                             if (caliblineL > 0 && caliblineL < im_height )
                                 frameL.at<uint8_t>(caliblineL,j) = buffer[jj++];
@@ -276,6 +313,20 @@ void DelFly::workerThread() {
 
                         cv::cvtColor(frameYUYV,frameC_mat,  CV_YUV2RGB_YVYU );
 #else
+
+
+//                        //rectify and calibrate the stereo image
+//                        cv::Mat bigL (480,640, CV_8UC1);
+//                        cv::Mat bigR (480,640, CV_8UC1);
+//                        cv::resize(frameL,bigL,bigL.size(),0,0,CV_INTER_LINEAR);
+//                        cv::resize(frameR,bigR,bigR.size(),0,0,CV_INTER_LINEAR);
+
+//                        cv::remap(bigL, bigL, (cv::Mat) _mx1, (cv::Mat) _my1 ,CV_INTER_LINEAR);
+//                        cv::remap(bigR, bigR, (cv::Mat) _mx2, (cv::Mat) _my2 ,CV_INTER_LINEAR);
+
+//                        cv::resize(bigL,frameL_mat,frameL.size(),0,0,CV_INTER_LINEAR);
+//                        cv::resize(bigR,frameR_mat,frameR.size(),0,0,CV_INTER_LINEAR);
+
                         frameL.copyTo(frameL_mat);
                         frameR.copyTo(frameR_mat);
 #endif

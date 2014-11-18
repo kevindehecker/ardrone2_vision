@@ -11,6 +11,12 @@ class DelFly{
 
 
 private:
+    //calibration matrices
+    CvMat *_mx1;
+    CvMat *_my1;
+    CvMat *_mx2;
+    CvMat *_my2;
+
 	std::mutex g_lockWaitForImage;
 	bool copyNewImage;
 	std::thread thread_cam;
