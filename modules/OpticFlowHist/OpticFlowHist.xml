@@ -1,0 +1,35 @@
+<!DOCTYPE module SYSTEM "../module.dtd">
+
+<module name="OpticFlowHist">
+  <doc>
+    <description>Stabilise and control the drone using an optic flow algorithm based on Histograms of a Sobel Filter</description>
+  </doc>
+
+  <header>
+    <file name="opticflow_module.h"/>
+  </header>
+
+  <periodic fun="opticflow_module_run()" freq="60" start="opticflow_module_start()" stop="opticflow_module_stop()" autorun="TRUE"/>
+  <makefile>
+      <raw>
+
+include $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/Makefile.paths
+          
+VISION_MODULE_FOLDER = $(DIR_MODULES)/OpticFlowHist
+
+$(TARGET).srcs += $(VISION_MODULE_FOLDER)/opticflow_module.c
+$(TARGET).srcs += $(VISION_MODULE_FOLDER)/opticflow_sobelfilter.c
+$(TARGET).srcs += $(VISION_MODULE_FOLDER)/calcflow.c
+$(TARGET).srcs += $(VISION_MODULE_FOLDER)/opticflow_kalmanfilt.c
+$(TARGET).srcs += $(VISION_MODULE_FOLDER)/matrixcalc.c
+$(TARGET).srcs += $(DIR_CV)/encoding/jpeg.c
+$(TARGET).srcs += $(DIR_CV)/encoding/rtp.c
+$(TARGET).srcs += $(DIR_LIB)/udp/socket.c
+$(TARGET).srcs += $(DIR_LIB)/v4l/video.c
+$(TARGET).srcs += $(DIR_LIB)/v4l/ardrone2.c
+$(TARGET).CFLAGS += -I$(DIR_MODULES) -I$(DIR_CV) -I$(DIR_LIB) -pthread -D__USE_GNU
+$(TARGET).LDFLAGS += -pthread -lrt -static
+
+    </raw>
+  </makefile>
+</module>

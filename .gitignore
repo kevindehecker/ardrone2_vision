@@ -18,3 +18,7 @@
 *.out
 *.app
 *.x
+
+# Kate temporary files
+*~
+*.kate-swp

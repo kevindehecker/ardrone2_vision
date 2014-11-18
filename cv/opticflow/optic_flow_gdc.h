@@ -1,6 +1,29 @@
 #ifndef OPTIC
 #define OPTIC
 
+typedef struct flowPoint
+{
+	int x;
+	int y;
+	int prev_x;
+	int prev_y;
+	int dx;
+	int dy;
+	int new_dx;
+	int new_dy;
+//	double P[16]; // represents a diagonal 4x4 matrix
+//	double Q[16]; // represents a diagonal 4x4 matrix
+//	double R[16]; // represents a diagonal 4x4 matrix
+//	double K[16]; // represents a diagonal 4x4 matrix
+//	int n_observations;
+} flowPoint;
+
+typedef struct detectedPoint
+{
+	int x;
+	int y;
+} detectedPoint;
+
 int getMaximum(int * Im);
 int getMinimum(int * Im);
 void getGradientPixelWH(unsigned char *frame_buf, int x, int y, int* dx, int* dy);
