@@ -12,7 +12,7 @@ bool stereoAlg::init (int im_width,int im_height ) {
 
 #ifdef SGM
     #ifdef DELFLY
-        SGBM = cv::StereoSGBM (5, 32, 0) ; // ,50,500,10,100,10,0,0,false);
+        SGBM = cv::StereoSGBM (5, 32, 5 ,50,500,10,100,10,0,0,true);
         dispScale = 512.0;
 	#else
 	    SGBM = cv::StereoSGBM (5, 256, 5) ; // ,50,500,10,100,10,0,0,false);
