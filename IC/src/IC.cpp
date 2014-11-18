@@ -71,7 +71,7 @@ Textons textonizer;
 void process_video();
 void TerminalInputThread();
 int main( int argc, char **argv);
-
+void saveStereoPair();
 
 void combineImage(cv::Mat resFrame, cv::Mat smallsourceimage, int x, int y,int width, int height, bool convertRGB);
 void commOutThread();
@@ -227,6 +227,7 @@ void process_video() {
         if (key==49) {mode=textons_only;key=0;} //                        [1]: switch stereo mode off, textons on
         if (key==50) {mode=stereo_only;key=0;} //                         [2]: switch stereo mode on, textons off
         if (key==51) {mode=stereo_textons;key=0;} //                      [3]: switch both stereo and textons calucation on
+        if (key==32) {saveStereoPair();key=0;} //                         [ ]: save stereo image to bmp
         if (key==114) {frames=0;stopWatch.Restart();msg="Reset";key=0;} //[r]: reset stopwatch
 
 
@@ -245,6 +246,17 @@ void process_video() {
 #endif
 }
 #endif
+
+int saveid=1;
+void saveStereoPair() {
+    char str[64];
+
+    sprintf(str,"left%d.png", saveid);
+    cv::imwrite( str, svcam.frameL_mat );
+    sprintf(str,"right%d.png", saveid);
+    cv::imwrite( str, svcam.frameR_mat );
+    saveid++;
+}
 
 void TerminalInputThread() {
 #ifndef HASSCREEN
