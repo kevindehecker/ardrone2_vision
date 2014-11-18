@@ -24,8 +24,8 @@
 #ifndef DELFLY_COLORMODE
 
 #define HEADERBYTE HEADERSTEREO
-#define GEIGER
-//#define SGM
+//#define GEIGER
+#define SGM
 //#define BM currently not completely implemented
 //#define LONGSEC
 #else
