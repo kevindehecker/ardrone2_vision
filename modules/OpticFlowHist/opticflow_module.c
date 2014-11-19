@@ -134,7 +134,7 @@ float rc_phi = 0.0;
 float rc_theta = 0.0;
 float rc_psi = 0.0;
 
-volatile struct Int32Eulers cmd_euler;
+struct Int32Eulers cmd_euler;
 volatile uint8_t computervision_thread_has_results = 0;
 
 // acceleration in horizontal plane
@@ -509,8 +509,8 @@ void *computervision_thread_main(void* data)
   float alpha_v = 0.16;
   
   // sonar height
-  float h_sonar 	= 0.0;
-  float h_ap 		= 0.0;
+  // float h_sonar 	= 0.0;
+  // float h_ap 		= 0.0;
   float h 		= 0.0;
   
   // kalman filter
