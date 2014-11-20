@@ -109,7 +109,7 @@
 #endif
 
 // optic flow control
-uint8_t opticflow_control_mode = OPTICFLOW_HORIZONTAL;
+uint8_t opticflow_control_mode = OPTICFLOW_HOVER;
 float Vx_ctrl = 0.0, Vy_ctrl=0.0, Vz_ctrl=0.0;
 float Vx_sp = 0.0, Vy_sp = 0.0, Vz_sp = 0.0;
 float Vx_ctrl_err = 0.0, Vy_ctrl_err = 0.0, Vz_ctrl_err = 0.0;
@@ -118,7 +118,7 @@ float OFXInt = 0;
 float OFYInt = 0;
 
 // default settings
-uint32_t pGainHover = 500;
+uint32_t pGainHover = 750;
 uint32_t iGainHover = 5;
 uint32_t dGainHover = 300;
 
@@ -191,9 +191,10 @@ static float get_rc_yaw_f(void);
 void opticflow_module_run(void) {
   
  
-  printf("phi, theta, psi: %.2f, %.2f, %.2f\n",rc_phi,rc_theta,rc_psi);
+  //printf("autopilot_mode %d, %d \n\r", autopilot_mode,AP_MODE_OPTIC_FLOW);
   
 	if(autopilot_mode == AP_MODE_OPTIC_FLOW) {
+    //printf("phi, theta, psi: %.2f, %.2f, %.2f\n",rc_phi,rc_theta,rc_psi);
 	  
 	  switch (opticflow_control_mode) {
 	    case OPTICFLOW_HOVER:
@@ -551,7 +552,7 @@ void *computervision_thread_main(void* data)
   {
     
     
-     printf("cv thread loop\n");
+     //printf("cv thread loop\n");
      //
      msg_id++;
     
