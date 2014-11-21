@@ -109,7 +109,7 @@
 #endif
 
 // optic flow control
-uint8_t opticflow_control_mode = OPTICFLOW_HOVER;
+uint8_t opticflow_control_mode = OPTICFLOW_HORIZONTAL;
 float Vx_ctrl = 0.0, Vy_ctrl=0.0, Vz_ctrl=0.0;
 float Vx_sp = 0.0, Vy_sp = 0.0, Vz_sp = 0.0;
 float Vx_ctrl_err = 0.0, Vy_ctrl_err = 0.0, Vz_ctrl_err = 0.0;
@@ -548,11 +548,14 @@ void *computervision_thread_main(void* data)
   fp_flowdata=fopen(filename2, "w");  
   initflowdata(fp_flowdata);
   
+printf("computervision_thread_ wile\n");
+
+
   while (computer_vision_thread_command > 0)
   {
     
     
-     //printf("cv thread loop\n");
+     printf("cv thread loop\n");
      //
      msg_id++;
     
@@ -761,8 +764,8 @@ void *computervision_thread_main(void* data)
      Vy_kalman = Vkalmany;
      
      // Which velocity do you use for the control?
-     Vx_ctrl = Vx_filt_corr_angle;
-     Vy_ctrl = Vy_filt_corr_angle;     
+     Vx_ctrl = -Vx_filt_corr_angle;
+     Vy_ctrl = -Vy_filt_corr_angle;     
      
      ////////////////////////////////
      // AUTOPILOT BODY VELOCITY
