@@ -24,8 +24,8 @@
 #ifndef DELFLY_COLORMODE
 
 #define HEADERBYTE HEADERSTEREO
-//#define GEIGER
-#define SGM
+#define GEIGER
+//#define SGM
 //#define BM currently not completely implemented
 //#define LONGSEC
 #else
@@ -55,12 +55,12 @@
 #define HEADERBYTE HEADERSTEREO
 //#define VIDEORESULTS
 
-//#define SGM
-#define LONGSEC
+#define SGM
+//#define LONGSEC
 
 #endif // DELFLY_COLORMODE
 
-#define VIDEOFPS 8 // setting this lower than 5 will crash the drone...
+#define VIDEOFPS 6 // setting this lower than 5 will crash the drone...
 #define USE_SOCKET
 #define TCPPORT 6969
 #endif // pc/drone
