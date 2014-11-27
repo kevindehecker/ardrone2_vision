@@ -85,7 +85,7 @@ void Textons::drawGraph(std::string msg) {
             color_nn= cv::Scalar(0,0,255); // red
         } else {
 
-            color_nn= cv::Scalar(0,255,0); // red
+            color_nn= cv::Scalar(0,255,0); // green
         }
 
         if (j==filterwidth) { // fixes discontinuty at the start of the graph
@@ -234,14 +234,17 @@ void Textons::retrainAll() {
     std::cout << "Training knn regression:\n";
     knn.train(distribtuion_buffer, groundtruth_buffer, cv::Mat(), true, 32, false );
     lastLearnedPosition = (distribtuion_buf_pointer +1 )% distribution_buf_size;
+
+#ifdef _PC
     std::cout << "Initialising smoother:\n";
     for (int i=0;i<distribution_buf_size; i++) {
 
         int jj = (i+distribtuion_buf_pointer) % distribution_buf_size;
         cv::Mat M1 = distribtuion_buffer.row(jj); // prevent smoothing filter discontinuity
         graph_buffer.at<float>(jj,0) = knn_smoothed.addSample(knn.find_nearest(M1,5,0,0,0,0));
-        //	gt_smoothed.addSample(graph_buffer.at<float>(i,1)); // prepare the gt filter, not really necessary
+        gt_smoothed.addSample(graph_buffer.at<float>(i,1)); // prepare the gt filter, not really necessary
     }
+#endif
 }
 
 int Textons::loadPreviousRegression() {

@@ -14,38 +14,40 @@ bool DelFly::init () {
     int res = RS232_OpenComport(3000000);  //3000000 is the maximum of the usb bus ftdi serial port
 	if (res != 0) {
 		std::cerr << "Error opening COM port. Is the camera connected?\n";
-    }
-
-
-    const char* calibDir = "../calib10_2b/";
-
-    char mx1fn[256];
-    strcpy(mx1fn,calibDir);
-    strcat(mx1fn,"mx1.xml");
-    char mx2fn[256];
-    strcpy(mx2fn,calibDir);
-    strcat(mx2fn,"mx2.xml");
-    char my1fn[256];
-    strcpy(my1fn,calibDir);
-    strcat(my1fn,"my1.xml");
-    char my2fn[256];
-    strcpy(my2fn,calibDir);
-    strcat(my2fn,"my2.xml");
-
-    _mx1 =	(CvMat *)cvLoad(mx1fn,NULL,NULL,NULL);
-    _mx2 =	(CvMat *)cvLoad(mx2fn,NULL,NULL,NULL);
-    _my1 =	(CvMat *)cvLoad(my1fn,NULL,NULL,NULL);
-    _my2 =	(CvMat *)cvLoad(my2fn,NULL,NULL,NULL);
-
-    if (_mx1 != 0 && _mx2 != 0 && _my1 != 0 && _my2 != 0) {
-        std::cout << "finished loading\n";
-        return true;
-    }
-    else {
-        fprintf(stderr,"\nError loading calib matrices!");
         return false;
     }
 
+
+//    const char* calibDir = "../calib10_2b/";
+
+//    char mx1fn[256];
+//    strcpy(mx1fn,calibDir);
+//    strcat(mx1fn,"mx1.xml");
+//    char mx2fn[256];
+//    strcpy(mx2fn,calibDir);
+//    strcat(mx2fn,"mx2.xml");
+//    char my1fn[256];
+//    strcpy(my1fn,calibDir);
+//    strcat(my1fn,"my1.xml");
+//    char my2fn[256];
+//    strcpy(my2fn,calibDir);
+//    strcat(my2fn,"my2.xml");
+
+//    _mx1 =	(CvMat *)cvLoad(mx1fn,NULL,NULL,NULL);
+//    _mx2 =	(CvMat *)cvLoad(mx2fn,NULL,NULL,NULL);
+//    _my1 =	(CvMat *)cvLoad(my1fn,NULL,NULL,NULL);
+//    _my2 =	(CvMat *)cvLoad(my2fn,NULL,NULL,NULL);
+
+//    if (_mx1 != 0 && _mx2 != 0 && _my1 != 0 && _my2 != 0) {
+//        std::cout << "finished loading\n";
+//        return true;
+//    }
+//    else {
+//        fprintf(stderr,"\nError loading calib matrices!");
+//        return false;
+//    }
+
+    return true;
 
 }
 
