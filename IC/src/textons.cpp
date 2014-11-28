@@ -1,4 +1,5 @@
 #include "textons.h"
+#include <opencv2/highgui/highgui.hpp>
 
 void Textons::getCommData(float* s){
         s[0] = 66.0; // header
@@ -50,6 +51,7 @@ void Textons::drawHistogram(cv::Mat hist,int bins) {
                     color, line_width, 8, 0
                     );
     }
+    cv::imshow("Histogram", canvas);
 }
 
 void Textons::drawGraph(std::string msg) {
@@ -164,7 +166,9 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
     graph_buffer.at<float>(distribtuion_buf_pointer,0) = nn;
     graph_buffer.at<float>(distribtuion_buf_pointer,1) = avgdisp; // groundtruth
 
+#ifdef DRAWHIST
     drawHistogram(hist,n_textons);
+#endif
 }
 
 int Textons::getLast_gt() {

@@ -19,7 +19,7 @@
 //#define DUOWEBCAM
 
 //#define DELFLY_WIFI
-//#define FILECAM
+#define FILECAM
 
 #ifndef DELFLY_COLORMODE
 
@@ -34,7 +34,7 @@
 
 #define HASSCREEN // dont disable in qt debugger!
 #ifndef FILECAM
-//#define VIDEORAW
+#define VIDEORAW
 #endif
 
 #ifndef DELFLY_COLORMODE
@@ -44,6 +44,8 @@
 
 #define USE_SOCKET
 #define TCPPORT 6969
+
+#define DRAWHIST
 
 #else // drone
 
