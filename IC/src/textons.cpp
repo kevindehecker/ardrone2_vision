@@ -112,11 +112,12 @@ void Textons::drawGraph(std::string msg) {
 void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
     //printf("im height: %d\n",(*grayframe).height);
 
-    unsigned char* im = (unsigned char*)grayframe.data;
     unsigned char sample[patch_square_size];
     std::vector<int> distribution(n_textons);
     cv::Mat hist;
     hist = cv::Mat::zeros(1, n_textons, CV_32SC1);
+
+
 
     for(int n=0;n<n_samples;n++){
 
@@ -127,9 +128,14 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
         //extract a random patch to a temporary vector
         for (int i=0;i<patch_size;i++) {
             for (int j=0;j<patch_size;j++) {
-                sample[i*patch_size+j] = im[y+j,x+i];
+                sample[i*patch_size+j] = grayframe.at<uint8_t>(y+j,x+i);
             }
         }
+
+//        if (n==0) { // visualise a patch
+//            cv::Mat test((int)patch_size,(int)patch_size,CV_8UC1, *sample);
+//            imshow("patch", test );
+//        }
 
         //get the distances to this patch to the textons...
         std::vector<double> distances(n_textons); // distances
