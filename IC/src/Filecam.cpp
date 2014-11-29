@@ -9,7 +9,8 @@
 
 bool FileCam::init () {
 
-    video = cv::VideoCapture("/home/houjebek/paparazzi/sw/ext/ardrone2_vision/IC/pc/qt-build/video_doetwazig.avi");
+    video = cv::VideoCapture("/home/houjebek/AfstudeerData/Experiments/Test/video_hand.avi");
+    //video = cv::VideoCapture("/home/houjebek/grive/biebfootage/biebwalk1/video.avi");
 
     if (!video.isOpened()) {
         std::cerr << "Error opening video file!\n";
