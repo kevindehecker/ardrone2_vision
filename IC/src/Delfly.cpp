@@ -180,10 +180,10 @@ void DelFly::workerThread() {
                             int caliblineR = current_line +3; // for sv cam 10, this seems to work ok
                             int caliblineL = current_line -2;
 
-                            if (caliblineL > 0 && caliblineL < im_height )
+                            if (caliblineL >= 0 && caliblineL < im_height )
                                 frameL.at<uint8_t>(caliblineL,j) = buffer[jj++];
 
-                            if (caliblineR > 0 && caliblineR < im_height )
+                            if (caliblineR >= 0 && caliblineR < im_height )
                                 frameR.at<uint8_t>(caliblineR,j) = buffer[jj];
 #endif
                         }
