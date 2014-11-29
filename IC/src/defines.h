@@ -11,15 +11,15 @@
 //#define DELFLY_COLORMODE
 //#define DELFLY_DISPMODE
 
-#define RUNMODE stereo_only
+#define RUNMODE none
 
 #ifdef _PC
 
 #define DELFLY
 //#define DUOWEBCAM
 
-//#define DELFLY_WIFI
-#define FILECAM
+#define DELFLY_WIFI
+//#define FILECAM
 
 #ifndef DELFLY_COLORMODE
 
@@ -38,7 +38,7 @@
 #endif
 
 #ifndef DELFLY_COLORMODE
-//#define VIDEORESULTS
+#define VIDEORESULTS
 #endif
 #define VIDEOFPS 10
 
@@ -62,7 +62,7 @@
 
 #endif // DELFLY_COLORMODE
 
-#define VIDEOFPS 6 // setting this lower than 5 will crash the drone...
+#define VIDEOFPS 10 // setting this lower than 5 will crash the drone...
 #define USE_SOCKET
 #define TCPPORT 6969
 #endif // pc/drone

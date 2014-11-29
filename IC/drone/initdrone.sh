@@ -18,9 +18,10 @@ ln -s /data/video/stick/drone/ drone
 export PATH=/opt/arm/gst/bin:$PATH
 
 
-cd data/video/drone/build
+
 killall program.elf.respawner.sh
 killall -9 program.elf
 mount /dev/sda1 /data/video/stick/
 export PATH=/opt/arm_light/gst/bin:$PATH
+cd /data/video/drone/build
 
