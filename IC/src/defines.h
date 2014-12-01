@@ -11,10 +11,11 @@
 //#define DELFLY_COLORMODE
 //#define DELFLY_DISPMODE
 
-#define RUNMODE none
+
 
 #ifdef _PC
 
+#define RUNMODE none
 #define DELFLY
 //#define DUOWEBCAM
 
@@ -48,10 +49,10 @@
 #define DRAWHIST
 
 #else // drone
-
+#define RUNMODE stereo_only
 #define DELFLY
 
-#define VIDEORAW
+//#define VIDEORAW
 
 #ifndef DELFLY_COLORMODE
 #define HEADERBYTE HEADERSTEREO
