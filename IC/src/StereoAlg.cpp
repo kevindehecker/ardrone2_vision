@@ -139,11 +139,21 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
     performLongSec(frameC_mat,&DisparityMat );
 #endif
 
-    avgDisparity = cv::mean(DisparityMat)(0);
+    //avgDisparity = cv::mean(DisparityMat)(0);
+
+    cv::Scalar mean,stddev;
+    cv::meanStdDev(DisparityMat,mean,stddev,cv::Mat());
+
+    stddevDisparity = stddev(0);
+    avgDisparity = mean(0);
+    stddevDisparity = (stddevDisparity/avgDisparity ) * 100;
+
 #if defined(HASSCREEN) || defined(VIDEORESULTS)
     double min,max;
     cv::minMaxIdx(DisparityMat, &min, &max);
-    std::cout << " min/max: " << min << " / " << max << std::endl;
+
+    std::cout << " mean/std: " << mean(0) << " / " << stddev(0) << std::endl;
+    //std::cout << " min/max: " << min << " / " << max << std::endl;
     DisparityMat.convertTo(DisparityMat,CV_8UC1, 256.0 / dispScale, 0.0); // expand range to 0..255.
 #endif
 #endif

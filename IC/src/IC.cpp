@@ -32,6 +32,7 @@ enum modus_t {none, stereo_only, textons_only, stereo_textons};
 bool connectionAccepted;
 std::mutex g_lockComm;
 int commdata_gt;
+int commdata_gt_stdev;
 int commdata_nn;
 char key = 0;
 std::string msg;
@@ -164,16 +165,16 @@ void process_video() {
         svcam.waitForImage();  //synchronized grab stereo frame:
 
         bool stereoOK=true;
-        float avgDisparity=0;
+
         if (mode==stereo_only || mode==stereo_textons) {
             //stereo is turned on
             stereoOK = stereo.calcDisparityMap(svcam.frameL_mat,svcam.frameR_mat); // calc the stereo groundtruth
-            avgDisparity=stereo.avgDisparity;
-            commdata_gt = avgDisparity; // tmp for comm testing
+            commdata_gt = stereo.avgDisparity;
+            commdata_gt_stdev = stereo.stddevDisparity;
         }
 
         if ((mode==textons_only || mode==stereo_textons) && stereoOK) {
-            textonizer.getTextonDistributionFromImage(svcam.frameL_mat,avgDisparity);  //perform the texton stuff
+            textonizer.getTextonDistributionFromImage(svcam.frameL_mat,stereo.avgDisparity);  //perform the texton stuff
         }
 
 
@@ -220,6 +221,7 @@ void process_video() {
             break;
         }
         if (key==10) {textonizer.retrainAll();key=0;msg="Learn";} //      [enter]: perform learning
+        if (key==105) {textonizer.retrainAll();key=0;msg="Learn";} //     [i]: idem (perform learning)
         if (key==115) {textonizer.saveRegression();key=0;msg="Save";} //  [s]: save
         if (key==99) {textonizer.initLearner(true);key=0;msg="Clear";} // [c]: clear
         if (key==108) {textonizer.reload();key=0;msg="Reload";} //        [l]: reload
@@ -308,6 +310,7 @@ void commOutThread() {
 
         ICDataPackage out;
         out.avgdisp_gt = commdata_gt;
+        out.avgdisp_gt_stdev = commdata_gt_stdev;
         out.avgdisp_nn = textonizer.getLast_nn();
         out.endl = 0;
         std::cout << "gt: " << out.avgdisp_gt << " nn: " << out.avgdisp_nn << std::endl;
@@ -375,6 +378,10 @@ int main( int argc, char **argv )
 #ifdef USE_SOCKET
     std::thread thread_comm(commOutThread);
     g_lockComm.unlock();
+//    std::stringstream stream;
+//    stream << "\"./run.sh\"";
+//    system(stream.str().c_str());
+
 #endif
 #if defined(HASSCREEN) || defined(VIDEORESULTS)
 #ifdef DUOWEBCAM

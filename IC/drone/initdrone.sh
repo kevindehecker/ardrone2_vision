@@ -25,3 +25,18 @@ mount /dev/sda1 /data/video/stick/
 export PATH=/opt/arm_light/gst/bin:$PATH
 cd /data/video/drone/build
 
+killall -9 ap.elf && ./IC
+
+
+
+
+
+
+
+
+
+
+
+
+
+/data/video/raw/ap.elf

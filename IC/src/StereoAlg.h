@@ -42,6 +42,7 @@ private:
 public:
 	cv::Mat DisparityMat;
 	float avgDisparity;
+    float stddevDisparity;
     cv::Mat frameC_mat;
 
 	bool init (int im_width,int im_height);

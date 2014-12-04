@@ -11,6 +11,7 @@
 
 struct ICDataPackage {
     int avgdisp_gt;
+    int avgdisp_gt_stdev;
     int avgdisp_nn;
     char endl;             // endl fix :)
 };
