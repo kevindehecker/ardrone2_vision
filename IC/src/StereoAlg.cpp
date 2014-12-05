@@ -147,6 +147,11 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
     stddevDisparity = stddev(0);
     avgDisparity = mean(0);
     stddevDisparity = (stddevDisparity/avgDisparity ) * 100;
+#ifdef SGM
+    if (stddevDisparity  > 70) {
+        avgDisparity =0;
+    }
+#endif
 
 #if defined(HASSCREEN) || defined(VIDEORESULTS)
     double min,max;

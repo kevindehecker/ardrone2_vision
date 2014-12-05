@@ -9,7 +9,7 @@
 
 bool FileCam::init () {
 
-    video = cv::VideoCapture("/home/houjebek/AfstudeerData/Experiments/Test/video_hand.avi");
+    video = cv::VideoCapture("/home/houjebek/AfstudeerData/Experiments/CyberZoo/AutonomousFlightGroundtruth/video_dsp.avi");
     //video = cv::VideoCapture("/home/houjebek/grive/biebfootage/biebwalk1/video.avi");
 
     if (!video.isOpened()) {
@@ -57,6 +57,11 @@ void FileCam::workerThread() {
     cv::Mat frameL = cv::Mat::zeros(im_height,im_width, CV_8UC1);
     cv::Mat frameR = cv::Mat::zeros(im_height,im_width, CV_8UC1);
     stopWatch.Start();
+
+    int skipstart = 150;
+    //skip start
+    for (int i =0; i < skipstart;i++)
+        video >> frameC;
 
     while (cams_are_running)  {
 

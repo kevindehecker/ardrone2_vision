@@ -136,7 +136,8 @@ void DelFly::workerThread() {
 
             //In order to fix an issue with the drone comport driver; behold for this horrible hack:
             //If no bytes were received for more then 1 second, reinitialise the comport.
-            //On the ARDrone this happens after about ~0-30 frames, except for if the program was started after a clean boot.
+            //On the ARDrone2 this happens after about ~0-30 frames, except for if the program was started after a clean boot.
+            //Also, if the usb bus is used for other things, this may occur. (the camera maxes out the bandwidth)
             //On the PC, this does not happen at all.
             if (res>0) {
                 stopWatch_comportAlive.Restart();
@@ -316,18 +317,18 @@ void DelFly::workerThread() {
                         cv::cvtColor(frameYUYV,frameC_mat,  CV_YUV2RGB_YVYU );
 #else
 
+                        //rectify and calibrate the stereo image
+                        /* as it happens, this gives worst results due to the very small images
+                        cv::Mat bigL (480,640, CV_8UC1);
+                        cv::Mat bigR (480,640, CV_8UC1);
+                        cv::resize(frameL,bigL,bigL.size(),0,0,CV_INTER_LINEAR);
+                        cv::resize(frameR,bigR,bigR.size(),0,0,CV_INTER_LINEAR);
+                        cv::remap(bigL, bigL, (cv::Mat) _mx1, (cv::Mat) _my1 ,CV_INTER_LINEAR);
+                        cv::remap(bigR, bigR, (cv::Mat) _mx2, (cv::Mat) _my2 ,CV_INTER_LINEAR);
 
-//                        //rectify and calibrate the stereo image
-//                        cv::Mat bigL (480,640, CV_8UC1);
-//                        cv::Mat bigR (480,640, CV_8UC1);
-//                        cv::resize(frameL,bigL,bigL.size(),0,0,CV_INTER_LINEAR);
-//                        cv::resize(frameR,bigR,bigR.size(),0,0,CV_INTER_LINEAR);
-
-//                        cv::remap(bigL, bigL, (cv::Mat) _mx1, (cv::Mat) _my1 ,CV_INTER_LINEAR);
-//                        cv::remap(bigR, bigR, (cv::Mat) _mx2, (cv::Mat) _my2 ,CV_INTER_LINEAR);
-
-//                        cv::resize(bigL,frameL_mat,frameL.size(),0,0,CV_INTER_LINEAR);
-//                        cv::resize(bigR,frameR_mat,frameR.size(),0,0,CV_INTER_LINEAR);
+                        cv::resize(bigL,frameL_mat,frameL.size(),0,0,CV_INTER_LINEAR);
+                        cv::resize(bigR,frameR_mat,frameR.size(),0,0,CV_INTER_LINEAR);
+                        */
 
                         frameL.copyTo(frameL_mat);
                         frameR.copyTo(frameR_mat);

@@ -15,18 +15,18 @@
 
 #ifdef _PC
 
-#define RUNMODE none
+#define RUNMODE stereo_textons
 #define DELFLY
 //#define DUOWEBCAM
 
-#define DELFLY_WIFI
-//#define FILECAM
+//#define DELFLY_WIFI
+#define FILECAM
 
 #ifndef DELFLY_COLORMODE
 
 #define HEADERBYTE HEADERSTEREO
-#define GEIGER
-//#define SGM
+//#define GEIGER
+#define SGM
 //#define BM currently not completely implemented
 //#define LONGSEC
 #else
@@ -52,7 +52,7 @@
 #define RUNMODE stereo_only
 #define DELFLY
 
-//#define VIDEORAW
+#define VIDEORAW
 
 #ifndef DELFLY_COLORMODE
 #define HEADERBYTE HEADERSTEREO
