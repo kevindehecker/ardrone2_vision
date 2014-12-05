@@ -263,6 +263,7 @@ void saveStereoPair() {
 
 void TerminalInputThread() {
 #ifndef HASSCREEN
+#ifndef USE_SOCKET
     usleep(1000000); // let the qt debug output pass through. Hmm doesnt work.
     while(svcam.cams_are_running) {
         std::cin >> key;
@@ -273,6 +274,7 @@ void TerminalInputThread() {
         }
     }
 #endif
+#endif
 }
 
 void commInThread() {
@@ -280,6 +282,7 @@ void commInThread() {
     while (svcam.cams_are_running && connectionAccepted ) {
         int n = tcp.Read_socket(data,1);
         if (n>0 && data[0] != '\r' && data[0] != '\n') {
+            std::cout << "TCP received " << data[0] << std::endl;
             if (data[0]>0) {
                 key = data[0];
                 if (key==120 || key==113) {

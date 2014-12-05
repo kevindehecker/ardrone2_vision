@@ -46,13 +46,13 @@
 #define USE_SOCKET
 #define TCPPORT 6969
 
-#define DRAWHIST
+//#define DRAWHIST
 
 #else // drone
 #define RUNMODE stereo_only
 #define DELFLY
 
-#define VIDEORAW
+//#define VIDEORAW
 
 #ifndef DELFLY_COLORMODE
 #define HEADERBYTE HEADERSTEREO
