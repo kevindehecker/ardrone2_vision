@@ -7,6 +7,18 @@
 #include <opencv2/contrib/contrib.hpp>
 #include "defines.h"
 
+
+
+#define HEADERCOLOR  0
+#define HEADERSTEREO 1
+#define HEADERDISPARITY 2
+
+#ifndef DELFLY_COLORMODE
+#define HEADERBYTE HEADERSTEREO
+#else
+#define HEADERBYTE HEADERCOLOR
+#endif
+
 class DelFly{
 
 

@@ -8,7 +8,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <iostream>
+#include "defines.h"
 
 
 int Socket::closeSocket(void) {
@@ -139,6 +140,90 @@ ssize_t Socket::Writeline_socket(const char * text, size_t n) {
 	
 }
 
+void Socket::Unlock() {
+    g_lockComm.unlock();
+}
+
+void Socket::Init(char *keyp, bool *cams_are_runningp) {
+    closeThreads = false;
+    thread_comm  = std::thread(&Socket::commOutThread,this);
+    g_lockComm.unlock();
+    cams_are_running = cams_are_runningp; // TODO: improve this...
+    key = keyp;
+
+}
+
+void Socket::Close() {
+    std::cout << "Closing socket\n";
+
+    bool copy = *cams_are_running;
+    std::cout << "copy: " << copy << std::endl;
+    g_lockComm.unlock();
+    usleep(10000);
+    if (closeSocket()) {
+        std::cout << "Waiting socket tread\n";
+        thread_comm.join();
+        std::cout << "Socket thread closed\n";
+    }
+    else { // probably was never connected and hanging on initSocket()
+        thread_comm.detach();	//accept is blocking if no connection
+        std::cout << "Socket thread detached\n";
+    }
+}
+
+void Socket::commInThread() {
+    char data[1];
+    while (*cams_are_running && connectionAccepted ) {
+        int n = Read_socket(data,1);
+        if (n>0 && data[0] != '\r' && data[0] != '\n') {
+            std::cout << "TCP received " << data[0] << std::endl;
+            if (data[0]>0) {
+                *key = data[0];
+                if (*key==120 || *key==113) {
+                    *key=27; // translate x to esc
+                    *cams_are_running = false;
+                    std::cout << "Exiting\n";
+                }
+            }
+        } else {
+            usleep(100);
+        }
+    }
+    std::cout << "CommInThread exiting.\n";
+}
+
+void Socket::commOutThread() {
+    if (!initSocket(TCPPORT)) {
+        std::cout << "Error initialising connection\n";
+        return;
+    }
+    std::cout << "Opened socket @" << TCPPORT << std::endl;
+    connectionAccepted = true;
+
+    std::thread thread_commIn(&Socket::commInThread,this);
+
+    while (*cams_are_running) {
+
+        g_lockComm.lock();
+
+        ICDataPackage out;
+        out.avgdisp_gt = commdata_gt;
+        out.avgdisp_gt_stdev = commdata_gt_stdev;
+        out.avgdisp_nn = commdata_nn;
+        out.endl = 0;
+        std::cout << "gt: " << out.avgdisp_gt << " nn: " << out.avgdisp_nn << std::endl;
+
+        char * c = (char *) (void *) &out; // struct in c++ will not come out of the kast.
+        Write_socket(c, sizeof(out));
+    }
+
+    connectionAccepted = false;
+    closeSocket();
+    thread_commIn.detach(); // join seems to block
+
+
+    std::cout << "CommOutThread exiting.\n";
+}
 
 
 

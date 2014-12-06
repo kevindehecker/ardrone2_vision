@@ -29,11 +29,6 @@ enum modus_t {none, stereo_only, textons_only, stereo_textons};
 
 
 /***********Variables****************/
-bool connectionAccepted;
-std::mutex g_lockComm;
-int commdata_gt;
-int commdata_gt_stdev;
-int commdata_nn;
 char key = 0;
 std::string msg;
 cv::Mat resFrame;
@@ -43,8 +38,6 @@ stopwatch_c stopWatch;
 modus_t mode;
 Socket tcp;
 
-
-Socket tcp_test;
 
 #ifdef FILECAM
 FileCam svcam;
@@ -70,7 +63,9 @@ Textons textonizer;
 
 /*******Private prototypes*********/
 void process_video();
+#ifdef USE_TERMINAL_INPUT
 void TerminalInputThread();
+#endif
 int main( int argc, char **argv);
 void saveStereoPair();
 
@@ -79,6 +74,7 @@ void commOutThread();
 void commInThread();
 
 /************ code ***********/
+
 void combineAllImages() {
 
 #ifndef DELFLY_COLORMODE
@@ -96,6 +92,7 @@ void combineAllImages() {
 #endif
 
 }
+
 
 void combineImage(cv::Mat resFrame, cv::Mat smallsourceimage, int x, int y,int width, int height, bool convertRGB) {
 
@@ -120,12 +117,14 @@ void combineImage(cv::Mat resFrame, cv::Mat smallsourceimage, int x, int y,int w
     }
 }
 
+
 /*
  * process_video: retrieves frames from camera, does the processing and handles the IO.
  * Skips frames if processing takes too long.
  * the camera.
  */
 #ifdef DELFLY_COLORMODE
+
 void process_video() {
     stopWatch.Start();
     int frames = 0;
@@ -154,7 +153,9 @@ void process_video() {
     cv::destroyAllWindows();
 #endif
 }
+
 #else // stereo vision instead of color
+
 void process_video() {
     stopWatch.Start();
     int frames = 0;
@@ -169,12 +170,13 @@ void process_video() {
         if (mode==stereo_only || mode==stereo_textons) {
             //stereo is turned on
             stereoOK = stereo.calcDisparityMap(svcam.frameL_mat,svcam.frameR_mat); // calc the stereo groundtruth
-            commdata_gt = stereo.avgDisparity;
-            commdata_gt_stdev = stereo.stddevDisparity;
+            tcp.commdata_gt = stereo.avgDisparity;
+            tcp.commdata_gt_stdev = stereo.stddevDisparity;
         }
 
         if ((mode==textons_only || mode==stereo_textons) && stereoOK) {
             textonizer.getTextonDistributionFromImage(svcam.frameL_mat,stereo.avgDisparity);  //perform the texton stuff
+            tcp.commdata_nn = textonizer.getLast_nn();
         }
 
 
@@ -235,7 +237,7 @@ void process_video() {
 
 
 #ifdef USE_SOCKET        
-        g_lockComm.unlock();
+        tcp.Unlock();
 #endif
 
         frames++;
@@ -261,9 +263,9 @@ void saveStereoPair() {
     saveid++;
 }
 
+#ifdef USE_TERMINAL_INPUT
+
 void TerminalInputThread() {
-#ifndef HASSCREEN
-#ifndef USE_SOCKET
     usleep(1000000); // let the qt debug output pass through. Hmm doesnt work.
     while(svcam.cams_are_running) {
         std::cin >> key;
@@ -273,65 +275,12 @@ void TerminalInputThread() {
             std::cout << "Exiting\n";
         }
     }
-#endif
-#endif
 }
 
-void commInThread() {
-    char data[1];
-    while (svcam.cams_are_running && connectionAccepted ) {
-        int n = tcp.Read_socket(data,1);
-        if (n>0 && data[0] != '\r' && data[0] != '\n') {
-            std::cout << "TCP received " << data[0] << std::endl;
-            if (data[0]>0) {
-                key = data[0];
-                if (key==120 || key==113) {
-                    key=27; // translate x to esc
-                    svcam.cams_are_running = false;
-                    std::cout << "Exiting\n";
-                }
-            }
-        } else {
-            usleep(100);
-        }
-    }
-}
-
-void commOutThread() {
-#ifdef USE_SOCKET
-    if (!tcp.initSocket(TCPPORT)) {
-        std::cout << "Error initialising connection\n";
-        return;
-    }
-    std::cout << "Opened socket @" << TCPPORT << std::endl;
-    connectionAccepted = true;
-
-    std::thread thread_commIn(commInThread);
-
-    while (svcam.cams_are_running) {
-
-        g_lockComm.lock();
-
-        ICDataPackage out;
-        out.avgdisp_gt = commdata_gt;
-        out.avgdisp_gt_stdev = commdata_gt_stdev;
-        out.avgdisp_nn = textonizer.getLast_nn();
-        out.endl = 0;
-        std::cout << "gt: " << out.avgdisp_gt << " nn: " << out.avgdisp_nn << std::endl;
-
-        char * c = (char *) (void *) &out; // struct in c++ will not come out of the kast.
-        tcp.Write_socket(c, sizeof(out));
-    }
-    connectionAccepted = false;
-    tcp.closeSocket();
-    thread_commIn.join();
-
-    std::cout << "CommOutThread exiting.\n";
 #endif
-}
 
-int main( int argc, char **argv )
-{
+
+int init(int argc, char **argv) {
 
     /*****init the camera*****/
 #ifdef DUOWEBCAM
@@ -345,20 +294,20 @@ int main( int argc, char **argv )
         cam_left_id=0;
         cam_right_id=2;
 
-        //return -1;
+        //return 1;
     } else {
 
         cam_left_id= atoi(argv[1]);
         cam_right_id = atoi(argv[2]);
     }
-    if (!svcam.init(cam_left_id,cam_right_id)) {return 0;}
+    if (!svcam.init(cam_left_id,cam_right_id)) {return 1;}
 #else
-    if (!svcam.init()) {return 0;}
+    if (!svcam.init()) {return 1;}
 #endif
 
     /*****init the visual bag of words texton methode*****/
     std::cout << "Initialising textonizer\n";
-    if (!textonizer.init()) {return 0;}
+    if (!textonizer.init()) {return 1;}
 
     /*****Start capturing images*****/
     std::cout << "Start svcam\n";
@@ -377,15 +326,12 @@ int main( int argc, char **argv )
     cv::namedWindow("Results", CV_WINDOW_AUTOSIZE);
 #endif
 
+#ifdef USE_TERMINAL_INPUT
     std::thread thread_TerminalInput(TerminalInputThread);
+#endif
 
 #ifdef USE_SOCKET
-    std::thread thread_comm(commOutThread);
-    g_lockComm.unlock();
-//    std::stringstream stream;
-//    stream << "\"./run.sh\"";
-//    system(stream.str().c_str());
-
+    tcp.Init(&key, &(svcam.cams_are_running));
 #endif
 #if defined(HASSCREEN) || defined(VIDEORESULTS)
 #ifdef DUOWEBCAM
@@ -422,7 +368,7 @@ int main( int argc, char **argv )
    if (!outputVideo.isOpened())
    {
            std::cout << "!!! Output stereo video could not be opened" << std::endl;
-           return 0;
+           return 1;
    }
 #endif
 #ifdef VIDEORESULTS
@@ -436,15 +382,18 @@ int main( int argc, char **argv )
    if (!outputVideoResults.isOpened())
    {
            std::cout << "!!! Output result video could not be opened" << std::endl;
-           return 0;
+           return 1;
    }
 #endif
 
-    /***Go and run forever! ****/
    mode = RUNMODE;
    msg="";
-   process_video();
-    
+
+   return 0;
+}
+
+void close() {
+
     /*****Close everything down*****/
     svcam.close();
 #ifdef ARDRONEFRONTCAM
@@ -452,19 +401,20 @@ int main( int argc, char **argv )
 #endif
 
 #ifdef USE_SOCKET
-    std::cout << "Closing socket\n";
-    if (tcp.closeSocket()) {
-        std::cout << "Waiting socket tread\n";
-        thread_comm.join();
-        std::cout << "Socket thread closed\n";
-    }
-    else {
-        thread_comm.detach();	//accept is blocking if no connection
-        std::cout << "Socket thread detached\n";
-    }
+   tcp.Close();
 #endif
+#ifdef USE_TERMINAL_INPUT
     thread_TerminalInput.detach();	//cin is blocking
-    return 0;
+#endif
+
+}
+
+int main( int argc, char **argv )
+{
+   if (init(argc,argv)) {return 1;}
+   process_video();
+   close();
+   return 0;
 }
 
 

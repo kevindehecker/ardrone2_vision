@@ -2,18 +2,11 @@
 #define DEFINES_H
 
 
-
-#define HEADERCOLOR  0
-#define HEADERSTEREO 1
-#define HEADERDISPARITY 2
-
 //#define ARDRONEFRONTCAM
 //#define DELFLY_COLORMODE
 //#define DELFLY_DISPMODE
 
-
-
-#ifdef _PC
+#ifdef _PC /*************************     PC     ******************/
 
 #define RUNMODE stereo_textons
 #define DELFLY
@@ -24,13 +17,13 @@
 
 #ifndef DELFLY_COLORMODE
 
-#define HEADERBYTE HEADERSTEREO
+#define VIDEORESULTS
+//#define DRAWHIST
+
 //#define GEIGER
 #define SGM
 //#define BM currently not completely implemented
 //#define LONGSEC
-#else
-#define HEADERBYTE HEADERCOLOR
 #endif
 
 #define HASSCREEN // dont disable in qt debugger!
@@ -38,24 +31,19 @@
 #define VIDEORAW
 #endif
 
-#ifndef DELFLY_COLORMODE
-#define VIDEORESULTS
-#endif
 #define VIDEOFPS 10
 
+//#define USE_TERMINAL_INPUT // using this will conflict with qt debugging
 #define USE_SOCKET
-#define TCPPORT 6969
 
-//#define DRAWHIST
-
-#else // drone
+#else /*************************    DRONE     ******************/
 #define RUNMODE stereo_only
 #define DELFLY
 
 //#define VIDEORAW
 
 #ifndef DELFLY_COLORMODE
-#define HEADERBYTE HEADERSTEREO
+
 //#define VIDEORESULTS
 
 #define SGM
@@ -64,8 +52,9 @@
 #endif // DELFLY_COLORMODE
 
 #define VIDEOFPS 10 // setting this lower than 5 will crash the drone...
+
+//#define USE_TERMINAL_INPUT // using this disables running in background
 #define USE_SOCKET
-#define TCPPORT 6969
 #endif // pc/drone
 
 #endif //DEFINES_H

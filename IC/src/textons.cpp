@@ -293,6 +293,6 @@ void Textons::saveRegression() {
 }
 
 void Textons::reload() {
+    initLearner(false);
     loadPreviousRegression();
-    initLearner(true);
 }
