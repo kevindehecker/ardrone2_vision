@@ -27,7 +27,9 @@ private:
 public:
     int im_width;
     int im_height;
+    int nFrames;
 
+    int CurrentFrame;
     bool cams_are_running;
     cv::Mat frameL_mat;
     cv::Mat frameR_mat;

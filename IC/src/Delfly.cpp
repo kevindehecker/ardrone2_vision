@@ -59,9 +59,12 @@ void DelFly::start () {
     std::cout << "Delfly camera link started!\n";
 }
 
-void DelFly::waitForImage() {
-	copyNewImage = true;
-	g_lockWaitForImage.lock();
+void DelFly::waitForImage() {	
+    g_lockWaitForImage.lock();
+    frameL_2ndbuf.copyTo(frameL_mat);
+    frameR_2ndbuf.copyTo(frameR_mat);
+    //copyNewImage = true; // request a new frame to be copied into the 2nd buffer when it is available
+    g_lockWaitForImage.unlock();
 }
 
 void DelFly::close () {
@@ -125,7 +128,7 @@ void DelFly::workerThread() {
             if (res<0) {
                 cams_are_running = false;
                 std::cerr << "Serial port read error, is the camera connected?\n";
-                g_lockWaitForImage.unlock();
+               // g_lockWaitForImage.unlock();
                 return;
             }
             tmpsize+=res;
@@ -200,7 +203,11 @@ void DelFly::workerThread() {
                     // at the start of the program, of just after a stream corruption, i will vary
                     //std::cout << "current_line: " << current_line << ", at " << i << "\n";
 
-                    if (copyNewImage ) { // if the main thread asks for a new image
+
+
+
+
+                    if (true ) { // if the main thread asks for a new image
 #ifdef DELFLY_COLORMODE
 
 //                        uint32_t mean_u = 0;
@@ -330,12 +337,16 @@ void DelFly::workerThread() {
                         cv::resize(bigR,frameR_mat,frameR.size(),0,0,CV_INTER_LINEAR);
                         */
 
-                        frameL.copyTo(frameL_mat);
-                        frameR.copyTo(frameR_mat);
+                        g_lockWaitForImage.lock();
+                        frameL.copyTo(frameL_2ndbuf);
+                        frameR.copyTo(frameR_2ndbuf);
+                        g_lockWaitForImage.unlock();
+//                        frameL.copyTo(frameL_mat);
+//                        frameR.copyTo(frameR_mat);
 #endif
 
-                        copyNewImage = false;
-                        g_lockWaitForImage.unlock();
+
+
                     }
                     current_line = 0;
                 }

@@ -28,6 +28,8 @@ private:
     CvMat *_my1;
     CvMat *_mx2;
     CvMat *_my2;
+    cv::Mat frameL_2ndbuf;
+    cv::Mat frameR_2ndbuf;
 
 	std::mutex g_lockWaitForImage;
 	bool copyNewImage;
@@ -46,6 +48,7 @@ public:
 #else
     cv::Mat frameL_mat;
     cv::Mat frameR_mat;
+
 
 #endif
 
