@@ -40,7 +40,7 @@
 #define RUNMODE stereo_textons
 #define DELFLY
 
-//#define VIDEORAW
+#define VIDEORAW
 
 #ifndef DELFLY_COLORMODE
 

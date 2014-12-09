@@ -416,8 +416,8 @@ int main( int argc, char **argv )
    close();
 
    //auto save
-   textonizer.retrainAll();
-   textonizer.saveRegression();
+//   textonizer.retrainAll();
+//   textonizer.saveRegression();
 
    return 0;
 }
