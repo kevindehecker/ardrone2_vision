@@ -9,7 +9,7 @@
 
 bool FileCam::init () {
 
-    video = cv::VideoCapture("/home/houjebek/AfstudeerData/Experiments/CyberZoo/AutonomousFlightGroundtruth/video_dsp.avi");
+    video = cv::VideoCapture("/home/houjebek/shares/AfstudeerData/ExperimentData/video_dsp.avi");
     //video = cv::VideoCapture("/home/houjebek/grive/biebfootage/biebwalk1/video.avi");
 
     if (!video.isOpened()) {
@@ -18,6 +18,9 @@ bool FileCam::init () {
     } else {
         im_width = (int) video.get(CV_CAP_PROP_FRAME_WIDTH)/2;
         im_height = (int)video.get(CV_CAP_PROP_FRAME_HEIGHT);
+        nFrames = (int) video.get(CV_CAP_PROP_FRAME_COUNT);
+        std::cout << "Opened filecam, nFrames: " << nFrames << std::endl;
+        CurrentFrame=0;
         return true;
     }
 }
@@ -92,6 +95,7 @@ void FileCam::workerThread() {
 
         g_lockWaitForImage2.unlock();
 
+        CurrentFrame++;
 
 
 

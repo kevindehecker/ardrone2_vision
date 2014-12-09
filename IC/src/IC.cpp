@@ -414,6 +414,11 @@ int main( int argc, char **argv )
    if (init(argc,argv)) {return 1;}
    process_video();
    close();
+
+   //auto save
+   textonizer.retrainAll();
+   textonizer.saveRegression();
+
    return 0;
 }
 

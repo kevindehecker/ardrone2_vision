@@ -247,12 +247,12 @@ void Textons::retrainAll() {
 
 #ifdef _PC
     std::cout << "Initialising smoother:\n";
-    for (int i=0;i<distribution_buf_size; i++) {
+    for (int i=0; i<distribution_buf_size; i++) {
 
         int jj = (i+distribtuion_buf_pointer) % distribution_buf_size;
-        cv::Mat M1 = distribtuion_buffer.row(jj); // prevent smoothing filter discontinuity
-        graph_buffer.at<float>(jj,0) = knn_smoothed.addSample(knn.find_nearest(M1,5,0,0,0,0));
-        gt_smoothed.addSample(graph_buffer.at<float>(i,1)); // prepare the gt filter, not really necessary
+        //cv::Mat M1 = distribtuion_buffer.row(jj); // prevent smoothing filter discontinuity
+        //graph_buffer.at<float>(jj,0) = knn_smoothed.addSample(knn.find_nearest(M1,5,0,0,0,0));
+        gt_smoothed.addSample(graph_buffer.at<float>(jj,1)); // prepare the gt filter, not really necessary
     }
 #endif
 }
@@ -269,6 +269,9 @@ int Textons::loadPreviousRegression() {
         ground_fs["groundtruth_buffer"] >> groundtruth_buffer;
         cv::FileStorage graph_fs("../graph_buffer.xml", cv::FileStorage::READ);
         graph_fs["graph_buffer"] >> graph_buffer;
+
+        cv::FileStorage where_fs("../distribtuion_buf_pointer.xml", cv::FileStorage::READ);
+        where_fs["distribtuion_buf_pointer"] >> distribtuion_buf_pointer;
 
         std::cout << "Training...\n";
         //draw the training set results:
@@ -288,6 +291,13 @@ void Textons::saveRegression() {
 
     cv::FileStorage graph_fs("../graph_buffer.xml", cv::FileStorage::WRITE);
     graph_fs << "graph_buffer" << graph_buffer;
+
+    cv::FileStorage where_fs("../distribtuion_buf_pointer.xml", cv::FileStorage::WRITE);
+    where_fs << "distribtuion_buf_pointer" << distribtuion_buf_pointer;
+
+    cv::FileStorage size_fs("../distribution_buf_size.xml", cv::FileStorage::WRITE);
+    size_fs << "distribution_buf_size" << distribution_buf_size;
+
 
     retrainAll();
 }
