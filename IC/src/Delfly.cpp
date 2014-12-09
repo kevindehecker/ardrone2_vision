@@ -54,21 +54,26 @@ bool DelFly::init () {
 void DelFly::start () {
     cams_are_running=true;
     thread_cam = std::thread(&DelFly::workerThread,this);
+    copyNewImage = false;
     waitForImage(); // make sure to receive an image before proceeding, to have the width/height variables set
     waitForImage();
     std::cout << "Delfly camera link started!\n";
 }
 
 void DelFly::waitForImage() {	
+    while (!copyNewImage ) {
+        usleep(1000);
+    }
     g_lockWaitForImage.lock();
     frameL_2ndbuf.copyTo(frameL_mat);
-    frameR_2ndbuf.copyTo(frameR_mat);
-    //copyNewImage = true; // request a new frame to be copied into the 2nd buffer when it is available
+    frameR_2ndbuf.copyTo(frameR_mat);    
+    copyNewImage = false; // hmm ugly, but misisng resetevent in linux...
     g_lockWaitForImage.unlock();
 }
 
 void DelFly::close () {
     cams_are_running = false;
+    copyNewImage=true;
     g_lockWaitForImage.unlock();
 	thread_cam.join();
     RS232_CloseComport();
@@ -89,6 +94,7 @@ void DelFly::workerThread() {
     stopwatch_c stopWatch_comportAlive;
     stopWatch_comportAlive.Start();
 
+    int tmpjets ;
 
     /* perfect red detector
     const uint8_t min_U = 123; // u=pink, v=yellow, u+v = blue
@@ -128,7 +134,7 @@ void DelFly::workerThread() {
             if (res<0) {
                 cams_are_running = false;
                 std::cerr << "Serial port read error, is the camera connected?\n";
-               // g_lockWaitForImage.unlock();
+                g_lockWaitForImage.unlock();
                 return;
             }
             tmpsize+=res;
@@ -337,10 +343,17 @@ void DelFly::workerThread() {
                         cv::resize(bigR,frameR_mat,frameR.size(),0,0,CV_INTER_LINEAR);
                         */
 
+
+
+                       // tmpjets = (tmpjets+1) % 30;
+                       // if (tmpjets==1) {
                         g_lockWaitForImage.lock();
                         frameL.copyTo(frameL_2ndbuf);
                         frameR.copyTo(frameR_2ndbuf);
+                        copyNewImage =true;
                         g_lockWaitForImage.unlock();
+
+                   // }
 //                        frameL.copyTo(frameL_mat);
 //                        frameR.copyTo(frameR_mat);
 #endif

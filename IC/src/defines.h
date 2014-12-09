@@ -13,7 +13,7 @@
 //#define DUOWEBCAM
 
 //#define DELFLY_WIFI
-#define FILECAM
+//#define FILECAM
 
 #ifndef DELFLY_COLORMODE
 

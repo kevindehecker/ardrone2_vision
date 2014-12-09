@@ -28,7 +28,7 @@ private:
 	cv::Mat groundtruth_buffer;
 	cv::Mat graph_buffer;
 	int lastLearnedPosition;
-    int distribution_buf_size = 3000;
+    int distribution_buf_size = 2500;
     int distribtuion_buf_pointer =0;
 	CvKNearest knn;
 
