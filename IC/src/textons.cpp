@@ -9,7 +9,7 @@ void Textons::getCommData(float* s){
 
 bool Textons::init () {
     if (!initTextons()) {return false;}
-    if (!initLearner(false)) {return false;}
+    if (!initLearner(true)) {return false;}
     loadPreviousRegression();
     return true;
 }

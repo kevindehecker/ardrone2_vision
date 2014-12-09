@@ -37,7 +37,7 @@
 #define USE_SOCKET
 
 #else /*************************    DRONE     ******************/
-#define RUNMODE stereo_only
+#define RUNMODE stereo_textons
 #define DELFLY
 
 //#define VIDEORAW
