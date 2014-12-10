@@ -18,9 +18,9 @@
 #ifndef DELFLY_COLORMODE
 
 #define VIDEORESULTS
-//#define DRAWHIST
+#define DRAWHIST
 
-#define GEIGER
+//#define GEIGER
 #define SGM
 //#define BM currently not completely implemented
 //#define LONGSEC

@@ -152,7 +152,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
     }
 
     //copy new data into learning buffer:
-    cv::Mat M1 = distribtuion_buffer.row(distribtuion_buf_pointer ) ;
+    cv::Mat M1 = distribtuion_buffer.row((distribtuion_buf_pointer+filterwidth) % distribution_buf_size) ;
     hist.convertTo(M1,cv::DataType<float>::type,1,0);
     avgdisp = gt_smoothed.addSample(avgdisp); // perform smoothing
     groundtruth_buffer.at<float>(distribtuion_buf_pointer) = avgdisp;
@@ -169,7 +169,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
     std::cout << "knn.disp.: " << nn << "  |  truth: " << avgdisp << std::endl;
 
     //save values for visualisation	in graph
-    graph_buffer.at<float>(distribtuion_buf_pointer,0) = nn;
+    graph_buffer.at<float>((distribtuion_buf_pointer+filterwidth) % distribution_buf_size,0) = nn;
     graph_buffer.at<float>(distribtuion_buf_pointer,1) = avgdisp; // groundtruth
 
 #ifdef DRAWHIST
@@ -232,7 +232,7 @@ bool Textons::initLearner(bool nulltrain) {
     groundtruth_buffer = groundtruth_buffer +6.2; //for testing...
     distribtuion_buf_pointer = 0;
     knn_smoothed.init(filterwidth);
-    gt_smoothed.init(3);
+    gt_smoothed.init(filterwidth);
     if (nulltrain) {
         return knn.train(distribtuion_buffer, groundtruth_buffer, cv::Mat(), true, 32, false );
     } else {
@@ -250,8 +250,8 @@ void Textons::retrainAll() {
     for (int i=0; i<distribution_buf_size; i++) {
 
         int jj = (i+distribtuion_buf_pointer) % distribution_buf_size;
-        //cv::Mat M1 = distribtuion_buffer.row(jj); // prevent smoothing filter discontinuity
-        //graph_buffer.at<float>(jj,0) = knn_smoothed.addSample(knn.find_nearest(M1,5,0,0,0,0));
+        cv::Mat M1 = distribtuion_buffer.row(jj); // prevent smoothing filter discontinuity
+        graph_buffer.at<float>(jj,0) = knn_smoothed.addSample(knn.find_nearest(M1,5,0,0,0,0));
         gt_smoothed.addSample(graph_buffer.at<float>(jj,1)); // prepare the gt filter, not really necessary
     }
 #endif

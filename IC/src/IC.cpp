@@ -323,7 +323,8 @@ int init(int argc, char **argv) {
 
     /*****init the (G)UI*****/
 #ifdef HASSCREEN
-    cv::namedWindow("Results", CV_WINDOW_AUTOSIZE);
+    cv::namedWindow("Results", CV_WINDOW_NORMAL);
+    cv::resizeWindow("Results", 1100, 560);
 #endif
 
 #ifdef USE_TERMINAL_INPUT
@@ -414,14 +415,14 @@ int main( int argc, char **argv )
    if (init(argc,argv)) {return 1;}
 
    //clear learning buffer
-//   textonizer.initLearner(true);
+   //textonizer.initLearner(true);
 
    process_video();
    close();
 
    //auto save
-//   textonizer.retrainAll();
-//   textonizer.saveRegression();
+   textonizer.retrainAll();
+   textonizer.saveRegression();
 
    return 0;
 }

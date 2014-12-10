@@ -147,6 +147,7 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
     stddevDisparity = stddev(0);
     avgDisparity = mean(0);
     stddevDisparity = (stddevDisparity/avgDisparity ) * 100;
+    //avgDisparity = stddevDisparity; //tmp testing!!!
 #ifdef SGM
     if (stddevDisparity  > 70) {
         avgDisparity =0;
