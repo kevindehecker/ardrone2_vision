@@ -412,6 +412,10 @@ void close() {
 int main( int argc, char **argv )
 {
    if (init(argc,argv)) {return 1;}
+
+   //clear learning buffer
+//   textonizer.initLearner(true);
+
    process_video();
    close();
 

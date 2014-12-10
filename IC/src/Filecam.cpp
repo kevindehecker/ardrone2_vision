@@ -9,7 +9,7 @@
 
 bool FileCam::init () {
 
-    video = cv::VideoCapture("/home/houjebek/AfstudeerData/Experiments/CyberZoo/AutonomousFlightGroundtruth/video_dsp.avi");
+    video = cv::VideoCapture("/home/houjebek/AfstudeerData/Experiments/CyberZoo/AutonomousFlightGroundtruth/video_dsp2.avi");
     //video = cv::VideoCapture("/home/houjebek/grive/biebfootage/biebwalk1/video.avi");
 
     if (!video.isOpened()) {
@@ -72,7 +72,7 @@ void FileCam::workerThread() {
         //arrange speed to be ~10fps
         float time = stopWatch.Read();
         time = 100 - time/1000;
-        // if (time > 0)  {usleep((int)time*1000);}
+//        if (time > 0)  {usleep((int)time*1000);} // comment this line to disable fps control
         stopWatch.Restart();
 #endif
         g_lockWaitForImage1.lock();

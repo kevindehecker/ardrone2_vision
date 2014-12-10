@@ -21,7 +21,7 @@ private:
 	unsigned char patch_size;
 	unsigned char patch_square_size;
 	std::vector<std::vector<unsigned char> > textons;
-	int filterwidth = 10; // moving average filter
+    int filterwidth = 10; // moving average filter
 
 	//regression learning parameters
 	cv::Mat distribtuion_buffer;

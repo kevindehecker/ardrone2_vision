@@ -232,7 +232,7 @@ bool Textons::initLearner(bool nulltrain) {
     groundtruth_buffer = groundtruth_buffer +6.2; //for testing...
     distribtuion_buf_pointer = 0;
     knn_smoothed.init(filterwidth);
-    gt_smoothed.init(filterwidth);
+    gt_smoothed.init(3);
     if (nulltrain) {
         return knn.train(distribtuion_buffer, groundtruth_buffer, cv::Mat(), true, 32, false );
     } else {
