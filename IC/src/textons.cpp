@@ -54,11 +54,13 @@ void Textons::drawHistogram(cv::Mat hist,int bins) {
     cv::imshow("Histogram", canvas);
 }
 
+int countsincelearn =0;
 void Textons::drawGraph(std::string msg) {
 
     cv::Scalar color_gt= cv::Scalar(255,0,0); // blue
     cv::Scalar color_nn= cv::Scalar(0,0,255); // red
-    cv::Scalar color_vert= cv::Scalar(0,180,255); // orange
+    cv::Scalar color_vert= cv::Scalar(0,255,255); // orange
+    cv::Scalar color_invert= cv::Scalar(255,255,0); // light blue
     int line_width = 1;
 
     int stepX = distribution_buf_size/700;
@@ -73,6 +75,12 @@ void Textons::drawGraph(std::string msg) {
     float nn,gt;
     float prev_nn = 0, prev_gt = 0;
 
+    countsincelearn++;
+
+    int learnborder =  (lastLearnedPosition+(distribution_buf_size-distribtuion_buf_pointer)) % distribution_buf_size; // make a sliding graph
+    if ( countsincelearn > distribution_buf_size) {
+        learnborder=0;
+    }
 
     for (int j = filterwidth; j < distribution_buf_size ; j++)
     {
@@ -80,14 +88,20 @@ void Textons::drawGraph(std::string msg) {
         int jj = (j+distribtuion_buf_pointer) % distribution_buf_size; // make a sliding graph
         nn = graph_buffer.at<float>(jj,0)*scaleY;
         gt = graph_buffer.at<float>(jj,1)*scaleY;
-        //if ((lastLearnedPosition % distribution_buf_size) < jj && j > jj) {
-        if (lastLearnedPosition < jj && j > jj) {
-            //draw a small colored line above none learned part:
-            cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 3),color_vert, line_width, 8, 0);
+
+        if (j > learnborder ) { // change color according to training/test data
             color_nn= cv::Scalar(0,0,255); // red
         } else {
 
             color_nn= cv::Scalar(0,255,0); // green
+        }
+
+
+        //draw a small colored line below problematic part:
+        if (nn < threshold_nn && gt > 0) {
+            cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),color_vert, line_width, 8, 0);
+        } else if (nn > threshold_nn && gt < 0.1) {
+            cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),color_invert, line_width, 8, 0);
         }
 
         if (j==filterwidth) { // fixes discontinuty at the start of the graph
@@ -99,6 +113,10 @@ void Textons::drawGraph(std::string msg) {
         cv::line(graphFrame, cv::Point(j/stepX, rows- prev_nn), cv::Point((j+1)/stepX, rows -  nn), color_nn, line_width, 8, 0);
         //draw stereo vision groundtruth:
         cv::line(graphFrame, cv::Point(j/stepX, rows- prev_gt), cv::Point((j+1)/stepX, rows -  gt),color_gt, line_width, 8, 0);
+        //draw stereo vision threshold:
+        //cv::line(graphFrame, cv::Point(j/stepX, rows- 90), cv::Point((j+1)/stepX, rows -  90),color_gt, line_width, 8, 0);
+        //draw nn vision threshold:
+        cv::line(graphFrame, cv::Point(j/stepX, rows- threshold_nn), cv::Point((j+1)/stepX, rows -  threshold_nn),color_invert, line_width, 8, 0);
 
         prev_nn = nn;
         prev_gt = gt;
@@ -154,7 +172,14 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
     //copy new data into learning buffer:
     cv::Mat M1 = distribtuion_buffer.row((distribtuion_buf_pointer+filterwidth) % distribution_buf_size) ;
     hist.convertTo(M1,cv::DataType<float>::type,1,0);
-    avgdisp = gt_smoothed.addSample(avgdisp); // perform smoothing
+    if (avgdisp >0.1 ) {
+        avgdisp = gt_smoothed.addSample(avgdisp); // perform smoothing
+    }
+    else {
+        gt_smoothed.addSample(avgdisp); // perform smoothing, but don't apply to value
+    }
+
+
     groundtruth_buffer.at<float>(distribtuion_buf_pointer) = avgdisp;
     distribtuion_buf_pointer = (distribtuion_buf_pointer+1) % distribution_buf_size;
 
@@ -233,6 +258,8 @@ bool Textons::initLearner(bool nulltrain) {
     distribtuion_buf_pointer = 0;
     knn_smoothed.init(filterwidth);
     gt_smoothed.init(filterwidth);
+    lastLearnedPosition = 0;
+    countsincelearn=0;
     if (nulltrain) {
         return knn.train(distribtuion_buffer, groundtruth_buffer, cv::Mat(), true, 32, false );
     } else {
@@ -244,6 +271,7 @@ void Textons::retrainAll() {
     std::cout << "Training knn regression:\n";
     knn.train(distribtuion_buffer, groundtruth_buffer, cv::Mat(), true, 32, false );
     lastLearnedPosition = (distribtuion_buf_pointer +1 )% distribution_buf_size;
+    countsincelearn=0;
 
 #ifdef _PC
     std::cout << "Initialising smoother:\n";

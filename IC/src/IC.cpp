@@ -234,7 +234,8 @@ void process_video() {
         if (key==51) {mode=stereo_textons;key=0;} //                      [3]: switch both stereo and textons calucation on
         if (key==32) {saveStereoPair();key=0;} //                         [ ]: save stereo image to bmp
         if (key==114) {frames=0;stopWatch.Restart();msg="Reset";key=0;} //[r]: reset stopwatch
-
+        if (key==97) {textonizer.threshold_nn++;key=0;} //                [a]: increase threshold
+        if (key==122) {textonizer.threshold_nn--;key=0;} //               [z]: decrease threshold
 
 #ifdef USE_SOCKET        
         tcp.Unlock();
@@ -324,7 +325,7 @@ int init(int argc, char **argv) {
     /*****init the (G)UI*****/
 #ifdef HASSCREEN
     cv::namedWindow("Results", CV_WINDOW_NORMAL);
-    cv::resizeWindow("Results", 1100, 560);
+    cv::resizeWindow("Results", 1100, 550);
 #endif
 
 #ifdef USE_TERMINAL_INPUT
@@ -415,7 +416,7 @@ int main( int argc, char **argv )
    if (init(argc,argv)) {return 1;}
 
    //clear learning buffer
-   //textonizer.initLearner(true);
+   textonizer.initLearner(true);
 
    process_video();
    close();

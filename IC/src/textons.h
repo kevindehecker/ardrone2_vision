@@ -28,7 +28,7 @@ private:
 	cv::Mat groundtruth_buffer;
 	cv::Mat graph_buffer;
 	int lastLearnedPosition;
-    int distribution_buf_size = 3700;
+    int distribution_buf_size = 1400;
     int distribtuion_buf_pointer =0;
 	CvKNearest knn;
 
@@ -42,6 +42,7 @@ private:
 	
 
 public:
+    int threshold_nn = 60;
 	bool init (void);
 	bool close(void);
 	void drawHistogram(cv::Mat hist,int bins);
