@@ -21,7 +21,7 @@ private:
 	unsigned char patch_size;
 	unsigned char patch_square_size;
 	std::vector<std::vector<unsigned char> > textons;
-    int filterwidth = 10; // moving average filter
+    int filterwidth = 3; // moving average filter
 
 	//regression learning parameters
 	cv::Mat distribtuion_buffer;
@@ -43,6 +43,7 @@ private:
 
 public:
     int threshold_nn = 29;
+    int threshold_gt = 1;
     float avgdisp_smoothed;
 
 
@@ -60,6 +61,8 @@ public:
 	cv::Mat graphFrame;
     int getLast_nn();
     int getLast_gt();
+
+
 
 }; 
 #endif // TEXTONS_H

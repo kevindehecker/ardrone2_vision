@@ -113,6 +113,7 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
             	DisparityMat.data[i] = D1_data[i]*GeigerHeatScaling;
             }
             avgDisparity /= okcount;
+            avgDisparity *=5; // heuristic scaling for better visualisation and smoother thresh config
 
             res = (10*okcount > totdisppixels); //% of good pixels needed before ignoring the frame
             if (!res) {	std::cout << "Blocked: #" << okcount << "/" << totdisppixels << "\n";   }
@@ -147,9 +148,9 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
     stddevDisparity = stddev(0);
     avgDisparity = mean(0);
     stddevDisparity = (stddevDisparity/avgDisparity ) * 100;
-    //avgDisparity = stddevDisparity; //tmp testing!!!
+
 #ifdef SGM
-    if (stddevDisparity  > 70) {
+    if (stddevDisparity  > 50) {
         avgDisparity =0;
     }
 #endif

@@ -37,6 +37,7 @@ cv::VideoWriter outputVideoResults;
 stopwatch_c stopWatch;
 modus_t mode;
 Socket tcp;
+int countmsgclear=0;
 
 
 #ifdef FILECAM
@@ -67,6 +68,9 @@ void process_video();
 void TerminalInputThread();
 #endif
 int main( int argc, char **argv);
+
+void changeThresh_gt(int value);
+void changeThresh_nn(int value);
 void saveStereoPair();
 
 void combineImage(cv::Mat resFrame, cv::Mat smallsourceimage, int x, int y,int width, int height, bool convertRGB);
@@ -211,20 +215,28 @@ void process_video() {
 #endif
 #endif
 
-        switch ( mode) {
-        case none:
-            msg= "none";
-            break;
-        case textons_only:
-            msg= "textons";
-            break;
-        case stereo_only:
-            msg= "stereo";
-            break;
-        case stereo_textons:
-            msg= "textons+stereo";
-            break;
+
+        countmsgclear ++;
+        if (countmsgclear>10) {
+            countmsgclear=0;
+
+            switch ( mode) {
+            case none:
+                msg= "none";
+                break;
+            case textons_only:
+                msg= "textons";
+                break;
+            case stereo_only:
+                msg= "stereo";
+                break;
+            case stereo_textons:
+                msg= "textons+stereo";
+                break;
+            }
         }
+
+
         if (key==10) {textonizer.retrainAll();key=0;msg="Learn";} //      [enter]: perform learning
         if (key==105) {textonizer.retrainAll();key=0;msg="Learn";} //     [i]: idem (perform learning)
         if (key==115) {textonizer.saveRegression();key=0;msg="Save";} //  [s]: save
@@ -236,8 +248,11 @@ void process_video() {
         if (key==51) {mode=stereo_textons;key=0;} //                      [3]: switch both stereo and textons calucation on
         if (key==32) {saveStereoPair();key=0;} //                         [ ]: save stereo image to bmp
         if (key==114) {frames=0;stopWatch.Restart();msg="Reset";key=0;} //[r]: reset stopwatch
-        if (key==97) {textonizer.threshold_nn++;key=0;} //                [a]: increase threshold
-        if (key==122) {textonizer.threshold_nn--;key=0;} //               [z]: decrease threshold
+        if (key==97) {changeThresh_nn(1);key=0;} //                       [a]: increase threshold nn
+        if (key==122) {changeThresh_nn(-1);key=0;} //                     [z]: decrease threshold nn
+        if (key==65) {changeThresh_gt(1);;key=0;} //                      [A]: increase threshold gt
+        if (key==90) {changeThresh_gt(-1);key=0;} //                      [Z]: decrease threshold gt
+
 
 #ifdef USE_SOCKET        
         tcp.Unlock();
@@ -254,6 +269,23 @@ void process_video() {
 #endif
 }
 #endif
+
+void changeThresh_nn(int value) {
+    textonizer.threshold_nn = textonizer.threshold_nn + value;
+#ifdef _PC
+    std::stringstream s;
+    s << "nn thresh: " << (textonizer.threshold_nn);
+    msg=s.str();
+#endif
+}
+void changeThresh_gt(int value) {
+    textonizer.threshold_gt = textonizer.threshold_gt + value;
+#ifdef _PC
+    std::stringstream s;
+    s << "gt thresh: " << (textonizer.threshold_gt);
+    msg=s.str();
+#endif
+}
 
 int saveid=1;
 void saveStereoPair() {
@@ -418,7 +450,7 @@ int main( int argc, char **argv )
    if (init(argc,argv)) {return 1;}
 
    //clear learning buffer
-   //textonizer.initLearner(true);
+//   textonizer.initLearner(true);
 
    process_video();
    close();

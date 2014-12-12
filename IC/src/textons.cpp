@@ -98,15 +98,15 @@ void Textons::drawGraph(std::string msg) {
 
 
         //draw a small colored line above to indicate what the drone will do:
-        if (nn < threshold_nn && gt > 1) {
+        if (nn < threshold_nn && gt > threshold_gt) {
             //false negative; drone should stop according to stereo, but didn't if textons were used
             //white
             cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(255,255,255), line_width, 8, 0);
-        } else if (nn > threshold_nn && gt < 0.1) {
+        } else if (nn > threshold_nn && gt < threshold_gt) {
             //false positive; drone could have proceeded according to stereo, but stopped if textons were used
             //black
             cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,0,0), line_width, 8, 0);
-        } else if (nn > threshold_nn && gt > 0.1) {
+        } else if (nn > threshold_nn && gt > threshold_gt) {
             //both stereo and textons agree, drone should stop
             //red
             cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,0,255), line_width, 8, 0);
@@ -133,6 +133,8 @@ void Textons::drawGraph(std::string msg) {
         //cv::line(graphFrame, cv::Point(j/stepX, rows- 90), cv::Point((j+1)/stepX, rows -  90),color_gt, line_width, 8, 0);
         //draw nn vision threshold:
         cv::line(graphFrame, cv::Point(j/stepX, rows- threshold_nn*scaleY), cv::Point((j+1)/stepX, rows -  threshold_nn*scaleY),color_invert, line_width, 8, 0);
+        //draw gt vision threshold:
+        cv::line(graphFrame, cv::Point(j/stepX, rows- threshold_gt*scaleY), cv::Point((j+1)/stepX, rows -  threshold_gt*scaleY),color_vert, line_width, 8, 0);
 
         prev_nn = nn;
         prev_gt = gt;
@@ -140,6 +142,7 @@ void Textons::drawGraph(std::string msg) {
 
     //draw text to notify user a key press was handled
     putText(graphFrame,msg,cv::Point(0, 30),cv::FONT_HERSHEY_SIMPLEX,1,color_vert);
+
 }
 
 //calculates the histogram/distribution
@@ -186,17 +189,19 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
     }
 
     //copy new data into learning buffer:
-    cv::Mat M1 = distribtuion_buffer.row((distribtuion_buf_pointer+filterwidth) % distribution_buf_size) ;
+    cv::Mat M1 = distribtuion_buffer.row((distribtuion_buf_pointer+0) % distribution_buf_size) ;
     hist.convertTo(M1,cv::DataType<float>::type,1,0);
 
 
     //smooth avg, but exclude std filter from smoothing:
-    if (avgdisp >0.1 ) {
-        avgdisp_smoothed = gt_smoothed.addSample(avgdisp); // perform smoothing
-    }
-    else {
-        avgdisp_smoothed = 0;
-    }
+//    if (avgdisp >0.1 ) {
+//        avgdisp_smoothed = gt_smoothed.addSample(avgdisp); // perform smoothing
+//    }
+//    else {
+//        avgdisp_smoothed = 0;
+//    }
+avgdisp_smoothed = avgdisp;
+
 
     groundtruth_buffer.at<float>(distribtuion_buf_pointer) = avgdisp_smoothed;
     distribtuion_buf_pointer = (distribtuion_buf_pointer+1) % distribution_buf_size;
@@ -212,7 +217,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
     std::cout << "knn.disp.: " << nn << "  |  truth: " << avgdisp << std::endl;
 
     //save values for visualisation	in graph
-    graph_buffer.at<float>((distribtuion_buf_pointer+filterwidth) % distribution_buf_size,0) = nn;
+    graph_buffer.at<float>((distribtuion_buf_pointer+0) % distribution_buf_size,0) = nn;
     graph_buffer.at<float>(distribtuion_buf_pointer,1) = avgdisp; // groundtruth
 
 #ifdef DRAWHIST
@@ -352,3 +357,6 @@ void Textons::reload() {
     initLearner(false);
     loadPreviousRegression();
 }
+
+
+
