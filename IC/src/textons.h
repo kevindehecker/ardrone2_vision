@@ -42,7 +42,10 @@ private:
 	
 
 public:
-    int threshold_nn = 60;
+    int threshold_nn = 29;
+    float avgdisp_smoothed;
+
+
 	bool init (void);
 	bool close(void);
 	void drawHistogram(cv::Mat hist,int bins);

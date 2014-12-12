@@ -170,8 +170,6 @@ void process_video() {
         if (mode==stereo_only || mode==stereo_textons) {
             //stereo is turned on
             stereoOK = stereo.calcDisparityMap(svcam.frameL_mat,svcam.frameR_mat); // calc the stereo groundtruth
-            tcp.commdata_gt = stereo.avgDisparity;
-            tcp.commdata_gt_stdev = stereo.stddevDisparity;
         }
 
         if ((mode==textons_only || mode==stereo_textons) && stereoOK) {
@@ -179,6 +177,10 @@ void process_video() {
             tcp.commdata_nn = textonizer.getLast_nn();
         }
 
+        if (mode==stereo_only || mode==stereo_textons) { // apply smoothing
+            tcp.commdata_gt = textonizer.avgdisp_smoothed;
+            tcp.commdata_gt_stdev = stereo.stddevDisparity;
+        }
 
 
 #ifdef VIDEORAW

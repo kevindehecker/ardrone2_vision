@@ -86,8 +86,8 @@ void Textons::drawGraph(std::string msg) {
     {
 
         int jj = (j+distribtuion_buf_pointer) % distribution_buf_size; // make a sliding graph
-        nn = graph_buffer.at<float>(jj,0)*scaleY;
-        gt = graph_buffer.at<float>(jj,1)*scaleY;
+        nn = graph_buffer.at<float>(jj,0);
+        gt = graph_buffer.at<float>(jj,1);
 
         if (j > learnborder ) { // change color according to training/test data
             color_nn= cv::Scalar(0,0,255); // red
@@ -98,8 +98,8 @@ void Textons::drawGraph(std::string msg) {
 
 
         //draw a small colored line above to indicate what the drone will do:
-        if (nn < threshold_nn && gt > 0) {
-            //true negative; drone should stop according to stereo, but didn't if textons were used
+        if (nn < threshold_nn && gt > 1) {
+            //false negative; drone should stop according to stereo, but didn't if textons were used
             //white
             cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(255,255,255), line_width, 8, 0);
         } else if (nn > threshold_nn && gt < 0.1) {
@@ -116,7 +116,8 @@ void Textons::drawGraph(std::string msg) {
             cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,255,0), line_width, 8, 0);
         }
 
-
+        nn = graph_buffer.at<float>(jj,0)*scaleY;
+        gt = graph_buffer.at<float>(jj,1)*scaleY;
 
 
         if (j==filterwidth) { // fixes discontinuty at the start of the graph
@@ -131,7 +132,7 @@ void Textons::drawGraph(std::string msg) {
         //draw stereo vision threshold:
         //cv::line(graphFrame, cv::Point(j/stepX, rows- 90), cv::Point((j+1)/stepX, rows -  90),color_gt, line_width, 8, 0);
         //draw nn vision threshold:
-        cv::line(graphFrame, cv::Point(j/stepX, rows- threshold_nn), cv::Point((j+1)/stepX, rows -  threshold_nn),color_invert, line_width, 8, 0);
+        cv::line(graphFrame, cv::Point(j/stepX, rows- threshold_nn*scaleY), cv::Point((j+1)/stepX, rows -  threshold_nn*scaleY),color_invert, line_width, 8, 0);
 
         prev_nn = nn;
         prev_gt = gt;
@@ -187,16 +188,17 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
     //copy new data into learning buffer:
     cv::Mat M1 = distribtuion_buffer.row((distribtuion_buf_pointer+filterwidth) % distribution_buf_size) ;
     hist.convertTo(M1,cv::DataType<float>::type,1,0);
-    avgdisp_smoothed = gt_smoothed.addSample(avgdisp); // perform smoothing
 
-    //exclude std filter from smoothing:
+
+    //smooth avg, but exclude std filter from smoothing:
     if (avgdisp >0.1 ) {
-        groundtruth_buffer.at<float>(distribtuion_buf_pointer) = avgdisp_smoothed;
+        avgdisp_smoothed = gt_smoothed.addSample(avgdisp); // perform smoothing
     }
     else {
-        groundtruth_buffer.at<float>(distribtuion_buf_pointer) = avgdisp;
+        avgdisp_smoothed = 0;
     }
 
+    groundtruth_buffer.at<float>(distribtuion_buf_pointer) = avgdisp_smoothed;
     distribtuion_buf_pointer = (distribtuion_buf_pointer+1) % distribution_buf_size;
 
     // std::cout << "hist" << distribtuion_buf_pointer << ": " << hist << std::endl;
