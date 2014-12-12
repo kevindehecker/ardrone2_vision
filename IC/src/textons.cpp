@@ -97,12 +97,27 @@ void Textons::drawGraph(std::string msg) {
         }
 
 
-        //draw a small colored line below problematic part:
+        //draw a small colored line above to indicate what the drone will do:
         if (nn < threshold_nn && gt > 0) {
-            cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),color_vert, line_width, 8, 0);
+            //true negative; drone should stop according to stereo, but didn't if textons were used
+            //white
+            cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(255,255,255), line_width, 8, 0);
         } else if (nn > threshold_nn && gt < 0.1) {
-            cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),color_invert, line_width, 8, 0);
+            //false positive; drone could have proceeded according to stereo, but stopped if textons were used
+            //black
+            cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,0,0), line_width, 8, 0);
+        } else if (nn > threshold_nn && gt > 0.1) {
+            //both stereo and textons agree, drone should stop
+            //red
+            cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,0,255), line_width, 8, 0);
+        } else {
+            //both stereo and textons agree, drone may proceed
+            //green
+            cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,255,0), line_width, 8, 0);
         }
+
+
+
 
         if (j==filterwidth) { // fixes discontinuty at the start of the graph
             prev_nn = nn;
@@ -172,15 +187,16 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
     //copy new data into learning buffer:
     cv::Mat M1 = distribtuion_buffer.row((distribtuion_buf_pointer+filterwidth) % distribution_buf_size) ;
     hist.convertTo(M1,cv::DataType<float>::type,1,0);
+    avgdisp_smoothed = gt_smoothed.addSample(avgdisp); // perform smoothing
+
+    //exclude std filter from smoothing:
     if (avgdisp >0.1 ) {
-        avgdisp = gt_smoothed.addSample(avgdisp); // perform smoothing
+        groundtruth_buffer.at<float>(distribtuion_buf_pointer) = avgdisp_smoothed;
     }
     else {
-        gt_smoothed.addSample(avgdisp); // perform smoothing, but don't apply to value
+        groundtruth_buffer.at<float>(distribtuion_buf_pointer) = avgdisp;
     }
 
-
-    groundtruth_buffer.at<float>(distribtuion_buf_pointer) = avgdisp;
     distribtuion_buf_pointer = (distribtuion_buf_pointer+1) % distribution_buf_size;
 
     // std::cout << "hist" << distribtuion_buf_pointer << ": " << hist << std::endl;
