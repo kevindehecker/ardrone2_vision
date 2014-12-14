@@ -19,6 +19,7 @@
 
 #define VIDEORESULTS
 //#define DRAWHIST
+#define EXPORT
 
 //#define GEIGER
 #define SGM

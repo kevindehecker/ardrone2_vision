@@ -21,6 +21,9 @@
 #ifdef ARDRONEFRONTCAM
 #include "ARDroneCam.h"
 #endif
+#ifdef EXPORT
+#include "exporter.h"
+#endif
 
 #include "stopwatch.h"
 
@@ -37,6 +40,9 @@ cv::VideoWriter outputVideoResults;
 stopwatch_c stopWatch;
 modus_t mode;
 Socket tcp;
+#ifdef EXPORT
+Exporter exporter;
+#endif
 int countmsgclear=0;
 
 
@@ -186,6 +192,9 @@ void process_video() {
             tcp.commdata_gt_stdev = stereo.stddevDisparity;
         }
 
+#ifdef EXPORT
+    exporter.write(tcp.commdata_gt,tcp.commdata_gt_stdev,tcp.commdata_nn);
+#endif
 
 #ifdef VIDEORAW
         //combine stereo pair if needed
@@ -361,13 +370,14 @@ int init(int argc, char **argv) {
     cv::namedWindow("Results", CV_WINDOW_NORMAL);
     cv::resizeWindow("Results", 1100, 550);
 #endif
-
 #ifdef USE_TERMINAL_INPUT
     std::thread thread_TerminalInput(TerminalInputThread);
 #endif
-
 #ifdef USE_SOCKET
     tcp.Init(&key, &(svcam.cams_are_running));
+#endif
+#ifdef EXPORT
+    exporter.init();
 #endif
 #if defined(HASSCREEN) || defined(VIDEORESULTS)
 #ifdef DUOWEBCAM
@@ -441,6 +451,9 @@ void close() {
 #endif
 #ifdef USE_TERMINAL_INPUT
     thread_TerminalInput.detach();	//cin is blocking
+#endif
+#ifdef EXPORT
+    exporter.close();
 #endif
 
 }
