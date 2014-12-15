@@ -18,11 +18,11 @@
 #ifndef DELFLY_COLORMODE
 
 #define VIDEORESULTS
-//#define DRAWHIST
-#define EXPORT
+#define DRAWHIST
+//#define EXPORT
 
-//#define GEIGER
-#define SGM
+#define GEIGER
+//#define SGM
 //#define BM currently not completely implemented
 //#define LONGSEC
 #endif

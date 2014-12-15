@@ -13,6 +13,11 @@ float Smoother::addSample(float sample) {
 
 	if (isnan(sample)) // fixes nan, which forever destroy the output
 		sample = 0;
+    if (_kernelsize==1) { // disable smoothing... to be sure:
+        return sample;
+    }
+
+
 
 	_rbuf.at(_rotater) = sample; // overwrite oldest sample in the roundtrip buffer
 	_rotater = (_rotater+1) % (_kernelsize); //update pointer to buffer

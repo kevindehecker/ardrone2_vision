@@ -271,6 +271,8 @@ void process_video() {
         float time = stopWatch.Read()/1000;
         std::cout << "FPS: " << frames /(time) << "\n";
 
+//        saveStereoPair();
+
     } // main while loop
 
 #ifdef HASSCREEN
@@ -304,6 +306,8 @@ void saveStereoPair() {
     cv::imwrite( str, svcam.frameL_mat );
     sprintf(str,"right%d.png", saveid);
     cv::imwrite( str, svcam.frameR_mat );
+    sprintf(str,"disp%d.png", saveid);
+    cv::imwrite( str, stereo.DisparityMat);
     saveid++;
 }
 
@@ -369,6 +373,12 @@ int init(int argc, char **argv) {
 #ifdef HASSCREEN
     cv::namedWindow("Results", CV_WINDOW_NORMAL);
     cv::resizeWindow("Results", 1100, 550);
+#endif
+#ifdef DRAWHIST
+    cv::namedWindow("TextonColors", CV_WINDOW_NORMAL);
+    cv::resizeWindow("TextonColors", 384, 288);
+    cv::namedWindow("TextonEncoded", CV_WINDOW_NORMAL);
+    cv::resizeWindow("TextonEncoded", 384, 288);
 #endif
 #ifdef USE_TERMINAL_INPUT
     std::thread thread_TerminalInput(TerminalInputThread);
@@ -471,6 +481,16 @@ int main( int argc, char **argv )
    //auto save
 //   textonizer.retrainAll();
 //   textonizer.saveRegression();
+
+#ifdef HASSCREEN
+
+//    key = 0;
+//    while(key !=27 ) {
+//        key =  cv::waitKey(1);
+//    }
+
+
+#endif
 
    return 0;
 }
