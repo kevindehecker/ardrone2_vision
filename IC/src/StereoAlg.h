@@ -13,6 +13,10 @@
 #include "elas.h"
 #endif
 
+/*
+ * This class provides access to several stereo algoritmes
+ *
+ */
 class stereoAlg{
 
 

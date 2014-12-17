@@ -7,6 +7,10 @@
 #include <fstream>
 #include <sstream>
 
+/*
+ * This class exports data to csv txt file, which may be imported in Matlab etc
+ *
+ */
 class Exporter{
 private:
     /*  Global variables  */

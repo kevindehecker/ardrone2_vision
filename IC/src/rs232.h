@@ -1,3 +1,6 @@
+/*
+ * This file contains the usb serial interface to retrieve data from the Delfly camera
+ */
 
 #ifndef rs232_INCLUDED
 #define rs232_INCLUDED

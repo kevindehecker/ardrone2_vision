@@ -7,6 +7,10 @@
 #include <vector>
 #include <math.h>
 
+/*
+ * This class performs moving average filtering
+ *
+ */
 class Smoother{
 
 private:
@@ -18,11 +22,7 @@ private:
 public:
 
 	void init(int width);
-
 	float addSample(float sample);
-
-	
-
 
 };
 

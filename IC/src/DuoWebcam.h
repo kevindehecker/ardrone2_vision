@@ -8,6 +8,10 @@
 #include <thread>
 #include <mutex>
 
+/*
+ * This class will interface with a Webcam stereocam over USB (2 seperate usb webcams that is)
+ *
+ */
 class DuoWebCam{
 
 

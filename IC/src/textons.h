@@ -16,7 +16,7 @@ class Textons{
 
 private:
 	//visual words parameters
-    int n_samples = 50;
+    int n_samples = 500;
     int filterwidth = 10; // moving average filter
     int k = 5;
 
@@ -44,7 +44,7 @@ private:
 
     double getEuclDistance(int16_t sample[], int texton_id);
 	int initTextons();
-    void drawTextonColoredImage(cv::Mat grayframe);
+    void drawTextonAnotatedImage(cv::Mat grayframe);
     cv::Scalar getColor(int id);
 
 public:
@@ -60,7 +60,7 @@ public:
     void getTextonDistributionFromImage(cv::Mat grayframeL, float avgdisp);
 	void saveRegression();
 	void retrainAll();
-	void getCommData(float* s);
+
     bool initLearner(bool nulltrain);
 	int loadPreviousRegression();
     void reload();

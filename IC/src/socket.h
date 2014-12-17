@@ -18,6 +18,10 @@ struct ICDataPackage {
 };
 extern struct ICDataPackage video_impl;
 
+/*
+ * This class will interface with to the IC pprz module over tcp/ip
+ *
+ */
 class Socket{
 private:
     /*  Global variables  */

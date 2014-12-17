@@ -19,6 +19,10 @@
 #define HEADERBYTE HEADERCOLOR
 #endif
 
+/*
+ * This class will interface with a Delfly stereocam over USB
+ *
+ */
 class DelFly{
 
 

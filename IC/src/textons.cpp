@@ -2,16 +2,14 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/contrib/contrib.hpp>
 
-void Textons::getCommData(float* s){
-        s[0] = 66.0; // header
-        s[1] = graph_buffer.at<float>(distribution_buf_pointer,0); // nn
-        s[2] = graph_buffer.at<float>(distribution_buf_pointer,1); // stereo
-}
-
+//from HSV colorspace:
 float r[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.9523809523809526, 0.8571428571428568, 0.7619047619047614, 0.6666666666666665, 0.5714285714285716, 0.4761904761904763, 0.3809523809523805, 0.2857142857142856, 0.1904761904761907, 0.0952380952380949, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.09523809523809557, 0.1904761904761905, 0.2857142857142854, 0.3809523809523809, 0.4761904761904765, 0.5714285714285714, 0.6666666666666663, 0.7619047619047619, 0.8571428571428574, 0.9523809523809523, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 float g[] = { 0, 0.09523809523809523, 0.1904761904761905, 0.2857142857142857, 0.3809523809523809, 0.4761904761904762, 0.5714285714285714, 0.6666666666666666, 0.7619047619047619, 0.8571428571428571, 0.9523809523809523, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.9523809523809526, 0.8571428571428577, 0.7619047619047619, 0.6666666666666665, 0.5714285714285716, 0.4761904761904767, 0.3809523809523814, 0.2857142857142856, 0.1904761904761907, 0.09523809523809579, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 float b[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.09523809523809523, 0.1904761904761905, 0.2857142857142857, 0.3809523809523809, 0.4761904761904762, 0.5714285714285714, 0.6666666666666666, 0.7619047619047619, 0.8571428571428571, 0.9523809523809523, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.9523809523809526, 0.8571428571428577, 0.7619047619047614, 0.6666666666666665, 0.5714285714285716, 0.4761904761904767, 0.3809523809523805, 0.2857142857142856, 0.1904761904761907, 0.09523809523809579, 0};
 
+/*
+ *Loads texton dictionary from  file, loads previously results from file, and learns them
+ */
 bool Textons::init () {
 
     if (!initTextons()) {return false;}
@@ -41,6 +39,9 @@ double Textons::getEuclDistance(int16_t sample[], int texton_id) {
     return distance;
 }
 
+/*
+ * Creates an histogram image
+ */
 cv::Mat Textons::drawHistogram(cv::Mat hist,int bins) {
 
     cv::Mat canvas;
@@ -59,22 +60,24 @@ cv::Mat Textons::drawHistogram(cv::Mat hist,int bins) {
     return canvas;
 }
 
+/*
+ * Retrieves the bin color for id
+ */
 cv::Scalar Textons::getColor(int id) {
-
     if (id<n_textons_intensity) {
 
     } else {
         id -= n_textons_intensity;
     }
     return cv::Scalar(b[id*6]*255.0,g[id*6]*255.0,r[id*6]*255.0);
-
-
-
 }
 
+/*
+ * Draws a range of histograms, averaged over several disparity ranges. Except for the first histogram which is for the current frame.
+ */
 void Textons::drawMeanHists(cv::Mat histimage) {
 
-    int nHists= 5; // TODO: move hard coded stuff to h
+    int nHists= 5;
     int hist_width = n_textons*10; // also in drawHistogram -> TODO: change
     int hist_height= 200; // idem
 
@@ -148,7 +151,7 @@ void Textons::drawMeanHists(cv::Mat histimage) {
 
 }
 
-void Textons::drawTextonColoredImage(cv::Mat grayframe) {
+void Textons::drawTextonAnotatedImage(cv::Mat grayframe) {
 
     int middleid = floor((float)patch_size/2.0); // for gradient, asumes, texton size is odd!
     int16_t sample[patch_square_size];
@@ -416,17 +419,24 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
     graph_buffer.at<float>((distribution_buf_pointer+0) % distribution_buf_size,0) = nn;
     graph_buffer.at<float>(distribution_buf_pointer,1) = avgdisp_smoothed; // groundtruth
 
-#ifdef DRAWHIST
+#ifdef DRAWVIZS
     cv::Mat histimage = drawHistogram(hist,n_textons);
     drawMeanHists(histimage);
-    drawTextonColoredImage(grayframe);
+    drawTextonAnotatedImage(grayframe);
 #endif
 }
 
+/*
+ * Retrieves and returns the last added ground truth
+ */
 int Textons::getLast_gt() {
     int gt = graph_buffer.at<float>(distribution_buf_pointer,1);
     return gt;
 }
+
+/*
+ * Retrieves and returns the last added texton result
+ */
 int Textons::getLast_nn() {
     int nn = graph_buffer.at<float>(distribution_buf_pointer,0);
     return nn;
@@ -441,6 +451,9 @@ inline bool checkFileExist (const std::string& name) {
     }
 }
 
+/*
+ * Loads the texton dictionaries from file
+ */
 int Textons::initTextons() {
     std::cout << "Opening textons file\n";
 
@@ -502,12 +515,12 @@ int Textons::initTextons() {
 //        std::cout << std::endl;
     }
 
-
-
-
     return 1;
 }
 
+/*
+ * Clears and initialises the learned buffer. Can also train on null data, actively reseting knn
+ */
 bool Textons::initLearner(bool nulltrain) {
     srand (time(NULL));
     distribution_buffer = cv::Mat::zeros(distribution_buf_size, n_textons, cv::DataType<float>::type);
@@ -526,6 +539,9 @@ bool Textons::initLearner(bool nulltrain) {
     }
 }
 
+/*
+ *  Retrains knn on all available data accumulated in the buffer
+ */
 void Textons::retrainAll() {
     std::cout << "Training knn regression:\n";
     knn.train(distribution_buffer, groundtruth_buffer, cv::Mat(), true, 32, false );
@@ -533,6 +549,8 @@ void Textons::retrainAll() {
     countsincelearn=0;
 
 #ifdef _PC
+    //redraw the graph and reinit the smoother
+    //may take significant time if learning buffer is big, so don't perform onboard drone
     std::cout << "Initialising smoother:\n";
     for (int i=0; i<distribution_buf_size; i++) {
 
@@ -544,6 +562,9 @@ void Textons::retrainAll() {
 #endif
 }
 
+/*
+ *  Loads the learning buffer from xml file previously saved, also performs retrain
+ */
 int Textons::loadPreviousRegression() {
     try {
         std::cout << "Opening memory files\n";
@@ -569,6 +590,9 @@ int Textons::loadPreviousRegression() {
     }
 }
 
+/*
+ * Save the current learning buffer to xml files. Also train on the currently available data.
+ */
 void Textons::saveRegression() {
     cv::FileStorage dist_fs("../distribution_buffer.xml", cv::FileStorage::WRITE);
     dist_fs << "distribution_buffer" << distribution_buffer;
@@ -589,6 +613,9 @@ void Textons::saveRegression() {
     retrainAll();
 }
 
+/*
+ * Reloads the learning buffer from file and retrains the learner with that data, effectively reseting the learner to then
+ */
 void Textons::reload() {
     initLearner(false);
     loadPreviousRegression();

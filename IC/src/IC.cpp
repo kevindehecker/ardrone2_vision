@@ -85,6 +85,9 @@ void commInThread();
 
 /************ code ***********/
 
+/*
+ * Combines the stereo image and the learning graph to one big image
+ */
 void combineAllImages() {
 
 #ifndef DELFLY_COLORMODE
@@ -103,7 +106,9 @@ void combineAllImages() {
 
 }
 
-
+/*
+ * Puts one image into the big image
+ */
 void combineImage(cv::Mat resFrame, cv::Mat smallsourceimage, int x, int y,int width, int height, bool convertRGB) {
 
     cv::Point p1(x, y);
@@ -165,7 +170,7 @@ void process_video() {
 }
 
 #else // stereo vision instead of color
-
+int pauseVideo=0;
 void process_video() {
     stopWatch.Start();
     int frames = 0;
@@ -246,6 +251,7 @@ void process_video() {
         }
 
 
+
         if (key==10) {textonizer.retrainAll();key=0;msg="Learn";} //      [enter]: perform learning
         if (key==105) {textonizer.retrainAll();key=0;msg="Learn";} //     [i]: idem (perform learning)
         if (key==115) {textonizer.saveRegression();key=0;msg="Save";} //  [s]: save
@@ -255,13 +261,31 @@ void process_video() {
         if (key==49) {mode=textons_only;key=0;} //                        [1]: switch stereo mode off, textons on
         if (key==50) {mode=stereo_only;key=0;} //                         [2]: switch stereo mode on, textons off
         if (key==51) {mode=stereo_textons;key=0;} //                      [3]: switch both stereo and textons calucation on
-        if (key==32) {saveStereoPair();key=0;} //                         [ ]: save stereo image to bmp
+        if (key==92) {saveStereoPair();key=0;} //                         [\]: save stereo image to bmp
         if (key==114) {frames=0;stopWatch.Restart();msg="Reset";key=0;} //[r]: reset stopwatch
         if (key==97) {changeThresh_nn(1);key=0;} //                       [a]: increase threshold nn
         if (key==122) {changeThresh_nn(-1);key=0;} //                     [z]: decrease threshold nn
         if (key==65) {changeThresh_gt(1);;key=0;} //                      [A]: increase threshold gt
         if (key==90) {changeThresh_gt(-1);key=0;} //                      [Z]: decrease threshold gt
 
+#ifdef HASSCREEN
+        if (key==62) {svcam.fastforward=1;key=0;} //                      [>]: fast forward filecam
+        if (key==60) {svcam.rewind=1;key=0;} //                           [<]: rewind filecam
+        if (key==63) {svcam.fastforward=0;svcam.rewind=0;key=0;} //       [?]: normal filecam
+        if (key==47) {pauseVideo=1;key=0;} //                             [/]: pause
+
+        while (pauseVideo==1) {
+            usleep(1000);
+            key = cv::waitKey();
+            if (key == 32) { // next frame
+                key=0;
+                break;
+            }else if (key != 0) {
+                pauseVideo=0;
+                key=0;
+            }
+        }
+#endif
 
 #ifdef USE_SOCKET        
         tcp.Unlock();
@@ -301,6 +325,10 @@ void changeThresh_gt(int value) {
 }
 
 int saveid=1;
+/*
+ * Saves the current stereo image to png files
+ * TODO: move to exporter.cpp
+ */
 void saveStereoPair() {
     char str[64];
 
@@ -376,7 +404,7 @@ int init(int argc, char **argv) {
     cv::namedWindow("Results", CV_WINDOW_NORMAL);
     cv::resizeWindow("Results", 1100, 550);
 #endif
-#ifdef DRAWHIST
+#ifdef DRAWVIZS
     cv::namedWindow("TextonColors gradient", CV_WINDOW_NORMAL);
     cv::resizeWindow("TextonColors gradient", 256, 192);
     cv::namedWindow("TextonEncoded gradient", CV_WINDOW_NORMAL);
@@ -478,25 +506,15 @@ int main( int argc, char **argv )
 {
    if (init(argc,argv)) {return 1;}
 
-   //clear learning buffer
+   /* clear learning buffer instead of using old stuff */
 //   textonizer.initLearner(true);
 
    process_video();
    close();
 
-   //auto save
+   /* auto save at the end */
 //   textonizer.retrainAll();
 //   textonizer.saveRegression();
-
-#ifdef HASSCREEN
-
-//    key = 0;
-//    while(key !=27 ) {
-//        key =  cv::waitKey(1);
-//    }
-
-
-#endif
 
    return 0;
 }

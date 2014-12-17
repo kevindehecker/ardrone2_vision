@@ -18,7 +18,7 @@
 #ifndef DELFLY_COLORMODE
 
 #define VIDEORESULTS
-#define DRAWHIST
+#define DRAWVIZS
 //#define EXPORT
 
 #define GEIGER

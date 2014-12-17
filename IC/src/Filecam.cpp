@@ -72,12 +72,26 @@ void FileCam::workerThread() {
         //arrange speed to be ~10fps
         float time = stopWatch.Read();
         time = 100 - time/1000;
-        if (time > 0)  {usleep((int)time*1000);} // comment this line to disable fps control
+        if (fastforward==0) {
+            if (time > 0)  {usleep((int)time*1000);}
+        }
         stopWatch.Restart();
 #endif
         g_lockWaitForImage1.lock();
 
+
+        if (rewind==1) {
+         int id = video.get(CV_CAP_PROP_POS_FRAMES);
+         if (id>0) {
+             id-=2;
+         }
+         video.set(CV_CAP_PROP_POS_FRAMES,id);
+        }
+
         video >> frameC;
+
+
+
 
         if (frameC.empty())
         {

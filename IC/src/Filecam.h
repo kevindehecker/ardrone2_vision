@@ -10,7 +10,10 @@
 #include "stopwatch.h"
 
 
-
+/*
+ * This class will open a stereo video file and stream the data as if it was an Delfly stereo camera
+ *
+ */
 class FileCam{
 
 
@@ -28,6 +31,9 @@ public:
     int im_width;
     int im_height;
     int nFrames;
+
+    int fastforward;
+    int rewind;
 
     int CurrentFrame;
     bool cams_are_running;
