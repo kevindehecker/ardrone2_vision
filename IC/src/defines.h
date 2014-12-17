@@ -19,10 +19,10 @@
 
 #define VIDEORESULTS
 #define DRAWHIST
-//#define EXPORT
+#define EXPORT
 
-#define GEIGER
-//#define SGM
+//#define GEIGER
+#define SGM
 //#define BM currently not completely implemented
 //#define LONGSEC
 #endif

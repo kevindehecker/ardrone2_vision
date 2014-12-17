@@ -281,6 +281,8 @@ void Textons::drawGraph(std::string msg) {
 void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
     //printf("im height: %d\n",(*grayframe).height);
 
+    int sample_dx[patch_square_size];
+
     unsigned char sample[patch_square_size];
     std::vector<int> distribution(n_textons);
     cv::Mat hist;
@@ -295,11 +297,35 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
         //printf("x: %d, y: %d\n",x,y);
 
         //extract a random patch to a temporary vector
+
+        int middleid = floor((float)patch_size/2.0); // asumes, texton size is odd!
+
+//        std::cout << std::endl;
+//        x = 1;
+//        y = 1;
+
+
         for (int i=0;i<patch_size;i++) {
+
+
             for (int j=0;j<patch_size;j++) {
-                sample[i*patch_size+j] = grayframe.at<uint8_t>(y+j,x+i);
+                sample[i*patch_size+j] = grayframe.at<uint8_t>(x+j,y+i);
+
+                //calculate x gradient:
+                if (j>middleid ) {
+                    sample_dx[i*patch_size+j] = (int)grayframe.at<uint8_t>(x+j,y+i) - (int)grayframe.at<uint8_t>(x+j-1,y+i);
+                } else if ( j < middleid ) {
+                    sample_dx[i*patch_size+j] = (int)grayframe.at<uint8_t>(x+j+1,y+i) - (int)grayframe.at<uint8_t>(x+j,y+i);
+                } else {
+                    sample_dx[i*patch_size+j] = (int)grayframe.at<uint8_t>(x+j+1,y+i) - (int)grayframe.at<uint8_t>(x+j,y+i);
+                    sample_dx[i*patch_size+j] += (int)grayframe.at<uint8_t>(x+j,y+i) - (int)grayframe.at<uint8_t>(x+j-1,y+i);
+                    sample_dx[i*patch_size+j] /=2;
+                }
+
+//                std::cout << (int32_t)sample_dx[i*patch_size+j] << ",";
                 // grayframe.at<uint8_t>(y+j,x+i) = 255; // uncomment to visualise picking
             }
+//            std::cout << std::endl;
         }
 
 //        if (n==0) { // visualise a patch
@@ -309,7 +335,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
 
         //get the distances to this patch to the textons...
         std::vector<double> distances(n_textons); // distances
-        for(int j=0;j<n_textons;j++) {
+        for(int j=0;j<n_textons;j++) {            
             distances.at(j) = getEuclDistance(sample,j);
         }
         //...and find out the closest texton:

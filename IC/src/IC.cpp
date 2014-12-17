@@ -271,7 +271,7 @@ void process_video() {
         float time = stopWatch.Read()/1000;
         std::cout << "FPS: " << frames /(time) << "\n";
 
-//        saveStereoPair();
+        saveStereoPair();
 
     } // main while loop
 
