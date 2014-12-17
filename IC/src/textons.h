@@ -16,20 +16,17 @@ class Textons{
 
 private:
 	//visual words parameters
-    #define n_samples 100
-	unsigned char n_textons ;
+    int n_samples = 50;
+    int filterwidth = 10; // moving average filter
+    int k = 5;
+
+    // to be loaded from textons*.dat dictionary files:
+    unsigned char n_textons;
+    unsigned char n_textons_gradient;
+    unsigned char n_textons_intensity;
 	unsigned char patch_size;
 	unsigned char patch_square_size;
-	std::vector<std::vector<unsigned char> > textons;
-    int filterwidth = 5; // moving average filter
-    int k = 5;
-//    std::vector<cv::Scalar> colors2;
-//    cv::Scalar colors[30];
-
-//    uint8_t colorsr[30];
-//    uint8_t colorsg[30];
-//    uint8_t colorsb[30];
-
+    std::vector<std::vector<int16_t> > textons;
 
 
 	//regression learning parameters
@@ -45,10 +42,10 @@ private:
 	Smoother knn_smoothed;
 	Smoother gt_smoothed;
 
-	double getEuclDistance(unsigned char sample[], int texton_id);
+    double getEuclDistance(int16_t sample[], int texton_id);
 	int initTextons();
     void drawTextonColoredImage(cv::Mat grayframe);
-	
+    cv::Scalar getColor(int id);
 
 public:
     int threshold_nn = 29;

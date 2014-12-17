@@ -271,7 +271,9 @@ void process_video() {
         float time = stopWatch.Read()/1000;
         std::cout << "FPS: " << frames /(time) << "\n";
 
+#ifdef EXPORT
         saveStereoPair();
+#endif
 
     } // main while loop
 
@@ -375,10 +377,14 @@ int init(int argc, char **argv) {
     cv::resizeWindow("Results", 1100, 550);
 #endif
 #ifdef DRAWHIST
-    cv::namedWindow("TextonColors", CV_WINDOW_NORMAL);
-    cv::resizeWindow("TextonColors", 384, 288);
-    cv::namedWindow("TextonEncoded", CV_WINDOW_NORMAL);
-    cv::resizeWindow("TextonEncoded", 384, 288);
+    cv::namedWindow("TextonColors gradient", CV_WINDOW_NORMAL);
+    cv::resizeWindow("TextonColors gradient", 256, 192);
+    cv::namedWindow("TextonEncoded gradient", CV_WINDOW_NORMAL);
+    cv::resizeWindow("TextonEncoded gradient", 256, 192);
+    cv::namedWindow("TextonColors intensity", CV_WINDOW_NORMAL);
+    cv::resizeWindow("TextonColors intensity", 256, 192);
+    cv::namedWindow("TextonEncoded intensity", CV_WINDOW_NORMAL);
+    cv::resizeWindow("TextonEncoded intensity", 256, 192);
 #endif
 #ifdef USE_TERMINAL_INPUT
     std::thread thread_TerminalInput(TerminalInputThread);
