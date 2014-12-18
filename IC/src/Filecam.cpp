@@ -90,9 +90,6 @@ void FileCam::workerThread() {
 
         video >> frameC;
 
-
-
-
         if (frameC.empty())
         {
             cams_are_running=false;
@@ -110,8 +107,6 @@ void FileCam::workerThread() {
         g_lockWaitForImage2.unlock();
 
         CurrentFrame++;
-
-
 
     } // while loop
 

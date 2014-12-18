@@ -609,12 +609,12 @@ void Textons::saveRegression() {
     cv::FileStorage size_fs("../distribution_buf_size.xml", cv::FileStorage::WRITE);
     size_fs << "distribution_buf_size" << distribution_buf_size;
 
-
     retrainAll();
 }
 
 /*
- * Reloads the learning buffer from file and retrains the learner with that data, effectively reseting the learner to then
+ * Reloads the learning buffer from file and retrains the learner with that data,
+ * effectively reseting the learner to save point
  */
 void Textons::reload() {
     initLearner(false);

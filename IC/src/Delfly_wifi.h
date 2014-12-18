@@ -8,6 +8,10 @@
 #include <opencv2/highgui/highgui.hpp>
 #include "defines.h"
 
+/*
+ * This class will interface with a Delfly stereocam over WiFi, if the camera is connected to an ARDrone2 via USB
+ *
+ */
 class Delfly_WiFi{
 
 
