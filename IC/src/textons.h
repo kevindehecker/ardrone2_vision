@@ -16,7 +16,7 @@ class Textons{
 
 private:
 	//visual words parameters
-    int n_samples = 500;
+    int n_samples = 50;
     int filterwidth = 10; // moving average filter
     int k = 5;
 
@@ -53,9 +53,11 @@ public:
     float avgdisp_smoothed;
 
 
+
+
 	bool init (void);
 	bool close(void);	
-    cv::Mat drawHistogram(cv::Mat hist,int bins);
+    cv::Mat drawHistogram(cv::Mat hist,int bins, int maxY);
     void drawGraph(std::string msg);
     void getTextonDistributionFromImage(cv::Mat grayframeL, float avgdisp);
 	void saveRegression();

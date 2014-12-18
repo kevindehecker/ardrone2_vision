@@ -1,6 +1,9 @@
 #include "textons.h"
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/contrib/contrib.hpp>
+#ifdef _PC
+#include <boost/math/special_functions/round.hpp>
+#endif
 
 //from HSV colorspace:
 float r[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.9523809523809526, 0.8571428571428568, 0.7619047619047614, 0.6666666666666665, 0.5714285714285716, 0.4761904761904763, 0.3809523809523805, 0.2857142857142856, 0.1904761904761907, 0.0952380952380949, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.09523809523809557, 0.1904761904761905, 0.2857142857142854, 0.3809523809523809, 0.4761904761904765, 0.5714285714285714, 0.6666666666666663, 0.7619047619047619, 0.8571428571428574, 0.9523809523809523, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
@@ -42,20 +45,20 @@ double Textons::getEuclDistance(int16_t sample[], int texton_id) {
 /*
  * Creates an histogram image
  */
-cv::Mat Textons::drawHistogram(cv::Mat hist,int bins) {
+cv::Mat Textons::drawHistogram(cv::Mat hist,int bins, int maxY) {
 
     cv::Mat canvas;
     int line_width = 10;
 
 
     // Display each histogram in a canvas
-    canvas = cv::Mat::ones(200, bins*line_width, CV_8UC3);
+    canvas = cv::Mat::ones(maxY, bins*line_width, CV_8UC3);
 
     int rows = canvas.rows;
     for (int j = 0; j < bins-1; j++)
     {
         cv::Scalar c = getColor(j);
-        cv::line(canvas,cv::Point(j*line_width, rows),cv::Point(j*line_width, rows - (hist.at<int>(j) * rows/n_samples)),c, line_width, 8, 0);
+        cv::line(canvas,cv::Point(j*line_width, rows),cv::Point(j*line_width, rows - (hist.at<int>(j))),c, line_width, 8, 0);
     }    
     return canvas;
 }
@@ -109,8 +112,16 @@ void Textons::drawMeanHists(cv::Mat histimage) {
     }
 
     for (int i=0; i<nHists;i++) {
-        //calc average for each hist
+
+        // select a hist:
         cv::Mat tmp = meanhists.row(i);
+
+        //normalize
+        for (int i = 0; i<n_textons; i++) {
+            tmp.at<int>(i) = ((tmp.at<int>(i) * 1000) /  n_samples)/10;
+        }
+
+        //calc average for each hist
         for (int j = 0; j<n_textons; j++) {
             if (amounts.at<int>(i) > 0 ) {
                 tmp.at<int>(j) = (tmp.at<int>(j) / amounts.at<int>(i));
@@ -120,8 +131,10 @@ void Textons::drawMeanHists(cv::Mat histimage) {
 
         }
 
+
+
         //create an image of it
-       cv::Mat canvas =  drawHistogram(tmp,n_textons);
+       cv::Mat canvas =  drawHistogram(tmp,n_textons,200);
        std::stringstream s;
        s << "Disps: " << (int)(f*i) << " - " << (int)(f*(i+1)) << ", #" << amounts.at<int>(i);
        putText(canvas,s.str(),cv::Point(0, 20),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
@@ -237,6 +250,7 @@ void Textons::drawTextonAnotatedImage(cv::Mat grayframe) {
 }
 
 int countsincelearn =0;
+
 void Textons::drawGraph(std::string msg) {
 
     cv::Scalar color_gt= cv::Scalar(255,0,0); // blue
@@ -256,6 +270,14 @@ void Textons::drawGraph(std::string msg) {
 
     float nn,gt;
     float prev_nn = 0, prev_gt = 0;
+
+
+    int positive_true=0;
+    int positive_false=0;
+    int negative_true=0;
+    int negative_false=0;
+    int negatives=0;
+    int positives=0;
 
     countsincelearn++;
 
@@ -279,24 +301,33 @@ void Textons::drawGraph(std::string msg) {
         }
 
 
+        if (!(groundtruth_buffer.at<float>(jj) < 6.201 && groundtruth_buffer.at<float>(jj) > 6.199)) {
+
         //draw a small colored line above to indicate what the drone will do:
         if (nn < threshold_nn && gt > threshold_gt) {
             //false negative; drone should stop according to stereo, but didn't if textons were used
             //white
+            negative_false++;
             cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(255,255,255), line_width, 8, 0);
         } else if (nn > threshold_nn && gt < threshold_gt) {
             //false positive; drone could have proceeded according to stereo, but stopped if textons were used
             //black
+            positive_false++;
             cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,0,0), line_width, 8, 0);
         } else if (nn > threshold_nn && gt > threshold_gt) {
-            //both stereo and textons agree, drone should stop
+            //true positive; both stereo and textons agree, drone should stop
             //red
+            positive_true++;
             cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,0,255), line_width, 8, 0);
         } else {
             //both stereo and textons agree, drone may proceed
             //green
+            negative_true++;
             cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,255,0), line_width, 8, 0);
         }
+
+        }
+
 
         nn = graph_buffer.at<float>(jj,0)*scaleY;
         gt = graph_buffer.at<float>(jj,1)*scaleY;
@@ -322,8 +353,20 @@ void Textons::drawGraph(std::string msg) {
         prev_gt = gt;
     }
 
-    //draw text to notify user a key press was handled
-    putText(graphFrame,msg,cv::Point(0, 30),cv::FONT_HERSHEY_SIMPLEX,1,color_vert);
+#ifdef _PC
+    //calculate fp/fn ratio
+    float tpr = (float)positive_true /(float)(positive_true+negative_false);
+    float fpr = (float)negative_true /(float)(negative_true+positive_false);
+
+    std::stringstream s;
+    s << msg << " TPR: " << boost::format("%.2f")%tpr << ", FPR: " << boost::format("%.2f")%fpr;
+    msg = s.str();
+
+#endif
+
+
+    //draw text to inform about the mode and ratios or to notify user a key press was handled
+    putText(graphFrame,msg,cv::Point(0, 40),cv::FONT_HERSHEY_SIMPLEX,1,color_vert);
 
 }
 
@@ -388,9 +431,14 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
 
     }
 
+    //normalize
+    for (int i = 0; i<n_textons; i++) {
+        hist.at<int>(i) = ((hist.at<int>(i) * 1000) /  n_samples)/10;
+    }
+
     //copy new data into learning buffer:
     cv::Mat M1 = distribution_buffer.row((distribution_buf_pointer+0) % distribution_buf_size) ;
-    hist.convertTo(M1,cv::DataType<float>::type,1,0);
+    hist.convertTo(M1,cv::DataType<float>::type,1,0); // floats are needed for knn
 
     //smooth avg, but exclude std filter from smoothing:
     if (avgdisp >0.1 ) {
@@ -399,10 +447,10 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
     else {
         avgdisp_smoothed = 0;
     }
-//avgdisp_smoothed = avgdisp;
+avgdisp_smoothed = avgdisp; // nah, nm
 
 
-    groundtruth_buffer.at<float>(distribution_buf_pointer) = avgdisp_smoothed;
+    groundtruth_buffer.at<float>((distribution_buf_pointer)% distribution_buf_size) = avgdisp_smoothed;
     distribution_buf_pointer = (distribution_buf_pointer+1) % distribution_buf_size;
 
      //std::cout << "hist" << distribution_buf_pointer << ": " << hist << std::endl;
@@ -420,7 +468,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
     graph_buffer.at<float>(distribution_buf_pointer,1) = avgdisp_smoothed; // groundtruth
 
 #ifdef DRAWVIZS
-    cv::Mat histimage = drawHistogram(hist,n_textons);
+    cv::Mat histimage = drawHistogram(hist,n_textons,200);
     drawMeanHists(histimage);
     drawTextonAnotatedImage(grayframe);
 #endif
