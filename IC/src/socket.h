@@ -14,6 +14,7 @@ struct ICDataPackage {
     int avgdisp_gt;
     int avgdisp_gt_stdev;
     int avgdisp_nn;
+    float fps;
     char endl;             // endl fix, makes it worker nicer in terminal for debugging :)
 };
 extern struct ICDataPackage video_impl;
@@ -54,6 +55,7 @@ public:
     int commdata_gt;
     int commdata_gt_stdev;
     int commdata_nn;
+    float commdata_fps;
 
     /*  Function declarations  */
     void Close();

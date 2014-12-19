@@ -289,14 +289,13 @@ void process_video() {
         }
 #endif
 
-#ifdef USE_SOCKET        
-        tcp.Unlock();
-#endif
-
         frames++;
         float time = stopWatch.Read()/1000;
-        std::cout << "FPS: " << frames /(time) << "\n";
+        tcp.commdata_fps = frames /(time);
 
+#ifdef USE_SOCKET
+        tcp.Unlock();
+#endif
 #ifdef EXPORT
         saveStereoPair();
 #endif
