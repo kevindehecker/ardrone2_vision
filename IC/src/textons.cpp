@@ -371,7 +371,7 @@ void Textons::drawGraph(std::string msg) {
 }
 
 //calculates the histogram/distribution
-void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
+void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, bool activeLearning) {
 
     int middleid = floor((float)patch_size/2.0); // for gradient, asumes, texton size is odd!
     int16_t sample[patch_square_size];
@@ -439,27 +439,37 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp) {
     //copy new data into learning buffer:
     cv::Mat M1 = distribution_buffer.row((distribution_buf_pointer+0) % distribution_buf_size) ;
     hist.convertTo(M1,cv::DataType<float>::type,1,0); // floats are needed for knn
+    groundtruth_buffer.at<float>((distribution_buf_pointer)% distribution_buf_size) = avgdisp_smoothed;
+    //run knn
+    float nn = knn.find_nearest(M1,k,0,0,0,0); // if segfault here, clear xmls!
+    //perform smoothing:
+    nn = knn_smoothed.addSample(nn);
 
-    //smooth avg, but exclude std filter from smoothing:
+    //smooth gt, but exclude std filter from smoothing:
     if (avgdisp >0.1 ) {
         avgdisp_smoothed = gt_smoothed.addSample(avgdisp); // perform smoothing
     }
     else {
         avgdisp_smoothed = 0;
     }
-avgdisp_smoothed = avgdisp; // nah, nm
+    avgdisp_smoothed = avgdisp; // nah, nm
 
 
-    groundtruth_buffer.at<float>((distribution_buf_pointer)% distribution_buf_size) = avgdisp_smoothed;
-    distribution_buf_pointer = (distribution_buf_pointer+1) % distribution_buf_size;
+    if (!activeLearning) {        //if not active learning, learn all samples
+        distribution_buf_pointer = (distribution_buf_pointer+1) % distribution_buf_size;
+    } else {            //otherwise, only learn errornous samples
+        if (nn < threshold_nn && avgdisp_smoothed > threshold_gt) {
+            //false negative; drone should stop according to stereo, but didn't if textons were used
+            distribution_buf_pointer = (distribution_buf_pointer+1) % distribution_buf_size;
+        } else if (nn > threshold_nn && avgdisp_smoothed < threshold_gt) {
+            //false positive; drone could have proceeded according to stereo, but stopped if textons were used
+            distribution_buf_pointer = (distribution_buf_pointer+1) % distribution_buf_size;
+        }
+    }
 
      //std::cout << "hist" << distribution_buf_pointer << ": " << hist << std::endl;
 
-    //run knn
-   float nn = knn.find_nearest(M1,k,0,0,0,0); // if segfault here, clear xmls!
 
-    //perform smoothing:
-    nn = knn_smoothed.addSample(nn);
 
     std::cout << "knn.disp.: " << nn << "  |  truth: " << avgdisp_smoothed << std::endl;
 

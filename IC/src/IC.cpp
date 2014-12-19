@@ -28,7 +28,7 @@
 #include "stopwatch.h"
 
 /***********Enums****************/
-enum modus_t {none, stereo_only, textons_only, stereo_textons};
+enum modus_t {none, stereo_only, textons_only, stereo_textons, stereo_textons_active};
 
 
 /***********Variables****************/
@@ -186,13 +186,11 @@ void process_video() {
             //stereo is turned on
             stereoOK = stereo.calcDisparityMap(svcam.frameL_mat,svcam.frameR_mat); // calc the stereo groundtruth
         }
-
-        if ((mode==textons_only || mode==stereo_textons) && stereoOK) {
-            textonizer.getTextonDistributionFromImage(svcam.frameL_mat,stereo.avgDisparity);  //perform the texton stuff
+        if (mode==stereo_textons_active || mode==stereo_textons && stereoOK) {
+            textonizer.getTextonDistributionFromImage(svcam.frameL_mat,stereo.avgDisparity,mode==stereo_textons_active);  //perform the texton stuff
             tcp.commdata_nn = textonizer.getLast_nn();
         }
-
-        if (mode==stereo_only || mode==stereo_textons) { // apply smoothing
+        if (mode==stereo_only || mode==stereo_textons || stereo_textons_active) {
             tcp.commdata_gt = textonizer.avgdisp_smoothed;
             tcp.commdata_gt_stdev = stereo.stddevDisparity;
         }
@@ -247,6 +245,9 @@ void process_video() {
             case stereo_textons:
                 msg= "textons+stereo";
                 break;
+            case stereo_textons_active:
+                msg= "stereo+textons active learning";
+                break;
             }
         }
 
@@ -261,6 +262,7 @@ void process_video() {
         if (key==49) {mode=textons_only;key=0;} //                        [1]: switch stereo mode off, textons on
         if (key==50) {mode=stereo_only;key=0;} //                         [2]: switch stereo mode on, textons off
         if (key==51) {mode=stereo_textons;key=0;} //                      [3]: switch both stereo and textons calucation on
+        if (key==52) {mode=stereo_textons_active;key=0;} //               [4]: switch both stereo and textons calucation on, use active learning
         if (key==92) {saveStereoPair();key=0;} //                         [\]: save stereo image to bmp
         if (key==114) {frames=0;stopWatch.Restart();msg="Reset";key=0;} //[r]: reset stopwatch
         if (key==97) {changeThresh_nn(1);key=0;} //                       [a]: increase threshold nn
