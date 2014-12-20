@@ -182,7 +182,7 @@ void process_video() {
 
         bool stereoOK=true;
 
-        if (mode==stereo_only || mode==stereo_textons) {
+        if (mode==stereo_only || mode==stereo_textons || mode==stereo_textons_active) {
             //stereo is turned on
             stereoOK = stereo.calcDisparityMap(svcam.frameL_mat,svcam.frameR_mat); // calc the stereo groundtruth
         }
@@ -292,6 +292,7 @@ void process_video() {
         frames++;
         float time = stopWatch.Read()/1000;
         tcp.commdata_fps = frames /(time);
+        std::cout << "Fps: " << tcp.commdata_fps << std::endl;
 
 #ifdef USE_SOCKET
         tcp.Unlock();
@@ -508,7 +509,7 @@ int main( int argc, char **argv )
    if (init(argc,argv)) {return 1;}
 
    /* clear learning buffer instead of using old stuff */
-   //textonizer.initLearner(true);
+//   textonizer.initLearner(true);
 
    process_video();
    close();

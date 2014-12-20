@@ -276,10 +276,8 @@ void Textons::drawGraph(std::string msg) {
     int positive_false=0;
     int negative_true=0;
     int negative_false=0;
-    int negatives=0;
-    int positives=0;
 
-    countsincelearn++;
+    countsincelearn++; // keep track of training/test data
 
     int learnborder =  (lastLearnedPosition+(distribution_buf_size-distribution_buf_pointer)) % distribution_buf_size; // make a sliding graph
     if ( countsincelearn > distribution_buf_size) {
@@ -289,7 +287,7 @@ void Textons::drawGraph(std::string msg) {
     for (int j = filterwidth; j < distribution_buf_size ; j++)
     {
 
-        int jj = (j+distribution_buf_pointer) % distribution_buf_size; // make a sliding graph
+        int jj = (j+distribution_buf_pointer) % distribution_buf_size; // make it a sliding graph
         nn = graph_buffer.at<float>(jj,0);
         gt = graph_buffer.at<float>(jj,1);
 

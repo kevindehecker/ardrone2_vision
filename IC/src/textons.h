@@ -48,8 +48,8 @@ private:
     cv::Scalar getColor(int id);
 
 public:
-    int threshold_nn = 29;
-    int threshold_gt = 90;
+    int threshold_nn = 40;
+    int threshold_gt = 95;
     float avgdisp_smoothed;
 
 

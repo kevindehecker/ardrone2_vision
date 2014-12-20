@@ -8,7 +8,7 @@
 
 #ifdef _PC /*************************     PC     ******************/
 
-#define RUNMODE stereo_textons // start with this mode (enum defined in IC.cpp)
+#define RUNMODE stereo_textons_active // start with this mode (enum defined in IC.cpp)
 #define DELFLY //use the Delfly stereo cam over usb2serial
 //#define DUOWEBCAM // use the double webcam stereo set up
 
@@ -18,7 +18,7 @@
 #ifndef DELFLY_COLORMODE
 
 #define VIDEORESULTS // show the main results window
-#define DRAWVIZS    //show secundairy results (histograms and texton visulaisations
+//#define DRAWVIZS    //show secundairy results (histograms and texton visulaisations
 //#define EXPORT //create export.txt and seperate stereo pair png images
 
 //#define GEIGER // use libelas Geiger stereo algorithm

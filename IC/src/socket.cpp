@@ -88,58 +88,6 @@ bool Socket::Write_socket(char * c, size_t n) {
     }
 }
 
-ssize_t Socket::Readline_socket(void *vptr, size_t maxlen) {
-    size_t n, rc;
-    char    c, *buffer;
-  
-    buffer = (char*)vptr;
-
-    for ( n = 1; n < maxlen; n++ ) {
-	
-	if ( (rc = read(conn_s, &c, 1)) == 1 ) {
-	    *buffer++ = c;
-	    if ( c == '\n' )
-		break;
-	}
-	else if ( rc == 0 ) {
-	    if ( n == 1 )
-		return 0;
-	    else
-		break;
-	}
-	else {
-	    if ( errno == EINTR )
-		continue;
-	    return -1;
-	}
-    }
-
-    *buffer = 0;
-    return n;
-}
-
-
-/*  Write a line to a socket  */
-ssize_t Socket::Writeline_socket(const char * text, size_t n) {
-    size_t      nleft;
-    ssize_t     nwritten;
-	nleft  = n+1; //also send \0
-	
-    while ( nleft > 0 ) {
-	if ( (nwritten = write(conn_s, text, nleft)) <= 0 ) {
-	    if ( errno == EINTR )
-		nwritten = 0;
-	    else
-		return -1;
-	}
-	nleft  -= nwritten;
-	text += nwritten;
-    }
-
-    return n;
-	
-}
-
 void Socket::Unlock() {
     g_lockComm.unlock();
 }
@@ -210,6 +158,7 @@ void Socket::commOutThread() {
         out.avgdisp_gt = commdata_gt;
         out.avgdisp_gt_stdev = commdata_gt_stdev;
         out.avgdisp_nn = commdata_nn;
+        out.fps = commdata_fps;
         out.endl = 0;
         std::cout << "gt: " << out.avgdisp_gt << " nn: " << out.avgdisp_nn << std::endl;
 

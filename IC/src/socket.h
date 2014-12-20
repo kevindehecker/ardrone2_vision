@@ -41,10 +41,8 @@ private:
 
     /*  Function declarations  */
     int initSocket(unsigned int port) ;
-    ssize_t Readline_socket(void *vptr, size_t maxlen);
     bool Read_socket(char * c, size_t maxlen);
     bool Write_socket(char * c, size_t n) ;
-    ssize_t Writeline_socket(const char * text, size_t n);
     int closeSocket(void);
     int shutdownSocket(void);
     void commInThread();
