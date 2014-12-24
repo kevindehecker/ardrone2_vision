@@ -39,6 +39,7 @@ cv::VideoWriter outputVideo;
 cv::VideoWriter outputVideoResults;
 stopwatch_c stopWatch;
 modus_t mode;
+int result_input2Mode = 1;
 Socket tcp;
 #ifdef EXPORT
 Exporter exporter;
@@ -94,7 +95,23 @@ void combineAllImages() {
 #if defined(DELFLY)
     combineImage(resFrame,stereo.DisparityMat,svcam.im_width*4,0,stereo.DisparityMat.cols*2,stereo.DisparityMat.rows*2,false);
     combineImage(resFrame,svcam.frameL_mat,0,0,svcam.frameL_mat.cols*2,svcam.frameL_mat.rows*2,true);
-    combineImage(resFrame,svcam.frameR_mat,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,true);
+
+    //select which result image will be shown next to input image:
+    if (result_input2Mode == 1) { //right input image
+        combineImage(resFrame,svcam.frameR_mat,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,true);
+    } else if (result_input2Mode == 2) { //texton intensity color encoding
+        combineImage(resFrame,textonizer.frame_Itextoncolor,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,false);
+    } else if (result_input2Mode == 3) {// texton intensity texton encoding
+        combineImage(resFrame,textonizer.frame_Itextontexton,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,true);
+    } else if (result_input2Mode == 4) { //texton gradient color encoding
+        combineImage(resFrame,textonizer.frame_Gtextoncolor,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,false);
+    } else if (result_input2Mode == 5) {// texton gradient
+        combineImage(resFrame,textonizer.frame_Gtextontexton,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,false);
+    } else if (result_input2Mode == 6) {// histogram
+        combineImage(resFrame,textonizer.frame_currentHist,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,false);
+    }
+
+
     combineImage(resFrame,textonizer.graphFrame,0,svcam.im_height*2,svcam.im_width*6,svcam.im_height*2,false);
 #else
     combineImage(resFrame,stereo.DisparityMat,svcam.im_width,0,stereo.DisparityMat.cols,stereo.DisparityMat.rows,false);
@@ -269,6 +286,12 @@ void process_video() {
         if (key==122) {changeThresh_nn(-1);key=0;} //                     [z]: decrease threshold nn
         if (key==65) {changeThresh_gt(1);;key=0;} //                      [A]: increase threshold gt
         if (key==90) {changeThresh_gt(-1);key=0;} //                      [Z]: decrease threshold gt
+        if (key==33) {result_input2Mode=1;;key=0;} //                     [!]: show right input image
+        if (key==64) {result_input2Mode=2;;key=0;} //                     [@]: show intensity texton color encoded left input image
+        if (key==35) {result_input2Mode=3;;key=0;} //                     [#]: show intensity texton texton encoded left input image
+        if (key==36) {result_input2Mode=4;;key=0;} //                     [$]: show gradient texton color encoded left input image
+        if (key==37) {result_input2Mode=5;;key=0;} //                     [%]: show gradient texton texton encoded left input image
+        if (key==38) {result_input2Mode=6;;key=0;} //                     [&]: show histogram
 
 #ifdef HASSCREEN
         if (key==62) {svcam.fastforward=1;key=0;} //                      [>]: fast forward filecam
@@ -407,14 +430,14 @@ int init(int argc, char **argv) {
     cv::resizeWindow("Results", 1100, 550);
 #endif
 #ifdef DRAWVIZS
-    cv::namedWindow("TextonColors gradient", CV_WINDOW_NORMAL);
-    cv::resizeWindow("TextonColors gradient", 256, 192);
-    cv::namedWindow("TextonEncoded gradient", CV_WINDOW_NORMAL);
-    cv::resizeWindow("TextonEncoded gradient", 256, 192);
-    cv::namedWindow("TextonColors intensity", CV_WINDOW_NORMAL);
-    cv::resizeWindow("TextonColors intensity", 256, 192);
-    cv::namedWindow("TextonEncoded intensity", CV_WINDOW_NORMAL);
-    cv::resizeWindow("TextonEncoded intensity", 256, 192);
+//    cv::namedWindow("TextonColors gradient", CV_WINDOW_NORMAL);
+//    cv::resizeWindow("TextonColors gradient", 256, 192);
+//    cv::namedWindow("TextonEncoded gradient", CV_WINDOW_NORMAL);
+//    cv::resizeWindow("TextonEncoded gradient", 256, 192);
+//    cv::namedWindow("TextonColors intensity", CV_WINDOW_NORMAL);
+//    cv::resizeWindow("TextonColors intensity", 256, 192);
+//    cv::namedWindow("TextonEncoded intensity", CV_WINDOW_NORMAL);
+//    cv::resizeWindow("TextonEncoded intensity", 256, 192);
 #endif
 #ifdef USE_TERMINAL_INPUT
     std::thread thread_TerminalInput(TerminalInputThread);

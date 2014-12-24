@@ -25,7 +25,7 @@ bool Textons::init () {
 *Calculates the Eucladian distance between a patch and a texton
 */
 double Textons::getEuclDistance(int16_t sample[], int texton_id) {
-    double distance =0;
+    int sum =0;
 
     std::vector<int16_t> v =textons[texton_id];
 
@@ -34,10 +34,10 @@ double Textons::getEuclDistance(int16_t sample[], int texton_id) {
 
     for(int i = 0; i < patch_square_size; i++)
     {
-        distance += pow(sample_[i] - v[i],2);
+        sum += pow(sample_[i] - v[i],2);
 
     }
-    distance = sqrt(distance);
+    float distance = sqrt((float)sum);
 
     return distance;
 }
@@ -58,7 +58,7 @@ cv::Mat Textons::drawHistogram(cv::Mat hist,int bins, int maxY) {
     for (int j = 0; j < bins-1; j++)
     {
         cv::Scalar c = getColor(j);
-        cv::line(canvas,cv::Point(j*line_width, rows),cv::Point(j*line_width, rows - (hist.at<int>(j))),c, line_width, 8, 0);
+        cv::line(canvas,cv::Point(j*line_width, rows),cv::Point(j*line_width, rows - (hist.at<float>(j))),c, line_width, 8, 0);
     }    
     return canvas;
 }
@@ -85,7 +85,7 @@ void Textons::drawMeanHists(cv::Mat histimage) {
     int hist_height= 200; // idem
 
     cv::Mat canvas_allHists = cv::Mat::zeros(hist_height*2,hist_width*3,CV_8UC3);
-    cv::Mat meanhists = cv::Mat::zeros(nHists, n_textons, cv::DataType<int>::type);
+    cv::Mat meanhists = cv::Mat::zeros(nHists, n_textons, cv::DataType<float>::type);
     cv::Mat amounts = cv::Mat::zeros(nHists, 1, cv::DataType<int>::type);
 
     //get the maximum disparity (range), in order to determine the histogram borders (of the 5 histograms)
@@ -95,7 +95,7 @@ void Textons::drawMeanHists(cv::Mat histimage) {
 
     for (int j=0;j<distribution_buf_size;j++) {
         cv::Mat hist;
-        distribution_buffer.row(j).convertTo(hist,cv::DataType<int>::type,1,0); // distribution_buffer is in float, so copy like this needed
+        distribution_buffer.row(j).copyTo(hist); // distribution_buffer is in float, so copy like this needed -> not any more TODO: fix
         int id = ceil((groundtruth_buffer.at<float>(j) / f))-1; // calc which hist this frame belongs to
         if (id<0){id=0;} // catch gt = 0;
 
@@ -105,7 +105,7 @@ void Textons::drawMeanHists(cv::Mat histimage) {
             //add hist of current frame to the cumulator of the specific range
             cv::Mat tmp = meanhists.row(id);
             for (int k = 0; k<n_textons; k++) {
-                tmp.at<int>(k) = tmp.at<int>(k) + hist.at<int>(k);
+                tmp.at<float>(k) = tmp.at<float>(k) + hist.at<float>(k);
             }
         }
 
@@ -116,17 +116,12 @@ void Textons::drawMeanHists(cv::Mat histimage) {
         // select a hist:
         cv::Mat tmp = meanhists.row(i);
 
-        //normalize
-        for (int i = 0; i<n_textons; i++) {
-            tmp.at<int>(i) = ((tmp.at<int>(i) * 1000) /  n_samples)/10;
-        }
-
         //calc average for each hist
         for (int j = 0; j<n_textons; j++) {
             if (amounts.at<int>(i) > 0 ) {
-                tmp.at<int>(j) = (tmp.at<int>(j) / amounts.at<int>(i));
+                tmp.at<float>(j) = (tmp.at<float>(j) / (float)amounts.at<int>(i))*150;
             } else {
-                 tmp.at<int>(j) = 0;
+                 tmp.at<float>(j) = 0;
             }
 
         }
@@ -171,20 +166,18 @@ void Textons::drawTextonAnotatedImage(cv::Mat grayframe) {
     int16_t sample_dx[patch_square_size]; // gradient;
 
     int line_width =1;
-    cv::Mat canvas_color_i;
-    cv::Mat canvas_encoded_i;
-    cv::Mat canvas_color_gr;
-    cv::Mat canvas_encoded_gr;
-    cv::cvtColor(grayframe, canvas_color_gr, CV_GRAY2BGR);
-    cv::cvtColor(grayframe, canvas_color_i, CV_GRAY2BGR);
-    grayframe.copyTo(canvas_encoded_gr);
-    grayframe.copyTo(canvas_encoded_i);
+
+    cv::cvtColor(grayframe, frame_Gtextoncolor, CV_GRAY2BGR);
+    cv::cvtColor(grayframe, frame_Itextoncolor, CV_GRAY2BGR);
+    frame_Gtextontexton = cv::Mat::zeros(grayframe.rows,grayframe.cols,CV_8UC1);
+//    grayframe.copyTo(frame_Gtextontexton);
+    grayframe.copyTo(frame_Itextontexton);
 
     // for all possible patches (non overlapping)
     for(int x=0;x<grayframe.cols-patch_size;x=x+patch_size){
         for(int y=0;y<grayframe.rows-patch_size;y=y+patch_size){
 
-            //extract a random patch to a temporary vector
+            //extract the next patch to a temporary vector
             for (int xx=0;xx<patch_size;xx++) {
                 for (int yy=0;yy<patch_size;yy++) {
 
@@ -206,7 +199,7 @@ void Textons::drawTextonAnotatedImage(cv::Mat grayframe) {
             }
 
             //get the distances to this patch to the textons...
-            std::vector<float> distances_gr(n_textons_gradient); // distances, TODO: float does not seem necessary -> int?
+            std::vector<float> distances_gr(n_textons_gradient); // distances
             std::vector<float> distances_i(n_textons_intensity); // distances
 
             for(int j=0;j<n_textons;j++) {
@@ -222,8 +215,8 @@ void Textons::drawTextonAnotatedImage(cv::Mat grayframe) {
            int min_id_gr = std::min_element(distances_gr.begin(), distances_gr.end()) - distances_gr.begin() + n_textons_intensity; //jàààhoor
 
             //draw colored rectangle:
-            cv::rectangle(canvas_color_gr,cv::Point(x, y),cv::Point(x+5, y+5),getColor(min_id_gr), line_width, 8, 0);
-            cv::rectangle(canvas_color_i,cv::Point(x, y),cv::Point(x+5, y+5),getColor(min_id_i), line_width, 8, 0);
+            cv::rectangle(frame_Gtextoncolor,cv::Point(x, y),cv::Point(x+5, y+5),getColor(min_id_gr), line_width, 8, 0);
+            cv::rectangle(frame_Itextoncolor,cv::Point(x, y),cv::Point(x+5, y+5),getColor(min_id_i), line_width, 8, 0);
 
             //encode the texton
             //copy the closest patch into the image
@@ -232,8 +225,8 @@ void Textons::drawTextonAnotatedImage(cv::Mat grayframe) {
             for (int i=0;i<patch_size;i++) {
                 for (int j=0;j<patch_size;j++) {
                     // sample[i*patch_size+j] = grayframe.at<uint8_t>(y+j,x+i);
-                    canvas_encoded_gr.at<uint8_t>(y+j,x+i) = v_gr[i*patch_size+j];
-                    canvas_encoded_i.at<uint8_t>(y+j,x+i) = v_i[i*patch_size+j];
+                    frame_Gtextontexton.at<uint8_t>(y+j,x+i) = v_gr[i*patch_size+j];
+                    frame_Itextontexton.at<uint8_t>(y+j,x+i) = v_i[i*patch_size+j];
                 }
             }
 
@@ -241,11 +234,12 @@ void Textons::drawTextonAnotatedImage(cv::Mat grayframe) {
         }
     }
 
+    cv::applyColorMap(frame_Gtextontexton,frame_Gtextontexton,2);
 
-    cv::imshow("TextonColors gradient", canvas_color_gr);
-    cv::imshow("TextonColors intensity", canvas_color_i);
-    cv::imshow("TextonEncoded gradient", canvas_encoded_gr);
-    cv::imshow("TextonEncoded intensity", canvas_encoded_i);
+//    cv::imshow("TextonColors gradient", frame_Gtextoncolor);
+//    cv::imshow("TextonColors intensity", frame_Itextoncolor);
+//    cv::imshow("TextonEncoded gradient", frame_Gtextontexton);
+//    cv::imshow("TextonEncoded intensity", frame_Itextontexton);
 
 }
 
@@ -315,12 +309,12 @@ void Textons::drawGraph(std::string msg) {
         } else if (nn > threshold_nn && gt > threshold_gt) {
             //true positive; both stereo and textons agree, drone should stop
             //red
-            positive_true++;
+            negative_true++;
             cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,0,255), line_width, 8, 0);
         } else {
             //both stereo and textons agree, drone may proceed
             //green
-            negative_true++;
+            positive_true++;
             cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,255,0), line_width, 8, 0);
         }
 
@@ -375,7 +369,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
     int16_t sample[patch_square_size];
     int16_t sample_dx[patch_square_size]; // gradient
     cv::Mat hist;
-    hist = cv::Mat::zeros(1, n_textons, CV_32SC1);
+    hist = cv::Mat::zeros(1, n_textons, cv::DataType<float>::type);
 
     for(int n=0;n<n_samples;n++){
 
@@ -407,31 +401,33 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 //            imshow("patch", test );
 //        }
 
-        //get the distances to this patch to the textons...
+        //get the and sum distances to this patch to the textons...
         std::vector<float> distances_gr(n_textons_gradient); // distances, TODO: float does not seem necessary -> int?
         std::vector<float> distances_i(n_textons_intensity); // distances
+        float sum_i=0;
+        float sum_gr=0;
 
         for(int j=0;j<n_textons;j++) {
             if (j < n_textons_intensity) {
-                distances_i.at(j) = getEuclDistance(sample,j);                
+                distances_i.at(j) = getEuclDistance(sample,j);
+                hist.at<float>(j) = distances_i.at(j);
+                sum_i +=hist.at<float>(j);
             } else {
                 distances_gr.at(j-n_textons_intensity) = getEuclDistance(sample_dx,j);
+                hist.at<float>(j) = distances_gr.at(j-n_textons_intensity);
+                sum_gr +=hist.at<float>(j);
             }
         }
 
-        //...and find out the closest texton:
-       int min_id_i = std::min_element(distances_i.begin(), distances_i.end()) - distances_i.begin();
-       int min_id_gr = std::min_element(distances_gr.begin(), distances_gr.end()) - distances_gr.begin() +n_textons_intensity;
+        //normalize
+        for(int j=0;j<n_textons;j++) {
+            if (j < n_textons_intensity) {
+                hist.at<float>(j) /=sum_i;
+            } else {
+                hist.at<float>(j) /=sum_gr;
+            }
+        }
 
-        //increase the bin of closest texton
-        hist.at<int>(min_id_gr)++;
-        hist.at<int>(min_id_i)++;
-
-    }
-
-    //normalize
-    for (int i = 0; i<n_textons; i++) {
-        hist.at<int>(i) = ((hist.at<int>(i) * 1000) /  n_samples)/10;
     }
 
     //copy new data into learning buffer:
@@ -476,8 +472,8 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
     graph_buffer.at<float>(distribution_buf_pointer,1) = avgdisp_smoothed; // groundtruth
 
 #ifdef DRAWVIZS
-    cv::Mat histimage = drawHistogram(hist,n_textons,200);
-    drawMeanHists(histimage);
+    frame_currentHist = drawHistogram(hist*150,n_textons,200);
+    drawMeanHists(frame_currentHist);
     drawTextonAnotatedImage(grayframe);
 #endif
 }
@@ -513,11 +509,11 @@ inline bool checkFileExist (const std::string& name) {
 int Textons::initTextons() {
     std::cout << "Opening textons file\n";
 
-    if (!checkFileExist("../textons_gradient.dat")) {std::cerr << "Error: gradient textons not available\n";return 0;}
-    if (!checkFileExist("../textons_intensity.dat")) {std::cerr << "Error: intensity textons not available\n";return 0;}
+    if (!checkFileExist("../textons10_gradient.dat")) {std::cerr << "Error: gradient textons not available\n";return 0;}
+    if (!checkFileExist("../textons10_intensity.dat")) {std::cerr << "Error: intensity textons not available\n";return 0;}
 
-    std::ifstream input_gr("../textons_gradient.dat", std::ios::binary );
-    std::ifstream input_i("../textons_intensity.dat", std::ios::binary );
+    std::ifstream input_gr("../textons10_gradient.dat", std::ios::binary );
+    std::ifstream input_i("../textons10_intensity.dat", std::ios::binary );
     // copies all data into buffer
     std::vector<unsigned char> buffer_gr(( std::istreambuf_iterator<char>(input_gr)),(std::istreambuf_iterator<char>()));
     std::vector<unsigned char> buffer_i(( std::istreambuf_iterator<char>(input_i)),(std::istreambuf_iterator<char>()));
@@ -556,7 +552,7 @@ int Textons::initTextons() {
     counter =2; // skip first two bytes, as they contain other info
     for (int i = 0;i<n_textons_gradient;i++) {
         std::vector<int16_t> v(patch_square_size);
-//        printf("texton_gr[%d]:", i+buffer_i[0]);
+        printf("texton_gr[%d]:", i+buffer_i[0]);
         for (int j=0;j<patch_square_size;j++) {
 
             uint8_t t0 = buffer_gr[counter];
@@ -564,11 +560,11 @@ int Textons::initTextons() {
             int16_t t = ((t1 << 8) & 0xff00) |  (t0 & 0x00ff);
             counter +=2;
             v[j] = t;
-//            if (j>0) {printf(", %d", v[j]);} else {printf(" %d", v[j]);}
+            if (j>0) {printf(", %d", v[j]);} else {printf(" %d", v[j]);}
         }
         textons[i+n_textons_intensity] = v;
         input_gr.close();
-//        std::cout << std::endl;
+        std::cout << std::endl;
     }
 
     return 1;

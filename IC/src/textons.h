@@ -16,7 +16,7 @@ class Textons{
 
 private:
 	//visual words parameters
-    int n_samples = 50;
+    int n_samples = 100;
     int filterwidth = 10; // moving average filter
     int k = 5;
 
@@ -34,7 +34,7 @@ private:
 	cv::Mat groundtruth_buffer;
 	cv::Mat graph_buffer;
 	int lastLearnedPosition;
-    int distribution_buf_size = 2000;
+    int distribution_buf_size = 4000;
     int distribution_buf_pointer =0;
 	CvKNearest knn;
 
@@ -48,10 +48,16 @@ private:
     cv::Scalar getColor(int id);
 
 public:
-    int threshold_nn = 40;
+    int threshold_nn = 30;
     int threshold_gt = 95;
     float avgdisp_smoothed;
 
+
+    cv::Mat frame_Itextoncolor;
+    cv::Mat frame_Itextontexton;
+    cv::Mat frame_Gtextoncolor;
+    cv::Mat frame_Gtextontexton;
+    cv::Mat frame_currentHist;
 
 
 
