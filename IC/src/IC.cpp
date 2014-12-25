@@ -78,7 +78,6 @@ int main( int argc, char **argv);
 
 void changeThresh_gt(int value);
 void changeThresh_nn(int value);
-void saveStereoPair();
 
 void combineImage(cv::Mat resFrame, cv::Mat smallsourceimage, int x, int y,int width, int height, bool convertRGB);
 void commOutThread();
@@ -212,10 +211,6 @@ void process_video() {
             tcp.commdata_gt_stdev = stereo.stddevDisparity;
         }
 
-#ifdef EXPORT
-    exporter.write(tcp.commdata_gt,tcp.commdata_gt_stdev,tcp.commdata_nn);
-#endif
-
 #ifdef VIDEORAW
         //combine stereo pair if needed
         if (mode==none  || mode==textons_only) {
@@ -280,7 +275,7 @@ void process_video() {
         if (key==50) {mode=stereo_only;key=0;} //                         [2]: switch stereo mode on, textons off
         if (key==51) {mode=stereo_textons;key=0;} //                      [3]: switch both stereo and textons calucation on
         if (key==52) {mode=stereo_textons_active;key=0;} //               [4]: switch both stereo and textons calucation on, use active learning
-        if (key==92) {saveStereoPair();key=0;} //                         [\]: save stereo image to bmp
+//      if (key==92) {exporter.saveStereoPair();key=0;} //                [\]: save stereo image to bmp
         if (key==114) {frames=0;stopWatch.Restart();msg="Reset";key=0;} //[r]: reset stopwatch
         if (key==97) {changeThresh_nn(1);key=0;} //                       [a]: increase threshold nn
         if (key==122) {changeThresh_nn(-1);key=0;} //                     [z]: decrease threshold nn
@@ -321,7 +316,8 @@ void process_video() {
         tcp.Unlock();
 #endif
 #ifdef EXPORT
-        saveStereoPair();
+        exporter.write(tcp.commdata_gt,tcp.commdata_gt_stdev,tcp.commdata_nn);
+        exporter.saveStereoPair(svcam.frameL_mat,svcam.frameR_mat,stereo.DisparityMat);
 #endif
 
     } // main while loop
@@ -347,23 +343,6 @@ void changeThresh_gt(int value) {
     s << "gt thresh: " << (textonizer.threshold_gt);
     msg=s.str();
 #endif
-}
-
-int saveid=1;
-/*
- * Saves the current stereo image to png files
- * TODO: move to exporter.cpp
- */
-void saveStereoPair() {
-    char str[64];
-
-    sprintf(str,"left%d.png", saveid);
-    cv::imwrite( str, svcam.frameL_mat );
-    sprintf(str,"right%d.png", saveid);
-    cv::imwrite( str, svcam.frameR_mat );
-    sprintf(str,"disp%d.png", saveid);
-    cv::imwrite( str, stereo.DisparityMat);
-    saveid++;
 }
 
 #ifdef USE_TERMINAL_INPUT
