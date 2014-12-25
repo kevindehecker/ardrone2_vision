@@ -93,22 +93,28 @@ void combineAllImages() {
 
 #ifndef DELFLY_COLORMODE
 #if defined(DELFLY)
-    combineImage(resFrame,stereo.DisparityMat,svcam.im_width*4,0,stereo.DisparityMat.cols*2,stereo.DisparityMat.rows*2,false);
+
     combineImage(resFrame,svcam.frameL_mat,0,0,svcam.frameL_mat.cols*2,svcam.frameL_mat.rows*2,true);
 
     //select which result image will be shown next to input image:
     if (result_input2Mode == 1) { //right input image
         combineImage(resFrame,svcam.frameR_mat,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,true);
+        combineImage(resFrame,stereo.DisparityMat,svcam.im_width*4,0,stereo.DisparityMat.cols*2,stereo.DisparityMat.rows*2,false);
     } else if (result_input2Mode == 2) { //texton intensity color encoding
         combineImage(resFrame,textonizer.frame_Itextoncolor,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,false);
+        combineImage(resFrame,textonizer.frame_currentHist,svcam.im_width*4,0,stereo.DisparityMat.cols*2,stereo.DisparityMat.rows*2,false);
     } else if (result_input2Mode == 3) {// texton intensity texton encoding
         combineImage(resFrame,textonizer.frame_Itextontexton,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,true);
+        combineImage(resFrame,stereo.DisparityMat,svcam.im_width*4,0,stereo.DisparityMat.cols*2,stereo.DisparityMat.rows*2,false);
     } else if (result_input2Mode == 4) { //texton gradient color encoding
         combineImage(resFrame,textonizer.frame_Gtextoncolor,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,false);
+        combineImage(resFrame,textonizer.frame_currentHist,svcam.im_width*4,0,stereo.DisparityMat.cols*2,stereo.DisparityMat.rows*2,false);
     } else if (result_input2Mode == 5) {// texton gradient
         combineImage(resFrame,textonizer.frame_Gtextontexton,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,false);
+        combineImage(resFrame,stereo.DisparityMat,svcam.im_width*4,0,stereo.DisparityMat.cols*2,stereo.DisparityMat.rows*2,false);
     } else if (result_input2Mode == 6) {// histogram
         combineImage(resFrame,textonizer.frame_currentHist,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,false);
+        combineImage(resFrame,stereo.DisparityMat,svcam.im_width*4,0,stereo.DisparityMat.cols*2,stereo.DisparityMat.rows*2,false);
     }
 
 
@@ -538,8 +544,8 @@ int main( int argc, char **argv )
    close();
 
    /* auto save at the end */
-//   textonizer.retrainAll();
-//   textonizer.saveRegression();
+   textonizer.retrainAll();
+   textonizer.saveRegression();
 
    return 0;
 }

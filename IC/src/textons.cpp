@@ -552,7 +552,7 @@ int Textons::initTextons() {
     counter =2; // skip first two bytes, as they contain other info
     for (int i = 0;i<n_textons_gradient;i++) {
         std::vector<int16_t> v(patch_square_size);
-        printf("texton_gr[%d]:", i+buffer_i[0]);
+//        printf("texton_gr[%d]:", i+buffer_i[0]);
         for (int j=0;j<patch_square_size;j++) {
 
             uint8_t t0 = buffer_gr[counter];
@@ -560,11 +560,11 @@ int Textons::initTextons() {
             int16_t t = ((t1 << 8) & 0xff00) |  (t0 & 0x00ff);
             counter +=2;
             v[j] = t;
-            if (j>0) {printf(", %d", v[j]);} else {printf(" %d", v[j]);}
+//            if (j>0) {printf(", %d", v[j]);} else {printf(" %d", v[j]);}
         }
         textons[i+n_textons_intensity] = v;
         input_gr.close();
-        std::cout << std::endl;
+//        std::cout << std::endl;
     }
 
     return 1;
