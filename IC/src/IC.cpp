@@ -161,7 +161,6 @@ void combineImage(cv::Mat resFrame, cv::Mat smallsourceimage, int x, int y,int w
  * the camera.
  */
 #ifdef DELFLY_COLORMODE
-
 void process_video() {
     stopWatch.Start();
     int frames = 0;

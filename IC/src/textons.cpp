@@ -1,8 +1,7 @@
 #include "textons.h"
+
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/contrib/contrib.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/core/core.hpp>
 
 #ifdef _PC
 #include <boost/math/special_functions/round.hpp>
@@ -238,7 +237,7 @@ void Textons::drawTextonAnotatedImage(cv::Mat grayframe) {
     }
 
     cv::applyColorMap(frame_Gtextontexton,frame_Gtextontexton,2);
-
+    
 
 //    cv::imshow("TextonColors gradient", frame_Gtextoncolor);
 //    cv::imshow("TextonColors intensity", frame_Itextoncolor);

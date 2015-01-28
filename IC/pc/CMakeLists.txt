@@ -4,12 +4,12 @@ project( IC )
 # directories
 set (LIBELAS_SRC_DIR ../src/Geiger_src)
 set (PROJECT_SRC_DIR ../src)
-set ( CMAKE_PREFIX_PATH /opt/x86_full/gst)
+#set ( CMAKE_PREFIX_PATH /opt/x86_full/gst)
 
 # add packages
 #set(OpenCV_DIR "/home/local/")
-set(OpenCV_DIR "/opt/x86_full/gst/")
-include_directories("/opt/x86_full/gst/include/" "/opt/x86_full/gst/include/opencv/" "/opt/x86_full/gst/include/opencv2/")
+#set(OpenCV_DIR "/opt/x86_full/gst/")
+#include_directories("/opt/x86_full/gst/include/" "/opt/x86_full/gst/include/opencv/" "/opt/x86_full/gst/include/opencv2/")
 find_package( OpenCV REQUIRED )
 MESSAGE( STATUS "OpenCV_DIR: " ${OpenCV_DIR} )
 MESSAGE( STATUS "OpenCV_LIBS: " ${OpenCV_LIBS} )
@@ -44,9 +44,10 @@ ENDIF()
 ADD_DEFINITIONS(-D_PC=${_PC})
 
 
-# build demo program
+# build program
 add_executable( IC ${LIBELAS_SRC_FILES} ${MY_SRC_FILES})
 ##add_executable( IC ${MY_SRC_FILES})
 
 target_link_libraries( IC ${OpenCV_LIBS} )
+
 
