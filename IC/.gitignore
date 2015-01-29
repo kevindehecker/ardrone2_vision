@@ -3,3 +3,4 @@ build
 qt-build
 calib*
 pc-gui-qtbuild
+qtcreator-build

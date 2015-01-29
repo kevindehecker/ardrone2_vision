@@ -9,7 +9,7 @@
 
 bool FileCam::init () {
 
-    video = cv::VideoCapture("/home/houjebek/AfstudeerData/DroneCam/AutonomousFlightGroundtruth13/video_dsp.avi");
+    video = cv::VideoCapture("/home/goggles/Desktop/video_dsp.avi");
 //    video = cv::VideoCapture("/home/houjebek/AfstudeerData/Experiments/CyberZoo/Walks/video_dsp.avi");
 
     if (!video.isOpened()) {

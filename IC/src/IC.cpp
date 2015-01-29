@@ -27,6 +27,18 @@
 
 #include "stopwatch.h"
 
+
+#include "caffe/caffe.hpp"
+
+using caffe::Blob;
+using caffe::Caffe;
+using caffe::Net;
+using caffe::Layer;
+using caffe::shared_ptr;
+using caffe::Timer;
+using caffe::vector;
+
+
 /***********Enums****************/
 enum modus_t {none, stereo_only, textons_only, stereo_textons, stereo_textons_active};
 
@@ -511,12 +523,24 @@ void close() {
 
 }
 
+
+void initCaffe() {
+    caffe::Caffe::set_mode(caffe::Caffe::CPU);
+
+    caffe::SolverParameter solver_param;
+    caffe::ReadProtoFromTextFileOrDie("/home/goggles/caffe/examples/cifar10/cifar10_quick_solver.prototxt", &solver_param);
+
+
+}
+
 int main( int argc, char **argv )
 {
    if (init(argc,argv)) {return 1;}
 
    /* clear learning buffer instead of using old stuff */
 //   textonizer.initLearner(true);
+
+   initCaffe();
 
    process_video();
    close();
