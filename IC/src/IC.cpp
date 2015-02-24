@@ -105,36 +105,41 @@ void combineAllImages() {
 #ifndef DELFLY_COLORMODE
 #if defined(DELFLY)
 
-    combineImage(resFrame,svcam.frameL_mat,0,0,svcam.frameL_mat.cols*2,svcam.frameL_mat.rows*2,true);
+	int im_width = resFrame.cols;
+	int im_height = resFrame.rows;
+	int sub_width = im_width/3;
+	int sub_height = im_height/2;
+
+	combineImage(resFrame,svcam.frameL_mat,0,0,sub_width,sub_height,true);
 
     //select which result image will be shown next to input image:
-    if (result_input2Mode == 1) { //right input image
-        combineImage(resFrame,svcam.frameR_mat,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,true);
-        combineImage(resFrame,stereo.DisparityMat,svcam.im_width*4,0,stereo.DisparityMat.cols*2,stereo.DisparityMat.rows*2,false);
-    } else if (result_input2Mode == 2) { //texton intensity color encoding
-        combineImage(resFrame,textonizer.frame_Itextoncolor,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,false);
-        combineImage(resFrame,textonizer.frame_currentHist,svcam.im_width*4,0,stereo.DisparityMat.cols*2,stereo.DisparityMat.rows*2,false);
-    } else if (result_input2Mode == 3) {// texton intensity texton encoding
-        combineImage(resFrame,textonizer.frame_Itextontexton,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,true);
-        combineImage(resFrame,stereo.DisparityMat,svcam.im_width*4,0,stereo.DisparityMat.cols*2,stereo.DisparityMat.rows*2,false);
-    } else if (result_input2Mode == 4) { //texton gradient color encoding
-        combineImage(resFrame,textonizer.frame_Gtextoncolor,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,false);
-        combineImage(resFrame,textonizer.frame_currentHist,svcam.im_width*4,0,stereo.DisparityMat.cols*2,stereo.DisparityMat.rows*2,false);
-    } else if (result_input2Mode == 5) {// texton gradient
-        combineImage(resFrame,textonizer.frame_Gtextontexton,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,false);
-        combineImage(resFrame,stereo.DisparityMat,svcam.im_width*4,0,stereo.DisparityMat.cols*2,stereo.DisparityMat.rows*2,false);
-    } else if (result_input2Mode == 6) {// histogram
-        combineImage(resFrame,textonizer.frame_currentHist,svcam.im_width*2,0,svcam.im_width*2,svcam.im_height*2,false);
-        combineImage(resFrame,stereo.DisparityMat,svcam.im_width*4,0,stereo.DisparityMat.cols*2,stereo.DisparityMat.rows*2,false);
+    if (result_input2Mode == 1) { //right input image        
+		combineImage(resFrame,svcam.frameR_mat,sub_width,0,sub_width,sub_height,true);
+		combineImage(resFrame,stereo.DisparityMat,sub_width*2,0,sub_width,sub_height,false);
+    } else if (result_input2Mode == 2) { //texton intensity color encoding        
+		combineImage(resFrame,textonizer.frame_Itextoncolor,sub_width,0,sub_width,sub_height,false);
+		combineImage(resFrame,textonizer.frame_currentHist,sub_width*2,0,sub_width,sub_height,false);
+    } else if (result_input2Mode == 3) {// texton intensity texton encoding        
+		combineImage(resFrame,textonizer.frame_Itextontexton,sub_width,0,sub_width,sub_height,true);
+		combineImage(resFrame,stereo.DisparityMat,sub_width*2,0,sub_width,sub_height,false);
+    } else if (result_input2Mode == 4) { //texton gradient color encoding        
+		combineImage(resFrame,textonizer.frame_Gtextoncolor,sub_width,0,sub_width,sub_height,false);
+		combineImage(resFrame,textonizer.frame_currentHist,sub_width*2,0,sub_width,sub_height,false);
+    } else if (result_input2Mode == 5) {// texton gradient        
+		combineImage(resFrame,textonizer.frame_Gtextontexton,sub_width,0,sub_width,sub_height,false);
+		combineImage(resFrame,stereo.DisparityMat,sub_width*2,0,sub_width,sub_height,false);
+	} else if (result_input2Mode == 6) {// histogram       , but press shift 7!
+		combineImage(resFrame,textonizer.frame_currentHist,sub_width,0,sub_width,sub_height,false);
+		combineImage(resFrame,stereo.DisparityMat,sub_width*2,0,sub_width,sub_height,false);
     }
 
 
-    combineImage(resFrame,textonizer.graphFrame,0,svcam.im_height*2,svcam.im_width*6,svcam.im_height*2,false);
+	combineImage(resFrame,textonizer.graphFrame,0,sub_height,im_width,sub_height,false);
 #else
-    combineImage(resFrame,stereo.DisparityMat,svcam.im_width,0,stereo.DisparityMat.cols,stereo.DisparityMat.rows,false);
+	combineImage(resFrame,stereo.DisparityMat,svcam.getImWidth(),0,stereo.DisparityMat.cols,stereo.DisparityMat.rows,false);
     combineImage(resFrame,svcam.frameL_mat,0,0,svcam.frameL_mat.cols/2,svcam.frameL_mat.rows/2,true);
-    combineImage(resFrame,svcam.frameR_mat,svcam.im_width/2,0,svcam.im_width/2,svcam.im_height/2,true);
-    combineImage(resFrame,textonizer.graphFrame,0,svcam.im_height/2,svcam.im_width*1.5,svcam.im_height/2,false);
+	combineImage(resFrame,svcam.frameR_mat,svcam.getImWidth()/2,0,svcam.getImWidth()/2,svcam.getImHeight()/2,true);
+	combineImage(resFrame,textonizer.graphFrame,0,svcam.getImHeight()/2,svcam.getImWidth()*1.5,svcam.getImHeight()/2,false);
 #endif
 #endif
 
@@ -418,7 +423,7 @@ int init(int argc, char **argv) {
 
     /***init the stereo vision (groundtruth) algorithm ****/
     std::cout << "Initialising stereo algorithm\n";
-    stereo.init(svcam.im_width, svcam.im_height); //sv initialisation can only happen after cam start, because it needs the im dims
+	stereo.init(svcam.getImWidth(), svcam.getImHeight()); //sv initialisation can only happen after cam start, because it needs the im dims
 
     /*****init the (G)UI*****/
 #ifdef HASSCREEN
@@ -446,9 +451,9 @@ int init(int argc, char **argv) {
 #endif
 #if defined(HASSCREEN) || defined(VIDEORESULTS)
 #ifdef DUOWEBCAM
-    resFrame = cv::Mat::zeros(svcam.im_height, svcam.im_width*1.5,CV_8UC3);
+	resFrame = cv::Mat::zeros(svcam.getImHeight(), svcam.getImWidth()*1.5,CV_8UC3);
 #else
-    resFrame = cv::Mat::zeros(4*svcam.im_height, 6*svcam.im_width,CV_8UC3);
+	resFrame = cv::Mat::zeros(4*svcam.getImHeight(), 6*svcam.getImWidth(),CV_8UC3);
 #endif
 #endif
 
@@ -456,7 +461,7 @@ int init(int argc, char **argv) {
 #ifdef VIDEORAW
 
 #ifdef DELFLY_COLORMODE
-    cv::Size size(svcam.im_width,svcam.im_height);
+	cv::Size size(svcam.getImWidth(),svcam.getImHeight());
 #ifdef pc
     //outputVideo.open("appsrc ! ffmpegcolorspace ! ffenc_mpeg4 ! avimux ! filesink location=testvid.avi",CV_FOURCC('H','O','E','R'),VIDEOFPS,size,true);
     outputVideo.open("video.avi",CV_FOURCC('M','P','E','G'),VIDEOFPS,size,true);
@@ -466,7 +471,7 @@ int init(int argc, char **argv) {
 #endif
 
 #else // stereo vision mode
-    cv::Size size(svcam.im_width*2,svcam.im_height); // for dsp encoding, ensure multiples of 16
+	cv::Size size(svcam.getImWidth()*2,svcam.getImHeight()); // for dsp encoding, ensure multiples of 16
 #ifdef _PC
     //outputVideo.open("appsrc ! ffmpegcolorspace ! ffenc_mpeg4 ! avimux ! filesink location=video_wifi.avi",CV_FOURCC('H','O','E','R'),VIDEOFPS,size,false);
     outputVideo.open("video_wifi.avi",CV_FOURCC('M','P','E','G'),VIDEOFPS,size,false);
@@ -538,7 +543,7 @@ int main( int argc, char **argv )
    if (init(argc,argv)) {return 1;}
 
    /* clear learning buffer instead of using old stuff */
-//   textonizer.initLearner(true);
+   textonizer.initLearner(true);
 
    initCaffe();
 

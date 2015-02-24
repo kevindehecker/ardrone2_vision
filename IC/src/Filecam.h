@@ -18,7 +18,10 @@ class FileCam{
 
 
 private:
-    std::mutex g_lockWaitForImage1;
+	int im_width;
+	int im_height;
+	int scaleFactor = 1;
+	std::mutex g_lockWaitForImage1;
     std::mutex g_lockWaitForImage2;
     bool copyNewImage;
     std::thread thread_cam;
@@ -28,8 +31,7 @@ private:
     stopwatch_c stopWatch;
 
 public:
-    int im_width;
-    int im_height;
+
     int nFrames;
 
     int fastforward;
@@ -44,7 +46,8 @@ public:
 	void start (void) ;
 	void waitForImage(void);
 	void close (void);
-
+	int getImWidth();
+	int getImHeight();
 
 
 };

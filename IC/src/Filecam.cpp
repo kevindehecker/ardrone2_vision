@@ -9,7 +9,7 @@
 
 bool FileCam::init () {
 
-    video = cv::VideoCapture("/home/goggles/Desktop/video_dsp.avi");
+	video = cv::VideoCapture("/home/goggles/Desktop/LeftRight.avi");
 //    video = cv::VideoCapture("/home/houjebek/AfstudeerData/Experiments/CyberZoo/Walks/video_dsp.avi");
 
     if (!video.isOpened()) {
@@ -100,6 +100,10 @@ void FileCam::workerThread() {
         cvtColor(frameC,frameC,CV_RGB2GRAY,CV_8UC1);
         splitIm(frameC,&frameL,&frameR);
 
+		cv::Point size(frameL.cols/scaleFactor,frameL.rows/scaleFactor);
+		cv::resize(frameL,frameL_mat,size);
+
+
         frameL.copyTo(frameL_mat);
         frameR.copyTo(frameR_mat);
 
@@ -113,4 +117,11 @@ void FileCam::workerThread() {
 
 }
 
+int FileCam::getImHeight() {
+	return im_height/scaleFactor;
+}
+
+int FileCam::getImWidth() {
+	return im_width/scaleFactor;
+}
 #endif

@@ -87,7 +87,7 @@ void Textons::drawMeanHists(cv::Mat histimage) {
     int hist_height= 200; // idem
 
     cv::Mat canvas_allHists = cv::Mat::zeros(hist_height*2,hist_width*3,CV_8UC3);
-    cv::Mat meanhists = cv::Mat::zeros(nHists, n_textons, cv::DataType<float>::type);
+	cv::Mat meanhists = cv::Mat::zeros(nHists, 20, cv::DataType<float>::type);
     cv::Mat amounts = cv::Mat::zeros(nHists, 1, cv::DataType<int>::type);
 
     //get the maximum disparity (range), in order to determine the histogram borders (of the 5 histograms)
@@ -99,13 +99,16 @@ void Textons::drawMeanHists(cv::Mat histimage) {
         cv::Mat hist;
         distribution_buffer.row(j).copyTo(hist); // distribution_buffer is in float, so copy like this needed -> not any more TODO: fix
         int id = ceil((groundtruth_buffer.at<float>(j) / f))-1; // calc which hist this frame belongs to
+		float hrrrr = groundtruth_buffer.at<float>(j);
+		//std::cout << groundtruth_buffer.at<float>(j) << "\n";
         if (id<0){id=0;} // catch gt = 0;
+		else if (id>nHists-1){id=nHists-1;} // catch gt = maxgt, can happen due to float/double difference, with some compilers at least... weird;
 
         if (!(groundtruth_buffer.at<float>(j) > 6.199 && groundtruth_buffer.at<float>(j) < 6.2001)) { // exclude unused buffer
             amounts.at<int>(id)++; // keep track of amount of frames in a each hist range
 
             //add hist of current frame to the cumulator of the specific range
-            cv::Mat tmp = meanhists.row(id);
+			cv::Mat tmp = meanhists.row(id);
             for (int k = 0; k<n_textons; k++) {
                 tmp.at<float>(k) = tmp.at<float>(k) + hist.at<float>(k);
             }
@@ -148,16 +151,16 @@ void Textons::drawMeanHists(cv::Mat histimage) {
        cv::Point p1(x, y);
        cv::Point p2(x+hist_width, y+hist_height);
        cv::Mat roi = cv::Mat(canvas_allHists, cv::Rect(p1, p2));
-       canvas.copyTo(roi);
+	   canvas.copyTo(roi);
 
     }
 
-    //copy the normal histogram to the big image
-    putText(histimage,"Current frame",cv::Point(0, 20),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
-    cv::Mat roi_o = cv::Mat(canvas_allHists, cv::Rect(cv::Point(0, 0), cv::Point(hist_width, hist_height)));
-    histimage.copyTo(roi_o);
+	//copy the normal histogram to the big image
+	putText(histimage,"Current frame",cv::Point(0, 20),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+	cv::Mat roi_o = cv::Mat(canvas_allHists, cv::Rect(cv::Point(0, 0), cv::Point(hist_width, hist_height)));
+	histimage.copyTo(roi_o);
 
-    cv::imshow("Histograms", canvas_allHists);
+	cv::imshow("Histograms", canvas_allHists);
 
 }
 
@@ -476,7 +479,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 
 #ifdef DRAWVIZS
     frame_currentHist = drawHistogram(hist*150,n_textons,200);
-    drawMeanHists(frame_currentHist);
+	drawMeanHists(frame_currentHist);
     drawTextonAnotatedImage(grayframe);
 #endif
 }

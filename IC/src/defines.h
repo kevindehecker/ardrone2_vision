@@ -17,17 +17,17 @@
 
 #ifndef DELFLY_COLORMODE
 
-//#define VIDEORESULTS // show the main results window
-//#define DRAWVIZS    //show secundairy results (histograms and texton visulaisations
-#define EXPORT //create export.txt and seperate stereo pair png images
+#define VIDEORESULTS // show the main results window
+#define DRAWVIZS    //show secundairy results (histograms and texton visulaisations
+//#define EXPORT //create export.txt and seperate stereo pair png images
 
-//#define GEIGER // use libelas Geiger stereo algorithm
-#define SGM  //use OpenCV Semi Global Matching stereo algorithm
+#define GEIGER // use libelas Geiger stereo algorithm
+//#define SGM  //use OpenCV Semi Global Matching stereo algorithm
 //#define BM currently not completely implemented
 //#define LONGSEC // use Kirk's implementation of LONGSEC stereo algorithm
 #endif
 
-//#define HASSCREEN // dont disable in qt debugger!
+#define HASSCREEN // dont disable in qt debugger!
 #ifndef FILECAM
 #define VIDEORAW // write the raw video footage from the camera to a video file
 #endif
