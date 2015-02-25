@@ -57,11 +57,18 @@ cv::Mat Textons::drawHistogram(cv::Mat hist,int bins, int maxY) {
     canvas = cv::Mat::ones(maxY, bins*line_width, CV_8UC3);
 
     int rows = canvas.rows;
-    for (int j = 0; j < bins-1; j++)
+	for (int j = 0; j < bins; j++)
     {
         cv::Scalar c = getColor(j);
-        cv::line(canvas,cv::Point(j*line_width, rows),cv::Point(j*line_width, rows - (hist.at<float>(j))),c, line_width, 8, 0);
-    }    
+		cv::line(canvas,cv::Point(j*line_width, rows),cv::Point(j*line_width, rows - (150*hist.at<float>(j))),c, line_width, 8, 0);
+	}
+
+
+	//copy the normal histogram to the big image
+	std::stringstream s;
+	s << "Entropy: " << hist.at<float>(n_textons) ;
+	putText(canvas,s.str(),cv::Point(0, 40),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+
     return canvas;
 }
 
@@ -99,7 +106,6 @@ void Textons::drawMeanHists(cv::Mat histimage) {
         cv::Mat hist;
         distribution_buffer.row(j).copyTo(hist); // distribution_buffer is in float, so copy like this needed -> not any more TODO: fix
         int id = ceil((groundtruth_buffer.at<float>(j) / f))-1; // calc which hist this frame belongs to
-		float hrrrr = groundtruth_buffer.at<float>(j);
 		//std::cout << groundtruth_buffer.at<float>(j) << "\n";
         if (id<0){id=0;} // catch gt = 0;
 		else if (id>nHists-1){id=nHists-1;} // catch gt = maxgt, can happen due to float/double difference, with some compilers at least... weird;
@@ -124,7 +130,7 @@ void Textons::drawMeanHists(cv::Mat histimage) {
         //calc average for each hist
         for (int j = 0; j<n_textons; j++) {
             if (amounts.at<int>(i) > 0 ) {
-                tmp.at<float>(j) = (tmp.at<float>(j) / (float)amounts.at<int>(i))*150;
+				tmp.at<float>(j) = (tmp.at<float>(j) / (float)amounts.at<int>(i));
             } else {
                  tmp.at<float>(j) = 0;
             }
@@ -375,7 +381,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
     int16_t sample[patch_square_size];
     int16_t sample_dx[patch_square_size]; // gradient
     cv::Mat hist;
-    hist = cv::Mat::zeros(1, n_textons, cv::DataType<float>::type);
+	hist = cv::Mat::zeros(1, n_textons+1, cv::DataType<float>::type); // +1 -> entropy
 
     for(int n=0;n<n_samples;n++){
 
@@ -407,34 +413,69 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 //            imshow("patch", test );
 //        }
 
-        //get the and sum distances to this patch to the textons...
-        std::vector<float> distances_gr(n_textons_gradient); // distances, TODO: float does not seem necessary -> int?
-        std::vector<float> distances_i(n_textons_intensity); // distances
-        float sum_i=0;
-        float sum_gr=0;
+		if (method==CUMULATIVE) {
+			//get the and sum distances to this patch to the textons...
+			std::vector<float> distances_gr(n_textons_gradient); // distances, TODO: float does not seem necessary -> int?
+			std::vector<float> distances_i(n_textons_intensity); // distances
+			float sum_i=0;
+			float sum_gr=0;
 
-        for(int j=0;j<n_textons;j++) {
-            if (j < n_textons_intensity) {
-                distances_i.at(j) = getEuclDistance(sample,j);
-                hist.at<float>(j) = distances_i.at(j);
-                sum_i +=hist.at<float>(j);
-            } else {
-                distances_gr.at(j-n_textons_intensity) = getEuclDistance(sample_dx,j);
-                hist.at<float>(j) = distances_gr.at(j-n_textons_intensity);
-                sum_gr +=hist.at<float>(j);
-            }
-        }
+			for(int j=0;j<n_textons;j++) {
+				if (j < n_textons_intensity) {
+					distances_i.at(j) = getEuclDistance(sample,j);
+					hist.at<float>(j) = distances_i.at(j);
+					sum_i +=hist.at<float>(j);
+				} else {
+					distances_gr.at(j-n_textons_intensity) = getEuclDistance(sample_dx,j);
+					hist.at<float>(j) = distances_gr.at(j-n_textons_intensity);
+					sum_gr +=hist.at<float>(j);
+				}
+			}
 
-        //normalize
-        for(int j=0;j<n_textons;j++) {
-            if (j < n_textons_intensity) {
-                hist.at<float>(j) /=sum_i;
-            } else {
-                hist.at<float>(j) /=sum_gr;
-            }
-        }
+			//normalize
+			for(int j=0;j<n_textons;j++) {
+				if (j < n_textons_intensity) {
+					hist.at<float>(j) /=sum_i;
+				} else {
+					hist.at<float>(j) /=sum_gr;
+				}
+			}
 
+		}  else {
+
+			cv::Mat distances_gr = cv::Mat::zeros(n_textons_gradient,1,CV_32F);
+			cv::Mat distances_i = cv::Mat::zeros(n_textons_gradient,1,CV_32F);
+
+			for(int j=0;j<n_textons;j++) {
+				if (j < n_textons_intensity) {
+					distances_i.at<float>(j,0) = getEuclDistance(sample,j);
+				} else {
+					distances_gr.at<float>(j-n_textons_intensity,0) = getEuclDistance(sample_dx,j);
+				}
+			}
+			cv::Point min_element_gr,min_element_i;
+			cv::minMaxLoc(distances_i,NULL, NULL, &min_element_i,NULL);
+			cv::minMaxLoc(distances_gr,NULL, NULL, &min_element_gr,NULL);
+
+
+			hist.at<float>(min_element_i.y) = hist.at<float>(min_element_i.y) + 0.0005;
+			hist.at<float>(min_element_gr.y + n_textons_intensity) = hist.at<float>(min_element_gr.y + n_textons_intensity) + 0.0005;
+
+
+		}
     }
+
+	float sum = cv::sum(hist)(0); //is already one? How can that be...
+	float entropy =0;
+	for (int i = 0 ; i < n_textons; i++) {
+		float f = hist.at<float>(i) / sum;
+		if (f!=0) {
+			entropy  = entropy  - f * log(f)/log(2);
+		}
+	}
+	hist.at<float>(n_textons) = entropy;
+	std:: cout << "Entropy: " << entropy << std::endl;
+
 
     //copy new data into learning buffer:
     cv::Mat M1 = distribution_buffer.row((distribution_buf_pointer+0) % distribution_buf_size) ;
@@ -478,8 +519,8 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
     graph_buffer.at<float>(distribution_buf_pointer,1) = avgdisp_smoothed; // groundtruth
 
 #ifdef DRAWVIZS
-    frame_currentHist = drawHistogram(hist*150,n_textons,200);
-	drawMeanHists(frame_currentHist);
+	frame_currentHist = drawHistogram(hist,n_textons,200);
+	//drawMeanHists(frame_currentHist);
     drawTextonAnotatedImage(grayframe);
 #endif
 }
@@ -581,7 +622,7 @@ int Textons::initTextons() {
  */
 bool Textons::initLearner(bool nulltrain) {
     srand (time(NULL));
-    distribution_buffer = cv::Mat::zeros(distribution_buf_size, n_textons, cv::DataType<float>::type);
+	distribution_buffer = cv::Mat::zeros(distribution_buf_size, n_textons+1, cv::DataType<float>::type);
     groundtruth_buffer = cv::Mat::zeros(distribution_buf_size, 1, cv::DataType<float>::type);
     graph_buffer = cv::Mat::zeros(distribution_buf_size, 2, cv::DataType<float>::type);
     groundtruth_buffer = groundtruth_buffer +6.2; //for testing...

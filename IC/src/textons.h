@@ -13,8 +13,8 @@ class Textons{
 
 private:
 	//visual words parameters
-    int n_samples = 100;
-    int filterwidth = 10; // moving average filter
+	int n_samples = 1000;
+	int filterwidth = 5; // moving average filter
     int k = 5;
 
     // to be loaded from textons*.dat dictionary files:
@@ -23,6 +23,10 @@ private:
     unsigned char n_textons_intensity;
     unsigned char patch_size;
     unsigned char patch_square_size;
+
+#define CUMULATIVE  0
+#define MINIMUM_DISTANCE 1
+	const int method = MINIMUM_DISTANCE;
     std::vector<std::vector<int16_t> > textons;
 
 
