@@ -35,8 +35,12 @@ FILE(GLOB LIBELAS_SRC_FILES "../src/Geiger_src/*.cpp")
 FILE(GLOB MY_SRC_FILES "../src/*.cpp" "../src/*.h" "../src/*.c")
 
 # use sse3 instruction set for libelas and c11 for threading (among others)
+
 SET(CMAKE_CXX_FLAGS "-msse3 -std=c++11")
 #SET(CMAKE_CXX_FLAGS "-msse3 -std=c++0x -pthread")
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -og")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -o3")
 
 #detect whether we build for ARM drone or pc
 IF (NOT DEFINED _PC)
@@ -49,5 +53,4 @@ ADD_DEFINITIONS(-D_PC=${_PC})
 add_executable( IC ${LIBELAS_SRC_FILES} ${MY_SRC_FILES})
 
 target_link_libraries( IC ${OpenCV_LIBS} ${Caffe_LIBRARIES} )
-
 

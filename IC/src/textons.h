@@ -14,6 +14,7 @@ class Textons{
 private:
 	//visual words parameters
 	int n_samples = 1000;
+	float hist_step; // 1/n_samples for histogram sum ==1
 	int filterwidth = 5; // moving average filter
     int k = 5;
 
@@ -61,6 +62,9 @@ public:
     cv::Mat frame_currentHist;
 
 
+	Textons() {
+		hist_step = 1/(float)n_samples;
+	}
 
     bool init (void);
     bool close(void);

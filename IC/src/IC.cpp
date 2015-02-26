@@ -330,9 +330,12 @@ void process_video() {
 #endif
 
         frames++;
+		if (frames == 1500) {
+			textonizer.retrainAll();
+		}
         float time = stopWatch.Read()/1000;
         tcp.commdata_fps = frames /(time);
-        std::cout << "Fps: " << tcp.commdata_fps << std::endl;
+		std::cout << "#" << frames << ", fps: " << tcp.commdata_fps << std::endl;
 
 #ifdef USE_SOCKET
         tcp.Unlock();

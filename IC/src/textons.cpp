@@ -444,7 +444,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 		}  else {
 
 			cv::Mat distances_gr = cv::Mat::zeros(n_textons_gradient,1,CV_32F);
-			cv::Mat distances_i = cv::Mat::zeros(n_textons_gradient,1,CV_32F);
+			cv::Mat distances_i = cv::Mat::zeros(n_textons_intensity,1,CV_32F);
 
 			for(int j=0;j<n_textons;j++) {
 				if (j < n_textons_intensity) {
@@ -458,17 +458,17 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 			cv::minMaxLoc(distances_gr,NULL, NULL, &min_element_gr,NULL);
 
 
-			hist.at<float>(min_element_i.y) = hist.at<float>(min_element_i.y) + 0.0005;
-			hist.at<float>(min_element_gr.y + n_textons_intensity) = hist.at<float>(min_element_gr.y + n_textons_intensity) + 0.0005;
+			hist.at<float>(min_element_i.y) = hist.at<float>(min_element_i.y) + hist_step;
+			hist.at<float>(min_element_gr.y + n_textons_intensity) = hist.at<float>(min_element_gr.y + n_textons_intensity) + hist_step;
 
 
 		}
     }
 
-	float sum = cv::sum(hist)(0); //is already one? How can that be...
+	//float sum = cv::sum(hist)(0);
 	float entropy =0;
 	for (int i = 0 ; i < n_textons; i++) {
-		float f = hist.at<float>(i) / sum;
+		float f = hist.at<float>(i); // sum;
 		if (f!=0) {
 			entropy  = entropy  - f * log(f)/log(2);
 		}
