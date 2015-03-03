@@ -56,7 +56,7 @@ public:
 	int threshold_gt = 200;
 
 	float tpr_threshold = 0.98;
-	float fpr_threshold = 0.7;
+	float fpr_best = 0.7;
     float avgdisp_smoothed;
 
 

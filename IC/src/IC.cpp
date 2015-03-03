@@ -341,7 +341,7 @@ void process_video() {
 
 		if ((frames % 100) == 99) {
 			textonizer.retrainAll();
-			//textonizer.saveRegression();
+			//textonizer.saveRegression();			
 			std::cout << "mod: " << frames % 100 << "\n|" ;
 		}
 
@@ -560,7 +560,7 @@ int main( int argc, char **argv )
    if (init(argc,argv)) {return 1;}
 
    /* clear learning buffer instead of using old stuff */
-  // textonizer.initLearner(true);
+   //textonizer.initLearner(true);
 
 //   initCaffe();
 
@@ -569,7 +569,7 @@ int main( int argc, char **argv )
 
    /* auto save at the end */
    textonizer.retrainAll();
-   //textonizer.saveRegression();
+   textonizer.saveRegression();
 
    return 0;
 }

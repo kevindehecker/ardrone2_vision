@@ -138,7 +138,7 @@ void Textons::drawMeanHists(cv::Mat histimage) {
             if (amounts.at<int>(i) > 0 ) {
 				tmp.at<float>(j) = (tmp.at<float>(j) / (float)amounts.at<int>(i));
             } else {
-                 tmp.at<float>(j) = 0;
+				tmp.at<float>(j) = 0;
             }
 
         }
@@ -146,24 +146,24 @@ void Textons::drawMeanHists(cv::Mat histimage) {
 
 
         //create an image of it
-       cv::Mat canvas =  drawHistogram(tmp,n_textons,200);
-       std::stringstream s;
-       s << "Disps: " << (int)(f*i) << " - " << (int)(f*(i+1)) << ", #" << amounts.at<int>(i);
-       putText(canvas,s.str(),cv::Point(0, 20),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+		cv::Mat canvas =  drawHistogram(tmp,n_textons,200);
+		std::stringstream s;
+		s << "Disps: " << (int)(f*i) << " - " << (int)(f*(i+1)) << ", #" << amounts.at<int>(i);
+		putText(canvas,s.str(),cv::Point(0, 20),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
 
-       //and copy it to the big image
-       int x,y;
-       if (i <2) {
-           x = (i+1)*hist_width;
-           y=0;
-       } else {
-           x = (i-2)*hist_width;
-           y=hist_height;
-       }
-       cv::Point p1(x, y);
-       cv::Point p2(x+hist_width, y+hist_height);
-       cv::Mat roi = cv::Mat(canvas_allHists, cv::Rect(p1, p2));
-	   canvas.copyTo(roi);
+		//and copy it to the big image
+		int x,y;
+		if (i <2) {
+			x = (i+1)*hist_width;
+			y=0;
+		} else {
+			x = (i-2)*hist_width;
+			y=hist_height;
+		}
+		cv::Point p1(x, y);
+		cv::Point p2(x+hist_width, y+hist_height);
+		cv::Mat roi = cv::Mat(canvas_allHists, cv::Rect(p1, p2));
+		canvas.copyTo(roi);
 
     }
 
@@ -187,7 +187,7 @@ void Textons::drawTextonAnotatedImage(cv::Mat grayframe) {
     cv::cvtColor(grayframe, frame_Gtextoncolor, CV_GRAY2BGR);
     cv::cvtColor(grayframe, frame_Itextoncolor, CV_GRAY2BGR);
     frame_Gtextontexton = cv::Mat::zeros(grayframe.rows,grayframe.cols,CV_8UC1);
-//    grayframe.copyTo(frame_Gtextontexton);
+	//    grayframe.copyTo(frame_Gtextontexton);
     grayframe.copyTo(frame_Itextontexton);
 
     // for all possible patches (non overlapping)
@@ -211,7 +211,7 @@ void Textons::drawTextonAnotatedImage(cv::Mat grayframe) {
                         sample_dx[yy*patch_size+xx] += (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx-1));
                         sample_dx[yy*patch_size+xx] /=2;
                     }
-                     // grayframe.at<uint8_t>(y+yy,x+xx) = 255; // uncomment to visualise picking
+					// grayframe.at<uint8_t>(y+yy,x+xx) = 255; // uncomment to visualise picking
                 }
             }
 
@@ -228,8 +228,8 @@ void Textons::drawTextonAnotatedImage(cv::Mat grayframe) {
             }
 
             //...and find out the closest texton:
-           int min_id_i = std::min_element(distances_i.begin(), distances_i.end()) - distances_i.begin(); //jàààhoor
-           int min_id_gr = std::min_element(distances_gr.begin(), distances_gr.end()) - distances_gr.begin() + n_textons_intensity; //jàààhoor
+			int min_id_i = std::min_element(distances_i.begin(), distances_i.end()) - distances_i.begin(); //jàààhoor
+			int min_id_gr = std::min_element(distances_gr.begin(), distances_gr.end()) - distances_gr.begin() + n_textons_intensity; //jàààhoor
 
             //draw colored rectangle:
             cv::rectangle(frame_Gtextoncolor,cv::Point(x, y),cv::Point(x+5, y+5),getColor(min_id_gr), line_width, 8, 0);
@@ -254,10 +254,10 @@ void Textons::drawTextonAnotatedImage(cv::Mat grayframe) {
     cv::applyColorMap(frame_Gtextontexton,frame_Gtextontexton,2);
     
 
-//    cv::imshow("TextonColors gradient", frame_Gtextoncolor);
-//    cv::imshow("TextonColors intensity", frame_Itextoncolor);
-//    cv::imshow("TextonEncoded gradient", frame_Gtextontexton);
-//    cv::imshow("TextonEncoded intensity", frame_Itextontexton);
+	//    cv::imshow("TextonColors gradient", frame_Gtextoncolor);
+	//    cv::imshow("TextonColors intensity", frame_Itextoncolor);
+	//    cv::imshow("TextonEncoded gradient", frame_Gtextontexton);
+	//    cv::imshow("TextonEncoded intensity", frame_Itextontexton);
 
 }
 
@@ -312,28 +312,28 @@ void Textons::drawGraph(std::string msg) {
 
         if (!(groundtruth_buffer.at<float>(jj) < 6.201 && groundtruth_buffer.at<float>(jj) > 6.199)) {
 
-        //draw a small colored line above to indicate what the drone will do:
-        if (nn < threshold_nn && gt > threshold_gt) {
-            //false negative; drone should stop according to stereo, but didn't if textons were used
-            //white
-            negative_false++;
-            cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(255,255,255), line_width, 8, 0);
-        } else if (nn > threshold_nn && gt < threshold_gt) {
-            //false positive; drone could have proceeded according to stereo, but stopped if textons were used
-            //black
-            positive_false++;
-            cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,0,0), line_width, 8, 0);
-        } else if (nn > threshold_nn && gt > threshold_gt) {
-            //true positive; both stereo and textons agree, drone should stop
-            //red
-            negative_true++;
-            cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,0,255), line_width, 8, 0);
-        } else {
-            //both stereo and textons agree, drone may proceed
-            //green
-            positive_true++;
-            cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,255,0), line_width, 8, 0);
-        }
+			//draw a small colored line above to indicate what the drone will do:
+			if (nn < threshold_nn && gt > threshold_gt) {
+				//false negative; drone should stop according to stereo, but didn't if textons were used
+				//white
+				negative_false++;
+				cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(255,255,255), line_width, 8, 0);
+			} else if (nn > threshold_nn && gt < threshold_gt) {
+				//false positive; drone could have proceeded according to stereo, but stopped if textons were used
+				//black
+				positive_false++;
+				cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,0,0), line_width, 8, 0);
+			} else if (nn > threshold_nn && gt > threshold_gt) {
+				//true positive; both stereo and textons agree, drone should stop
+				//red
+				negative_true++;
+				cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,0,255), line_width, 8, 0);
+			} else {
+				//both stereo and textons agree, drone may proceed
+				//green
+				positive_true++;
+				cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,255,0), line_width, 8, 0);
+			}
 
         }
 
@@ -363,34 +363,34 @@ void Textons::drawGraph(std::string msg) {
 	//TODO: move the following draw function out of the loop
 	//draw nn vision threshold:
 	cv::line(graphFrame, cv::Point(0, rows- threshold_nn*scaleY), cv::Point(graphFrame.cols, rows -  threshold_nn*scaleY),color_invert, line_width, 8, 0);
-	putText(graphFrame,"est.thresh",cv::Point(0, rows- threshold_nn*scaleY+10),cv::FONT_HERSHEY_SIMPLEX,0.4,color_invert);
+	putText(graphFrame,"est.thresh.",cv::Point(0, rows- threshold_nn*scaleY+10),cv::FONT_HERSHEY_SIMPLEX,0.4,color_invert);
 	//draw gt vision threshold:
 	cv::line(graphFrame, cv::Point(0, rows- threshold_gt*scaleY), cv::Point(graphFrame.cols, rows -  threshold_gt*scaleY),color_vert, line_width, 8, 0);
-	putText(graphFrame,"gt.thresh",cv::Point(0, rows- threshold_gt*scaleY-10),cv::FONT_HERSHEY_SIMPLEX,0.4,color_vert);
+	putText(graphFrame,"gt.thresh.",cv::Point(0, rows- threshold_gt*scaleY-10),cv::FONT_HERSHEY_SIMPLEX,0.4,color_vert);
 
 
 
 #ifdef _PC
     //calculate fp/fn ratio
     float tpr = (float)positive_true /(float)(positive_true+negative_false);
-    float fpr = (float)negative_true /(float)(negative_true+positive_false);
+	float fpr = (float)positive_false /(float)(negative_true+positive_false);
 
     std::stringstream s;
-    s << msg << " TPR: " << boost::format("%.2f")%tpr << ", FPR: " << boost::format("%.2f")%fpr;
+	s << msg << " TPR: " << boost::format("%.2f")%tpr << " --> FPR: " << boost::format("%.2f")%fpr;
     msg = s.str();
 
 #endif
 
 
     //draw text to inform about the mode and ratios or to notify user a key press was handled
-    putText(graphFrame,msg,cv::Point(0, 40),cv::FONT_HERSHEY_SIMPLEX,1,color_vert);
+	putText(graphFrame,msg,cv::Point(0, 30),cv::FONT_HERSHEY_SIMPLEX,0.7,color_vert);
 
 }
 
 void Textons::setAutoThreshold() {
 
 
-	int imsize = 500;
+	int imsize = 400;
 #ifdef DRAWVIZS
 	frame_ROC = cv::Mat::zeros(imsize,imsize,CV_8UC3);
 
@@ -399,16 +399,14 @@ void Textons::setAutoThreshold() {
 	std::string ylabel = "TPR";
 	putText(frame_ROC,ylabel,cv::Point(10, 20),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
 	cv::line(frame_ROC,cv::Point(0, 0),cv::Point(0, imsize),cv::Scalar(255,255,255), 1, 8, 0);
-	//draw threshold
-	cv::line(frame_ROC,cv::Point(fpr_threshold*imsize, 0),cv::Point(fpr_threshold*imsize, imsize),cv::Scalar(127,0,200), 1, 8, 0);
+	//draw tpr threshold (which is fixed)
+	cv::line(frame_ROC,cv::Point(0,imsize- tpr_threshold*imsize),cv::Point(imsize,imsize - tpr_threshold*imsize),cv::Scalar(127,127,255), 1, 8, 0);
 
 	//X
 	std::string xlabel = "FPR";
 	putText(frame_ROC,xlabel,cv::Point(imsize-30, imsize-20),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
 	cv::line(frame_ROC,cv::Point(0,imsize-1),cv::Point(imsize,imsize-1 ),cv::Scalar(255,255,255), 1, 8, 0);
 
-	//draw threshold
-	cv::line(frame_ROC,cv::Point(0,imsize- tpr_threshold*imsize),cv::Point(imsize,imsize - tpr_threshold*imsize),cv::Scalar(127,0,200), 1, 8, 0);
 
 
 	cv::Scalar c = getColor(2);
@@ -416,22 +414,22 @@ void Textons::setAutoThreshold() {
 #endif
 
 	bool done = false;
+	cv::Mat tprs(threshold_gt,1,CV_32F); // these two arrays could be optimised away, or used for nicer graph
+	cv::Mat fprs(threshold_gt,1,CV_32F);
+
+	int best = 0;
+	float fpr_best_tmp = 99999999;
 
 	for (int i = threshold_gt; i > 0; i-- ) {
-		float nn,gt;
+
 		int positive_true=0;
 		int positive_false=0;
 		int negative_true=0;
 		int negative_false=0;
 
-		int learnborder =  (lastLearnedPosition+(distribution_buf_size-distribution_buf_pointer)) % distribution_buf_size; // make a sliding graph
-		if ( countsincelearn > distribution_buf_size) {
-			learnborder=0;
-		}
-
 		for (int j = filterwidth; j < distribution_buf_size ; j++)
 		{
-
+			float nn,gt;
 			int jj = (j+distribution_buf_pointer) % distribution_buf_size; // make it a sliding graph
 			nn = graph_buffer.at<float>(jj,0);
 			gt = graph_buffer.at<float>(jj,1);
@@ -441,44 +439,53 @@ void Textons::setAutoThreshold() {
 
 				//draw a small colored line above to indicate what the drone will do:
 				if (nn < i && gt > threshold_gt) {
-					//false negative; drone should stop according to stereo, but didn't if textons were used
+					//false negative; drone should stop according to stereo, but didn't if textons were used (miss)
 					negative_false++;
 				} else if (nn > i && gt < threshold_gt) {
-					//false positive; drone could have proceeded according to stereo, but stopped if textons were used
+					//false positive; drone could have proceeded according to stereo, but stopped if textons were used (false alarm)
 					positive_false++;
 				} else if (nn > i && gt > threshold_gt) {
 					//true positive; both stereo and textons agree, drone should stop
 					negative_true++;
 				} else {
 					//both stereo and textons agree, drone may proceed
-					//green
 					positive_true++;
 				}
-
 			}
-
-
 		}
 
 		//calculate fp/fn ratio
 		float tpr = (float)positive_true /(float)(positive_true+negative_false);
-		float fpr = (float)negative_true /(float)(negative_true+positive_false);
+		float fpr = (float)positive_false /(float)(negative_true+positive_false);
+
+		tprs.at<float>(i) = tpr;
+		fprs.at<float>(i) = fpr;
+
+
+		if (tpr > tpr_threshold && fpr < fpr_best_tmp) {
+			best = i;
+			fpr_best_tmp = fprs.at<float>(best);
+		}
+
 
 #ifdef DRAWVIZS		
 		cv::line(frame_ROC,cv::Point(fpr*imsize,imsize- tpr*imsize),cv::Point(fpr*imsize, imsize-tpr*imsize),c, line_width, 8, 0);		
 #endif
 
-		if (tpr > tpr_threshold && fpr > fpr_threshold && !done) {
-			threshold_nn = i;
-			std::stringstream s;
-			s << "t = " << i;
-			putText(frame_ROC,s.str(),cv::Point(imsize/2, imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,c);
-			done=true;
-#ifndef DRAWVIZS
-			break;
-#endif
-		}
+
 	}
+
+	threshold_nn = best;
+	fpr_best = fpr_best_tmp;
+#ifdef DRAWVIZS
+	std::stringstream s;
+	s << "est.thresh. = " << best;
+	putText(frame_ROC,s.str(),cv::Point(fpr_best*imsize+5, imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(127,127,255));
+	//draw threshold
+	cv::line(frame_ROC,cv::Point(fpr_best*imsize, 0),cv::Point(fpr_best*imsize, imsize),cv::Scalar(127,127,255), 1, 8, 0);
+#endif
+
+
 }
 
 //calculates the histogram/distribution
@@ -511,14 +518,14 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
                     sample_dx[yy*patch_size+xx] += (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx-1));
                     sample_dx[yy*patch_size+xx] /=2;
                 }
-                 // grayframe.at<uint8_t>(y+yy,x+xx) = 255; // uncomment to visualise picking
+				// grayframe.at<uint8_t>(y+yy,x+xx) = 255; // uncomment to visualise picking
             }
         }
 
-//        if (n==0) { // visualise a patch
-//            cv::Mat test((int)patch_size,(int)patch_size,CV_8UC1, *sample);
-//            imshow("patch", test );
-//        }
+		//        if (n==0) { // visualise a patch
+		//            cv::Mat test((int)patch_size,(int)patch_size,CV_8UC1, *sample);
+		//            imshow("patch", test );
+		//        }
 
 		if (method==CUMULATIVE) {
 			//get the and sum distances to this patch to the textons...
@@ -615,7 +622,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
         }
     }
 
-     //std::cout << "hist" << distribution_buf_pointer << ": " << hist << std::endl;
+	//std::cout << "hist" << distribution_buf_pointer << ": " << hist << std::endl;
 
 
 
@@ -687,7 +694,7 @@ int Textons::initTextons() {
     int counter =2; // skip first two bytes, as they contain other info
     for (int i = 0;i<n_textons_intensity;i++) {
         std::vector<int16_t> v(patch_square_size);
-//        printf("texton[%d]:", i);
+		//        printf("texton[%d]:", i);
         for (int j=0;j<patch_square_size;j++) {
 
             uint8_t t0 = buffer_i[counter];
@@ -695,18 +702,18 @@ int Textons::initTextons() {
             int16_t t = ((t1 << 8) & 0xff00) |  (t0 & 0x00ff);
             counter +=2;
             v[j] = t;
-//            if (j>0) {printf(", %d", v[j]);} else {printf(" %d", v[j]);}
+			//            if (j>0) {printf(", %d", v[j]);} else {printf(" %d", v[j]);}
         }
         textons[i] = v;
         input_i.close();
-//        std::cout << std::endl;
+		//        std::cout << std::endl;
     }
 
 
     counter =2; // skip first two bytes, as they contain other info
     for (int i = 0;i<n_textons_gradient;i++) {
         std::vector<int16_t> v(patch_square_size);
-//        printf("texton_gr[%d]:", i+buffer_i[0]);
+		//        printf("texton_gr[%d]:", i+buffer_i[0]);
         for (int j=0;j<patch_square_size;j++) {
 
             uint8_t t0 = buffer_gr[counter];
@@ -714,11 +721,11 @@ int Textons::initTextons() {
             int16_t t = ((t1 << 8) & 0xff00) |  (t0 & 0x00ff);
             counter +=2;
             v[j] = t;
-//            if (j>0) {printf(", %d", v[j]);} else {printf(" %d", v[j]);}
+			//            if (j>0) {printf(", %d", v[j]);} else {printf(" %d", v[j]);}
         }
         textons[i+n_textons_intensity] = v;
         input_gr.close();
-//        std::cout << std::endl;
+		//        std::cout << std::endl;
     }
 
     return 1;
