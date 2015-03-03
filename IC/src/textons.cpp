@@ -1,4 +1,6 @@
 #include "textons.h"
+#include <string>
+#include <iostream>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/contrib/contrib.hpp>
@@ -54,7 +56,7 @@ cv::Mat Textons::drawHistogram(cv::Mat hist,int bins, int maxY) {
 
 
     // Display each histogram in a canvas
-    canvas = cv::Mat::ones(maxY, bins*line_width, CV_8UC3);
+	canvas = cv::Mat::zeros(maxY, bins*line_width, CV_8UC3);
 
     int rows = canvas.rows;
 	for (int j = 0; j < bins; j++)
@@ -81,6 +83,10 @@ cv::Scalar Textons::getColor(int id) {
     } else {
         id -= n_textons_intensity;
     }
+	if (id==4) { // fix double green...
+		return 	cv::Scalar(255,255,255);
+	}
+
     return cv::Scalar(b[id*6]*255.0,g[id*6]*255.0,r[id*6]*255.0);
 }
 
@@ -348,14 +354,22 @@ void Textons::drawGraph(std::string msg) {
         cv::line(graphFrame, cv::Point(j/stepX, rows- prev_gt), cv::Point((j+1)/stepX, rows -  gt),color_gt, line_width, 8, 0);
         //draw stereo vision threshold:
         //cv::line(graphFrame, cv::Point(j/stepX, rows- 90), cv::Point((j+1)/stepX, rows -  90),color_gt, line_width, 8, 0);
-        //draw nn vision threshold:
-        cv::line(graphFrame, cv::Point(j/stepX, rows- threshold_nn*scaleY), cv::Point((j+1)/stepX, rows -  threshold_nn*scaleY),color_invert, line_width, 8, 0);
-        //draw gt vision threshold:
-        cv::line(graphFrame, cv::Point(j/stepX, rows- threshold_gt*scaleY), cv::Point((j+1)/stepX, rows -  threshold_gt*scaleY),color_vert, line_width, 8, 0);
+
 
         prev_nn = nn;
         prev_gt = gt;
     }
+
+
+	//TODO: move the following draw function out of the loop
+	//draw nn vision threshold:
+	cv::line(graphFrame, cv::Point(0, rows- threshold_nn*scaleY), cv::Point(graphFrame.cols, rows -  threshold_nn*scaleY),color_invert, line_width, 8, 0);
+	putText(graphFrame,"est.thresh",cv::Point(0, rows- threshold_nn*scaleY+10),cv::FONT_HERSHEY_SIMPLEX,0.4,color_invert);
+	//draw gt vision threshold:
+	cv::line(graphFrame, cv::Point(0, rows- threshold_gt*scaleY), cv::Point(graphFrame.cols, rows -  threshold_gt*scaleY),color_vert, line_width, 8, 0);
+	putText(graphFrame,"gt.thresh",cv::Point(0, rows- threshold_gt*scaleY-10),cv::FONT_HERSHEY_SIMPLEX,0.4,color_vert);
+
+
 
 #ifdef _PC
     //calculate fp/fn ratio
@@ -372,6 +386,102 @@ void Textons::drawGraph(std::string msg) {
     //draw text to inform about the mode and ratios or to notify user a key press was handled
     putText(graphFrame,msg,cv::Point(0, 40),cv::FONT_HERSHEY_SIMPLEX,1,color_vert);
 
+}
+
+void Textons::setAutoThreshold() {
+
+
+	int imsize = 500;
+#ifdef DRAWVIZS
+	frame_ROC = cv::Mat::zeros(imsize,imsize,CV_8UC3);
+
+	/*** create axis and labels ***/
+	//Y
+	std::string ylabel = "TPR";
+	putText(frame_ROC,ylabel,cv::Point(10, 20),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+	cv::line(frame_ROC,cv::Point(0, 0),cv::Point(0, imsize),cv::Scalar(255,255,255), 1, 8, 0);
+	//draw threshold
+	cv::line(frame_ROC,cv::Point(fpr_threshold*imsize, 0),cv::Point(fpr_threshold*imsize, imsize),cv::Scalar(127,0,200), 1, 8, 0);
+
+	//X
+	std::string xlabel = "FPR";
+	putText(frame_ROC,xlabel,cv::Point(imsize-30, imsize-20),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+	cv::line(frame_ROC,cv::Point(0,imsize-1),cv::Point(imsize,imsize-1 ),cv::Scalar(255,255,255), 1, 8, 0);
+
+	//draw threshold
+	cv::line(frame_ROC,cv::Point(0,imsize- tpr_threshold*imsize),cv::Point(imsize,imsize - tpr_threshold*imsize),cv::Scalar(127,0,200), 1, 8, 0);
+
+
+	cv::Scalar c = getColor(2);
+	int line_width=2;
+#endif
+
+	bool done = false;
+
+	for (int i = threshold_gt; i > 0; i-- ) {
+		float nn,gt;
+		int positive_true=0;
+		int positive_false=0;
+		int negative_true=0;
+		int negative_false=0;
+
+		countsincelearn++; // keep track of training/test data
+
+		int learnborder =  (lastLearnedPosition+(distribution_buf_size-distribution_buf_pointer)) % distribution_buf_size; // make a sliding graph
+		if ( countsincelearn > distribution_buf_size) {
+			learnborder=0;
+		}
+
+		for (int j = filterwidth; j < distribution_buf_size ; j++)
+		{
+
+			int jj = (j+distribution_buf_pointer) % distribution_buf_size; // make it a sliding graph
+			nn = graph_buffer.at<float>(jj,0);
+			gt = graph_buffer.at<float>(jj,1);
+
+
+			if (!(groundtruth_buffer.at<float>(jj) < 6.201 && groundtruth_buffer.at<float>(jj) > 6.199)) {
+
+				//draw a small colored line above to indicate what the drone will do:
+				if (nn < i && gt > threshold_gt) {
+					//false negative; drone should stop according to stereo, but didn't if textons were used
+					negative_false++;
+				} else if (nn > i && gt < threshold_gt) {
+					//false positive; drone could have proceeded according to stereo, but stopped if textons were used
+					positive_false++;
+				} else if (nn > i && gt > threshold_gt) {
+					//true positive; both stereo and textons agree, drone should stop
+					negative_true++;
+				} else {
+					//both stereo and textons agree, drone may proceed
+					//green
+					positive_true++;
+				}
+
+			}
+
+
+		}
+
+		//calculate fp/fn ratio
+		float tpr = (float)positive_true /(float)(positive_true+negative_false);
+		float fpr = (float)negative_true /(float)(negative_true+positive_false);
+
+#ifdef DRAWVIZS		
+		cv::line(frame_ROC,cv::Point(fpr*imsize,imsize- tpr*imsize),cv::Point(fpr*imsize, imsize-tpr*imsize),c, line_width, 8, 0);		
+#endif
+
+		if (tpr > tpr_threshold && fpr > fpr_threshold && !done) {
+			threshold_nn = i;
+			std::stringstream s;
+			s << "t = " << i;
+			putText(frame_ROC,s.str(),cv::Point(imsize/2, imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,c);
+			done=true;
+#ifndef DRAWVIZS
+			break;
+#endif
+		}
+	}
 }
 
 //calculates the histogram/distribution

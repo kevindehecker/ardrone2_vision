@@ -50,8 +50,11 @@ private:
     cv::Scalar getColor(int id);
 
 public:
-	int threshold_nn = 200;
-	int threshold_gt = 400;
+	int threshold_nn = 150;
+	int threshold_gt = 200;
+
+	float tpr_threshold = 0.98;
+	float fpr_threshold = 0.7;
     float avgdisp_smoothed;
 
 
@@ -60,6 +63,7 @@ public:
     cv::Mat frame_Gtextoncolor;
     cv::Mat frame_Gtextontexton;
     cv::Mat frame_currentHist;
+	cv::Mat frame_ROC;
 
 
 	Textons() {
@@ -81,6 +85,7 @@ public:
     int getLast_nn();
     int getLast_gt();
     void drawMeanHists(cv::Mat histimage);
+	void setAutoThreshold();
 
 
 

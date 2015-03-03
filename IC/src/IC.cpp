@@ -27,7 +27,7 @@
 
 #include "stopwatch.h"
 
-
+/*
 #include "caffe/caffe.hpp"
 
 using caffe::Blob;
@@ -37,7 +37,7 @@ using caffe::Layer;
 using caffe::shared_ptr;
 using caffe::Timer;
 using caffe::vector;
-
+*/
 
 /***********Enums****************/
 enum modus_t {none, stereo_only, textons_only, stereo_textons, stereo_textons_active};
@@ -51,7 +51,7 @@ cv::VideoWriter outputVideo;
 cv::VideoWriter outputVideoResults;
 stopwatch_c stopWatch;
 modus_t mode;
-int result_input2Mode = 1;
+int result_input2Mode = 7;
 Socket tcp;
 #ifdef EXPORT
 Exporter exporter;
@@ -125,14 +125,16 @@ void combineAllImages() {
     } else if (result_input2Mode == 4) { //texton gradient color encoding        
 		combineImage(resFrame,textonizer.frame_Gtextoncolor,sub_width,0,sub_width,sub_height,false);
 		combineImage(resFrame,textonizer.frame_currentHist,sub_width*2,0,sub_width,sub_height,false);
-    } else if (result_input2Mode == 5) {// texton gradient        
+	} else if (result_input2Mode == 5) {// texton gradient,  press shift 6
 		combineImage(resFrame,textonizer.frame_Gtextontexton,sub_width,0,sub_width,sub_height,false);
 		combineImage(resFrame,stereo.DisparityMat,sub_width*2,0,sub_width,sub_height,false);
 	} else if (result_input2Mode == 6) {// histogram       , but press shift 7!
 		combineImage(resFrame,textonizer.frame_currentHist,sub_width,0,sub_width,sub_height,false);
 		combineImage(resFrame,stereo.DisparityMat,sub_width*2,0,sub_width,sub_height,false);
-    }
-
+	} else if (result_input2Mode == 7) {// ROC       , but press shift 8!
+		combineImage(resFrame,textonizer.frame_ROC,sub_width,0,sub_width,sub_height,false);
+		combineImage(resFrame,stereo.DisparityMat,sub_width*2,0,sub_width,sub_height,false);
+	}
 
 	combineImage(resFrame,textonizer.graphFrame,0,sub_height,im_width,sub_height,false);
 #else
@@ -233,6 +235,8 @@ void process_video() {
             tcp.commdata_gt_stdev = stereo.stddevDisparity;
         }
 
+		textonizer.setAutoThreshold();
+
 #ifdef VIDEORAW
         //combine stereo pair if needed
         if (mode==none  || mode==textons_only) {
@@ -245,7 +249,7 @@ void process_video() {
         }
         outputVideo.write(stereo.frameC_mat);
 
-#endif //VIDEORAW
+#endif //VIDEORAW		
 
 #if defined(HASSCREEN) || defined(VIDEORESULTS)
         textonizer.drawGraph(msg);
@@ -309,6 +313,7 @@ void process_video() {
         if (key==36) {result_input2Mode=4;;key=0;} //                     [$]: show gradient texton color encoded left input image
         if (key==37) {result_input2Mode=5;;key=0;} //                     [%]: show gradient texton texton encoded left input image
         if (key==38) {result_input2Mode=6;;key=0;} //                     [&]: show histogram
+		if (key==42) {result_input2Mode=7;;key=0;} //                     [&]: show ROC curve
 
 #ifdef HASSCREEN
         if (key==62) {svcam.fastforward=1;key=0;} //                      [>]: fast forward filecam
@@ -330,9 +335,18 @@ void process_video() {
 #endif
 
         frames++;
-		if (frames == 1500) {
+//		if (frames == 1500) {
+//			textonizer.retrainAll();
+//		}
+
+		if ((frames % 100) == 99) {
 			textonizer.retrainAll();
+			//textonizer.saveRegression();
+			std::cout << "mod: " << frames % 100 << "\n|" ;
 		}
+
+
+
         float time = stopWatch.Read()/1000;
         tcp.commdata_fps = frames /(time);
 		std::cout << "#" << frames << ", fps: " << tcp.commdata_fps << std::endl;
@@ -532,30 +546,30 @@ void close() {
 }
 
 
-void initCaffe() {
-    caffe::Caffe::set_mode(caffe::Caffe::CPU);
-
-    caffe::SolverParameter solver_param;
-    caffe::ReadProtoFromTextFileOrDie("/home/goggles/caffe/examples/cifar10/cifar10_quick_solver.prototxt", &solver_param);
-
-
-}
+//void initCaffe() {
+//    caffe::Caffe::set_mode(caffe::Caffe::CPU);
+//
+//    caffe::SolverParameter solver_param;
+//    caffe::ReadProtoFromTextFileOrDie("/home/goggles/caffe/examples/cifar10/cifar10_quick_solver.prototxt", &solver_param);
+//
+//
+//}
 
 int main( int argc, char **argv )
 {
    if (init(argc,argv)) {return 1;}
 
    /* clear learning buffer instead of using old stuff */
-   textonizer.initLearner(true);
+  // textonizer.initLearner(true);
 
-   initCaffe();
+//   initCaffe();
 
    process_video();
    close();
 
    /* auto save at the end */
    textonizer.retrainAll();
-   textonizer.saveRegression();
+   //textonizer.saveRegression();
 
    return 0;
 }

@@ -20,13 +20,13 @@ find_package( OpenCV REQUIRED )
 
 MESSAGE( STATUS "OPENCV_VERSION: " ${OpenCV_VERSION} )
 
-SET(CMAKE_MODULE_PATH ~/caffe/qtcreator-build)
-find_package(Caffe REQUIRED)
-include_directories(${Caffe_INCLUDE_DIRS})
-MESSAGE( STATUS "Caffe_INCLUDE_DIRS: " ${Caffe_INCLUDE_DIRS} )
-add_definitions(${Caffe_DEFINITIONS})    # ex. -DCPU_ONLY
-MESSAGE( STATUS "Caffe_DEFINITIONS: " ${Caffe_DEFINITIONS} )
-#MESSAGE( STATUS "Caffe_LIBRARIES: " ${Caffe_LIBRARIES} )
+#SET(CMAKE_MODULE_PATH ~/caffe/qtcreator-build)
+#find_package(Caffe REQUIRED)
+#include_directories(${Caffe_INCLUDE_DIRS})
+#MESSAGE( STATUS "Caffe_INCLUDE_DIRS: " ${Caffe_INCLUDE_DIRS} )
+#add_definitions(${Caffe_DEFINITIONS})    # ex. -DCPU_ONLY
+#MESSAGE( STATUS "Caffe_DEFINITIONS: " ${Caffe_DEFINITIONS} )
+
 
 include_directories("${LIBELAS_SRC_DIR}")
 
