@@ -25,6 +25,8 @@ private:
     unsigned char patch_size;
     unsigned char patch_square_size;
 
+	int countsincelearn =0;
+
 #define CUMULATIVE  0
 #define MINIMUM_DISTANCE 1
 	const int method = MINIMUM_DISTANCE;

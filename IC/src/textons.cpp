@@ -261,8 +261,6 @@ void Textons::drawTextonAnotatedImage(cv::Mat grayframe) {
 
 }
 
-int countsincelearn =0;
-
 void Textons::drawGraph(std::string msg) {
 
     cv::Scalar color_gt= cv::Scalar(255,0,0); // blue
@@ -290,6 +288,7 @@ void Textons::drawGraph(std::string msg) {
     int negative_false=0;
 
     countsincelearn++; // keep track of training/test data
+	std::cout << "csll: " << countsincelearn << " \n";
 
     int learnborder =  (lastLearnedPosition+(distribution_buf_size-distribution_buf_pointer)) % distribution_buf_size; // make a sliding graph
     if ( countsincelearn > distribution_buf_size) {
@@ -424,8 +423,6 @@ void Textons::setAutoThreshold() {
 		int positive_false=0;
 		int negative_true=0;
 		int negative_false=0;
-
-		countsincelearn++; // keep track of training/test data
 
 		int learnborder =  (lastLearnedPosition+(distribution_buf_size-distribution_buf_pointer)) % distribution_buf_size; // make a sliding graph
 		if ( countsincelearn > distribution_buf_size) {
