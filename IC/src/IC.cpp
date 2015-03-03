@@ -562,7 +562,7 @@ int main( int argc, char **argv )
    /* clear learning buffer instead of using old stuff */
    //textonizer.initLearner(true);
 
-//   initCaffe();
+   initCaffe();
 
    process_video();
    close();
