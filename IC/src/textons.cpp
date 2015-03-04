@@ -53,23 +53,24 @@ cv::Mat Textons::drawHistogram(cv::Mat hist,int bins, int maxY) {
 
     cv::Mat canvas;
     int line_width = 10;
+	int line_width_half = 5;
 
 
     // Display each histogram in a canvas
 	canvas = cv::Mat::zeros(maxY, bins*line_width, CV_8UC3);
 
     int rows = canvas.rows;
-	for (int j = 0; j < bins; j++)
-    {
+	for (int j = 0; j < bins; j++) {
         cv::Scalar c = getColor(j);
-		cv::line(canvas,cv::Point(j*line_width, rows),cv::Point(j*line_width, rows - (150*hist.at<float>(j))),c, line_width, 8, 0);
+		cv::line(canvas,cv::Point(j*line_width+line_width_half , rows),cv::Point(j*line_width+line_width_half , rows - (150*hist.at<float>(j))),c, line_width, 8, 0);
 	}
 
 
 	//copy the normal histogram to the big image
 	std::stringstream s;
 	s << "Entropy: " << hist.at<float>(n_textons) ;
-	putText(canvas,s.str(),cv::Point(0, 40),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+	putText(canvas,s.str(),cv::Point(0, 20),cv::FONT_HERSHEY_SIMPLEX,0.3,cv::Scalar(255,255,255));
+	cv::line(canvas,cv::Point(canvas.cols/2,45),cv::Point(canvas.cols/2, canvas.rows ),cv::Scalar(180,180,180), 1, 8, 0);
 
     return canvas;
 }
@@ -389,24 +390,39 @@ void Textons::drawGraph(std::string msg) {
 void Textons::setAutoThreshold() {
 
 
-	int imsize = 400;
+
 #ifdef DRAWVIZS
-	frame_ROC = cv::Mat::zeros(imsize,imsize,CV_8UC3);
+
+	int imsize = 400;
+	int border = 20;
+
+	cv::Point p1(border,0);
+	cv::Point p2(imsize+border, imsize);
+
+	frame_ROC = cv::Mat::zeros(imsize+border,imsize+border,CV_8UC3);
+	cv::Mat graphframe = cv::Mat(frame_ROC, cv::Rect(p1, p2));
+
+	//graphframe =cv::Scalar(255,255,255);
 
 	/*** create axis and labels ***/
-	//Y
-	std::string ylabel = "TPR";
-	putText(frame_ROC,ylabel,cv::Point(10, 20),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
-	cv::line(frame_ROC,cv::Point(0, 0),cv::Point(0, imsize),cv::Scalar(255,255,255), 1, 8, 0);
+	//Y	
+	putText(frame_ROC,"T",cv::Point(4, imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+	putText(frame_ROC,"P",cv::Point(4, 15+imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+	putText(frame_ROC,"R",cv::Point(4, 30+imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+	cv::line(graphframe,cv::Point(0, 0),cv::Point(0, imsize),cv::Scalar(255,255,255), 1, 8, 0);
 	//draw tpr threshold (which is fixed)
-	cv::line(frame_ROC,cv::Point(0,imsize- tpr_threshold*imsize),cv::Point(imsize,imsize - tpr_threshold*imsize),cv::Scalar(127,127,255), 1, 8, 0);
+	cv::line(graphframe,cv::Point(0,imsize- tpr_threshold*imsize),cv::Point(imsize,imsize - tpr_threshold*imsize),cv::Scalar(127,127,255), 1, 8, 0);
 
 	//X
 	std::string xlabel = "FPR";
-	putText(frame_ROC,xlabel,cv::Point(imsize-30, imsize-20),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
-	cv::line(frame_ROC,cv::Point(0,imsize-1),cv::Point(imsize,imsize-1 ),cv::Scalar(255,255,255), 1, 8, 0);
+	putText(frame_ROC,xlabel,cv::Point(imsize/2, imsize+border-7),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+	cv::line(graphframe,cv::Point(0,imsize-1),cv::Point(imsize,imsize-1 ),cv::Scalar(255,255,255), 1, 8, 0);
 
-
+	// 0 scale
+	putText(frame_ROC,"0",cv::Point(4, imsize+border-7),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+	// 1 scale
+	putText(frame_ROC,"1",cv::Point(4, 12),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+	putText(frame_ROC,"1",cv::Point(imsize+border-10, imsize+border-7),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
 
 	cv::Scalar c = getColor(2);
 	int line_width=2;
@@ -417,7 +433,7 @@ void Textons::setAutoThreshold() {
 	cv::Mat fprs(threshold_gt,1,CV_32F);
 
 	int best = 0;
-	float fpr_best_tmp = 99999999;
+	float fpr_best_tmp = 99999999; //smaller is better, so start the search extremely high
 
 	for (int i = threshold_gt; i > 0; i-- ) {
 
@@ -468,7 +484,7 @@ void Textons::setAutoThreshold() {
 
 
 #ifdef DRAWVIZS		
-		cv::line(frame_ROC,cv::Point(fpr*imsize,imsize- tpr*imsize),cv::Point(fpr*imsize, imsize-tpr*imsize),c, line_width, 8, 0);		
+		cv::line(graphframe,cv::Point(fpr*imsize,imsize- tpr*imsize),cv::Point(fpr*imsize, imsize-tpr*imsize),c, line_width, 8, 0);
 #endif
 
 
@@ -479,8 +495,8 @@ void Textons::setAutoThreshold() {
 #ifdef DRAWVIZS
 	std::stringstream s;
 	s << "est.thresh. = " << best;
-	putText(frame_ROC,s.str(),cv::Point(fpr_best*imsize+5, imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(127,127,255));
-	//draw threshold
+	putText(graphframe,s.str(),cv::Point(fpr_best*imsize+5, imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(127,127,255));
+	//draw fpr resulting threshold
 	cv::line(frame_ROC,cv::Point(fpr_best*imsize, 0),cv::Point(fpr_best*imsize, imsize),cv::Scalar(127,127,255), 1, 8, 0);
 #endif
 
