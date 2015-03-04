@@ -560,7 +560,7 @@ int main( int argc, char **argv )
    if (init(argc,argv)) {return 1;}
 
    /* clear learning buffer instead of using old stuff */
-   //textonizer.initLearner(true);
+   textonizer.initLearner(true);
 
    //initCaffe();
 
