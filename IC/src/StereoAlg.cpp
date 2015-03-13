@@ -8,7 +8,40 @@
 #include <opencv2/contrib/contrib.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-bool stereoAlg::init (int im_width,int im_height ) {
+bool stereoAlg::init (int im_width,int im_height) {
+
+#ifdef FILESTEREO
+	//create filename
+	std::string filename = "export.txt";
+
+	//get length of the file
+	std::ifstream sfile;
+	sfile.open(filename);
+	std::ifstream f(filename);
+	std::string line;	
+	int flength;
+	for (flength = 0; std::getline(sfile, line); ++flength)
+		;
+	sfile.close();
+
+	//read the file into flst
+	flst = cv::Mat(flength ,1,CV_32S);
+	sfile.open(filename);
+	for (int i = 0; i<flength; ++i) {
+
+		std::getline(sfile, line);
+		auto start = 0U;
+		auto end = line.find(";" );
+		//std::cout << line.substr(start, end - start) << std::endl;
+		int d;
+		d = std::stoi(line, NULL,10);
+		//std::cout << d << std::endl;
+		flst.at<int>(i)  =d;
+	}
+	sfile.close();
+	std::cout << flst << std::endl;
+
+#endif
 
 #ifdef SGM
     #ifdef DELFLY
@@ -154,6 +187,23 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
         avgDisparity =0;
     }
 #endif
+
+
+	//calc depth in mm from disparity
+	// z = (b*F) / (d*s)
+	// z = depth in mm
+	// b = baseline in mm
+	// F = focal length in mm
+	// d = depth in pixel
+	// s = sensor size in mm/pixel.
+	//or
+	// z = b*F / d
+	// mm = mm * pixel / pixel
+
+
+	// DisparityMat = 500000  / DisparityMat;
+
+
 
 #if defined(HASSCREEN) || defined(VIDEORESULTS)
     double min,max;

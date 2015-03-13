@@ -27,7 +27,10 @@ private:
     int32_t dims[3];
 
     void performLongSec(cv::Mat bw,cv::Mat * DisparityMat);
+#ifdef FILESTEREO
+	cv::Mat flst;
 
+#endif
 #ifdef GEIGER
 // //Geiger stereovision class
 	Elas::parameters param;
