@@ -12,7 +12,7 @@
 void Exporter::write(int avgdisp_gt,int avgdisp_gt_stdev, int avgdisp_nn) {
     std::stringstream s;
     s << avgdisp_gt << ";" << avgdisp_gt_stdev << ";" << avgdisp_nn << std::endl;
-    myfile << s.str();
+    myfile << s.str();	
 
     std::stringstream s2;
     s2 << "/left" << saveid << ".png " << avgdisp_gt << std::endl;

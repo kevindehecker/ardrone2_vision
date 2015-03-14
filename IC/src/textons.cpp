@@ -17,11 +17,18 @@ float b[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 /*
  *Loads texton dictionary from  file, loads previously results from file, and learns them
  */
-bool Textons::init () {
+bool Textons::init (int * result_input2Mode) {
+	this->result_input2Mode = result_input2Mode;
 
     if (!initTextons()) {return false;}
     if (!initLearner(true)) {return false;}
     loadPreviousRegression();
+
+
+#ifdef HASSCREEN
+	frame_ROC = cv::Mat::zeros(400,400,CV_8UC3);
+#endif
+
     return true;
 }
 
@@ -392,38 +399,43 @@ void Textons::setAutoThreshold() {
 
 
 #ifdef DRAWVIZS
-
 	int imsize = 400;
-	int border = 20;
+	cv::Mat graphframe;
+	if (*result_input2Mode == VIZ_ROC ) {
 
-	cv::Point p1(border,0);
-	cv::Point p2(imsize+border, imsize);
+		int border = 20;
 
-	frame_ROC = cv::Mat::zeros(imsize+border,imsize+border,CV_8UC3);
-	cv::Mat graphframe = cv::Mat(frame_ROC, cv::Rect(p1, p2));
+		cv::Point p1(border,0);
+		cv::Point p2(imsize+border, imsize);
 
-	//graphframe =cv::Scalar(255,255,255);
+		frame_ROC = cv::Mat::zeros(imsize+border,imsize+border,CV_8UC3);
+		graphframe = cv::Mat(frame_ROC, cv::Rect(p1, p2));
 
-	/*** create axis and labels ***/
-	//Y	
-	putText(frame_ROC,"T",cv::Point(4, imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
-	putText(frame_ROC,"P",cv::Point(4, 15+imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
-	putText(frame_ROC,"R",cv::Point(4, 30+imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
-	cv::line(graphframe,cv::Point(0, 0),cv::Point(0, imsize),cv::Scalar(255,255,255), 1, 8, 0);
-	//draw tpr threshold (which is fixed)
-	cv::line(graphframe,cv::Point(0,imsize- tpr_threshold*imsize),cv::Point(imsize,imsize - tpr_threshold*imsize),cv::Scalar(127,127,255), 1, 8, 0);
+		//graphframe =cv::Scalar(255,255,255);
 
-	//X
-	std::string xlabel = "FPR";
-	putText(frame_ROC,xlabel,cv::Point(imsize/2, imsize+border-7),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
-	cv::line(graphframe,cv::Point(0,imsize-1),cv::Point(imsize,imsize-1 ),cv::Scalar(255,255,255), 1, 8, 0);
+		/*** create axis and labels ***/
+		//Y
+		putText(frame_ROC,"T",cv::Point(4, imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+		putText(frame_ROC,"P",cv::Point(4, 15+imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+		putText(frame_ROC,"R",cv::Point(4, 30+imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+		cv::line(graphframe,cv::Point(0, 0),cv::Point(0, imsize),cv::Scalar(255,255,255), 1, 8, 0);
+		//draw tpr threshold (which is fixed)
+		cv::line(graphframe,cv::Point(0,imsize- tpr_threshold*imsize),cv::Point(imsize,imsize - tpr_threshold*imsize),cv::Scalar(127,127,255), 1, 8, 0);
 
-	// 0 scale
-	putText(frame_ROC,"0",cv::Point(4, imsize+border-7),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
-	// 1 scale
-	putText(frame_ROC,"1",cv::Point(4, 12),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
-	putText(frame_ROC,"1",cv::Point(imsize+border-10, imsize+border-7),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+		//X
+		std::string xlabel = "FPR";
+		putText(frame_ROC,xlabel,cv::Point(imsize/2, imsize+border-7),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+		cv::line(graphframe,cv::Point(0,imsize-1),cv::Point(imsize,imsize-1 ),cv::Scalar(255,255,255), 1, 8, 0);
 
+		// 0 scale
+		putText(frame_ROC,"0",cv::Point(4, imsize+border-7),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+		// 1 scale
+		putText(frame_ROC,"1",cv::Point(4, 12),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+		putText(frame_ROC,"1",cv::Point(imsize+border-10, imsize+border-7),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(255,255,255));
+
+
+
+	}
 	cv::Scalar c = getColor(2);
 	int line_width=2;
 #endif
@@ -483,8 +495,10 @@ void Textons::setAutoThreshold() {
 		}
 
 
-#ifdef DRAWVIZS		
-		cv::line(graphframe,cv::Point(fpr*imsize,imsize- tpr*imsize),cv::Point(fpr*imsize, imsize-tpr*imsize),c, line_width, 8, 0);
+#ifdef DRAWVIZS
+		if (*result_input2Mode == VIZ_ROC ) {
+			cv::line(graphframe,cv::Point(fpr*imsize,imsize- tpr*imsize),cv::Point(fpr*imsize, imsize-tpr*imsize),c, line_width, 8, 0);
+		}
 #endif
 
 
@@ -493,11 +507,13 @@ void Textons::setAutoThreshold() {
 	threshold_nn = best;
 	fpr_best = fpr_best_tmp;
 #ifdef DRAWVIZS
-	std::stringstream s;
-	s << "est.thresh. = " << best;
-	putText(graphframe,s.str(),cv::Point(fpr_best*imsize+5, imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(127,127,255));
-	//draw fpr resulting threshold
-	cv::line(frame_ROC,cv::Point(fpr_best*imsize, 0),cv::Point(fpr_best*imsize, imsize),cv::Scalar(127,127,255), 1, 8, 0);
+	if (*result_input2Mode == VIZ_ROC ) {
+		std::stringstream s;
+		s << "est.thresh. = " << best;
+		putText(graphframe,s.str(),cv::Point(fpr_best*imsize+5, imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(127,127,255));
+		//draw fpr resulting threshold
+		cv::line(frame_ROC,cv::Point(fpr_best*imsize, 0),cv::Point(fpr_best*imsize, imsize),cv::Scalar(127,127,255), 1, 8, 0);
+	}
 #endif
 
 
@@ -552,24 +568,15 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 			for(int j=0;j<n_textons;j++) {
 				if (j < n_textons_intensity) {
 					distances_i.at(j) = getEuclDistance(sample,j);
-					hist.at<float>(j) = distances_i.at(j);
+					hist.at<float>(j) = hist.at<float>(j) + distances_i.at(j);
 					sum_i +=hist.at<float>(j);
 				} else {
 					distances_gr.at(j-n_textons_intensity) = getEuclDistance(sample_dx,j);
-					hist.at<float>(j) = distances_gr.at(j-n_textons_intensity);
+					hist.at<float>(j) = hist.at<float>(j) + distances_gr.at(j-n_textons_intensity);
 					sum_gr +=hist.at<float>(j);
 				}
 			}
-
-			//normalize
-			for(int j=0;j<n_textons;j++) {
-				if (j < n_textons_intensity) {
-					hist.at<float>(j) /=sum_i;
-				} else {
-					hist.at<float>(j) /=sum_gr;
-				}
-			}
-
+			//move normalize uit for loop
 		}  else {
 
 			cv::Mat distances_gr = cv::Mat::zeros(n_textons_gradient,1,CV_32F);
@@ -594,7 +601,28 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 		}
     }
 
+
+	//normalize
 	//float sum = cv::sum(hist)(0);
+	float sum_i = 0;
+	for(int j=0;j<n_textons_intensity;j++) {
+		sum_i += hist.at<float>(j);
+	}
+	for(int j=0;j<n_textons_intensity;j++) {
+		hist.at<float>(j) /= sum_i;
+	}
+
+
+	float sum_gr = 0;
+	for(int j=n_textons_intensity;j<n_textons_gradient;j++) {
+		sum_gr += hist.at<float>(j);
+	}
+	for(int j=n_textons_intensity;j<n_textons_gradient;j++) {
+		hist.at<float>(j) /= sum_gr;
+	}
+
+
+
 	float entropy =0;
 	for (int i = 0 ; i < n_textons; i++) {
 		float f = hist.at<float>(i); // sum;
@@ -603,7 +631,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 		}
 	}
 	hist.at<float>(n_textons) = entropy;
-	std:: cout << "Entropy: " << entropy << std::endl;
+	//std:: cout << "Entropy: " << entropy << std::endl;
 
 
     //copy new data into learning buffer:
@@ -641,16 +669,20 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 
 
 
-    std::cout << "knn.disp.: " << nn << "  |  truth: " << avgdisp_smoothed << std::endl;
+	//std::cout << "knn.disp.: " << nn << "  |  truth: " << avgdisp_smoothed << std::endl;
 
     //save values for visualisation	in graph
     graph_buffer.at<float>((distribution_buf_pointer+0) % distribution_buf_size,0) = nn;
     graph_buffer.at<float>(distribution_buf_pointer,1) = avgdisp_smoothed; // groundtruth
 
 #ifdef DRAWVIZS
-	frame_currentHist = drawHistogram(hist,n_textons,200);
+	if (*result_input2Mode == VIZ_histogram || *result_input2Mode == VIZ_texton_intensity_color_encoding || *result_input2Mode == VIZ_texton_gradient_color_encoding ) {
+		frame_currentHist = drawHistogram(hist,n_textons,200);
+	}
 	//drawMeanHists(frame_currentHist);
-    drawTextonAnotatedImage(grayframe);
+	if (*result_input2Mode == VIZ_texton_intensity_color_encoding || *result_input2Mode == VIZ_texton_gradient_color_encoding || *result_input2Mode == VIZ_texton_intensity_texton_encoding || *result_input2Mode == VIZ_texton_gradient_texton_encoding) {
+		drawTextonAnotatedImage(grayframe);
+	}
 #endif
 }
 
@@ -771,7 +803,7 @@ bool Textons::initLearner(bool nulltrain) {
  *  Retrains knn on all available data accumulated in the buffer
  */
 void Textons::retrainAll() {
-    std::cout << "Training knn regression:\n";
+	std::cout << "Training knn regression\n";
     knn.train(distribution_buffer, groundtruth_buffer, cv::Mat(), true, 32, false );
     lastLearnedPosition = (distribution_buf_pointer +1 )% distribution_buf_size;
     countsincelearn=0;
@@ -779,7 +811,7 @@ void Textons::retrainAll() {
 #ifdef _PC
     //redraw the graph and reinit the smoother
     //may take significant time if learning buffer is big, so don't perform onboard drone
-    std::cout << "Initialising smoother:\n";
+	std::cout << "Initialising smoother\n";
     for (int i=0; i<distribution_buf_size; i++) {
 
         int jj = (i+distribution_buf_pointer) % distribution_buf_size;

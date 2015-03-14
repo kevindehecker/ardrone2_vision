@@ -10,7 +10,12 @@
 
 
 bool DuoWebCam::init (int cam_left_id,  int cam_right_id) {
-    camLeft_id = cam_left_id;
+	darksize = 80;
+	extracaliboffset = 4;
+	im_width = 640;
+	im_height = 480;
+	im_fps =VIDEOFPS;
+	camLeft_id = cam_left_id;
     camRight_id = cam_right_id;
     const char* calibDir = "../duocamcalib/";
 

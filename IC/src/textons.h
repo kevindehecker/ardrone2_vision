@@ -13,10 +13,10 @@ class Textons{
 
 private:
 	//visual words parameters
-	int n_samples = 1000;
+	int n_samples;
 	float hist_step; // 1/n_samples for histogram sum ==1
-	int filterwidth = 5; // moving average filter
-    int k = 5;
+	int filterwidth; // moving average filter
+	int k;
 
     // to be loaded from textons*.dat dictionary files:
     unsigned char n_textons;
@@ -25,11 +25,11 @@ private:
     unsigned char patch_size;
     unsigned char patch_square_size;
 
-	int countsincelearn =0;
+	int countsincelearn;
 
 #define CUMULATIVE  0
 #define MINIMUM_DISTANCE 1
-	const int method = MINIMUM_DISTANCE;
+	int method;
     std::vector<std::vector<int16_t> > textons;
 
 
@@ -38,8 +38,8 @@ private:
     cv::Mat groundtruth_buffer;
     cv::Mat graph_buffer;
     int lastLearnedPosition;
-    int distribution_buf_size = 2000;
-    int distribution_buf_pointer =0;
+	int distribution_buf_size;
+	int distribution_buf_pointer;
     CvKNearest knn;
 
 	//moving average filters:
@@ -52,11 +52,12 @@ private:
     cv::Scalar getColor(int id);
 
 public:
-	int threshold_nn = 150;
-	int threshold_gt = 200;
+	int threshold_nn;
+	int threshold_gt;
+	int *result_input2Mode;
 
-	float tpr_threshold = 0.98;
-	float fpr_best = 0.7;
+	float tpr_threshold;
+	float fpr_best;
     float avgdisp_smoothed;
 
 
@@ -69,10 +70,25 @@ public:
 
 
 	Textons() {
+
+		n_samples = 1000;
 		hist_step = 1/(float)n_samples;
+		filterwidth = 5;
+		k = 5;
+		countsincelearn =0;
+		method = MINIMUM_DISTANCE;
+		distribution_buf_size = 2000;
+		distribution_buf_pointer =0;
+		threshold_nn = 150;
+		threshold_gt = 200;
+
+		tpr_threshold = 0.98f;
+		fpr_best = 0.7f;
+
+
 	}
 
-    bool init (void);
+	bool init (int * result_input2Mode);
     bool close(void);
     cv::Mat drawHistogram(cv::Mat hist,int bins, int maxY);
     void drawGraph(std::string msg);

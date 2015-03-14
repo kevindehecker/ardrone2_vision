@@ -20,7 +20,7 @@ class FileCam{
 private:
 	int im_width;
 	int im_height;
-	int scaleFactor = 1;
+	int scaleFactor;
 	std::mutex g_lockWaitForImage1;
     std::mutex g_lockWaitForImage2;
     bool copyNewImage;

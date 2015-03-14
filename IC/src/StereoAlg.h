@@ -26,10 +26,11 @@ private:
     int darksize;
     int32_t dims[3];
 
+
     void performLongSec(cv::Mat bw,cv::Mat * DisparityMat);
 #ifdef FILESTEREO
 	cv::Mat flst;
-
+	int count_filestereo;
 #endif
 #ifdef GEIGER
 // //Geiger stereovision class
@@ -38,9 +39,9 @@ private:
  	int GeigerSubSampling;
  	int GeigerHeatScaling;
 	float* D1_data;
-	float* D2_data;
- 	void initGeigerParam(void);
+	float* D2_data; 	
 #endif
+void initGeigerParam(void);
 
 #ifdef SGM
     cv::StereoSGBM SGBM;

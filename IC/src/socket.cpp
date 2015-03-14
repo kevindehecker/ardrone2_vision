@@ -92,11 +92,11 @@ void Socket::Unlock() {
     g_lockComm.unlock();
 }
 
-void Socket::Init(char *keyp, bool *cams_are_runningp) {
+void Socket::Init(char *keyp, bool *cams_are_running) {
     closeThreads = false;
     thread_comm  = std::thread(&Socket::commOutThread,this);
     g_lockComm.unlock();
-    cams_are_running = cams_are_runningp; // TODO: improve this...
+	this->cams_are_running = cams_are_running;
     key = keyp;
 
 }
@@ -104,8 +104,6 @@ void Socket::Init(char *keyp, bool *cams_are_runningp) {
 void Socket::Close() {
     std::cout << "Closing socket\n";
 
-    bool copy = *cams_are_running;
-    std::cout << "copy: " << copy << std::endl;
     g_lockComm.unlock();
     usleep(10000);
     if (closeSocket()) {

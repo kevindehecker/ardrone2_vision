@@ -43,8 +43,8 @@ private:
 public:
 	int im_width;
 	int im_height;
-	int darksize = 0;
-	int extracaliboffset = 0;
+	int darksize;
+	int extracaliboffset;
 
 	bool cams_are_running;
 #ifdef DELFLY_COLORMODE

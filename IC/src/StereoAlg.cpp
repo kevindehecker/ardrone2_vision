@@ -10,9 +10,12 @@
 
 bool stereoAlg::init (int im_width,int im_height) {
 
+	DisparityMat = cv::Mat::zeros(im_height,im_width, CV_8UC3);
+
 #ifdef FILESTEREO
+	count_filestereo=0;
 	//create filename
-	std::string filename = "export.txt";
+	std::string filename = "../images/export.txt";
 
 	//get length of the file
 	std::ifstream sfile;
@@ -24,6 +27,8 @@ bool stereoAlg::init (int im_width,int im_height) {
 		;
 	sfile.close();
 
+
+	if (flength==0) {return 0;}
 	//read the file into flst
 	flst = cv::Mat(flength ,1,CV_32S);
 	sfile.open(filename);
@@ -39,7 +44,7 @@ bool stereoAlg::init (int im_width,int im_height) {
 		flst.at<int>(i)  =d;
 	}
 	sfile.close();
-	std::cout << flst << std::endl;
+	//std::cout << flst << std::endl;
 
 #endif
 
@@ -95,9 +100,8 @@ bool stereoAlg::init (int im_width,int im_height) {
 
 }
 
-
-#ifdef GEIGER
 void stereoAlg::initGeigerParam() {
+	#ifdef GEIGER
 #if defined(DELFLY)
 	param.subsampling = false;
     param.disp_min = 5;
@@ -117,13 +121,26 @@ void stereoAlg::initGeigerParam() {
 	else {
 		GeigerSubSampling =1;
 	}
-
-}
 #endif
+}
 
 
 bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
+#ifdef FILESTEREO		
+	avgDisparity = flst.at<int>(count_filestereo);
 
+#if defined(HASSCREEN) || defined(VIDEORESULTS)
+	std::stringstream s;
+	s <<  "../images/disp" << count_filestereo+1 << ".png";	
+	DisparityMat = cv::imread(s.str());
+#endif
+
+	count_filestereo++;
+	if (avgDisparity<0)
+		return false;
+	else
+		return true;
+#endif
 #ifdef GEIGER
 	Elas elas(param);  //hmm moving this to init gives weird deleted function compile error...
 	DisparityMat = cv::Mat::zeros((dims[1])/GeigerSubSampling,dims[0]/GeigerSubSampling, cv::DataType<uint8_t>::type);
@@ -151,7 +168,12 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
             res = (10*okcount > totdisppixels); //% of good pixels needed before ignoring the frame
             if (!res) {	std::cout << "Blocked: #" << okcount << "/" << totdisppixels << "\n";   }
 
-        } else { return false;}
+			avgDisparity = (int) avgDisparity;
+
+			//std::cout << "#" << count_filestereo << ", GT: " << avgDisparity << std::endl;
+
+
+		} else {return false;}
 
 #else
 
@@ -213,10 +235,6 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
     //std::cout << " min/max: " << min << " / " << max << std::endl;
     DisparityMat.convertTo(DisparityMat,CV_8UC1, 256.0 / dispScale, 0.0); // expand range to 0..255.
 #endif
-#endif
-
-#if defined(HASSCREEN) || defined(VIDEORESULTS)
-    cv::applyColorMap(DisparityMat,DisparityMat,2);
 #endif
 
     return true;

@@ -8,7 +8,7 @@
 
 
 bool FileCam::init () {
-
+	scaleFactor = 1;
 	video = cv::VideoCapture("/home/goggles/Desktop/LeftRight.avi");
 //    video = cv::VideoCapture("/home/houjebek/AfstudeerData/Experiments/CyberZoo/Walks/video_dsp.avi");
 
@@ -35,8 +35,8 @@ void FileCam::start () {
 
 void FileCam::waitForImage() {
 
-    g_lockWaitForImage2.lock();
     g_lockWaitForImage1.unlock();
+	g_lockWaitForImage2.lock();
 
 }
 
@@ -71,7 +71,7 @@ void FileCam::workerThread() {
 #ifdef HASSCREEN
         //arrange speed to be ~10fps
         float time = stopWatch.Read();
-        time = 100 - time/1000;
+		time = 1000/(float)VIDEOFPS - time/1000;
         if (fastforward==0) {
             if (time > 0)  {usleep((int)time*1000);}
         }

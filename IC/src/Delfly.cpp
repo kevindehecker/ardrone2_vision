@@ -11,7 +11,10 @@
 #include <cv.h>
 
 bool DelFly::init () {
-    int res = RS232_OpenComport(3000000);  //3000000 is the maximum of the usb bus ftdi serial port
+	int darksize = 0;
+	int extracaliboffset = 0;
+
+	int res = RS232_OpenComport(3000000);  //3000000 is the maximum of the usb bus ftdi serial port
 	if (res != 0) {
 		std::cerr << "Error opening COM port. Is the camera connected?\n";
         return false;

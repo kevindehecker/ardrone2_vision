@@ -28,8 +28,8 @@ private:
     CvMat *_my1;
     CvMat *_mx2;
     CvMat *_my2;
-    int darksize = 80;
-    int extracaliboffset = 4;
+	int darksize;
+	int extracaliboffset;
     int camLeft_id;
     int camRight_id;
 
@@ -42,9 +42,9 @@ private:
 
 
 public:
-    int im_width = 640;
-    int im_height = 480;
-    int im_fps =VIDEOFPS;
+	int im_width;
+	int im_height;
+	int im_fps;
     bool cams_are_running;
     cv::Mat frameL_mat;
     cv::Mat frameR_mat;
