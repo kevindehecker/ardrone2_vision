@@ -620,7 +620,11 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 						sample_dx[yy*patch_size+xx] += (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx-1));
 						sample_dx[yy*patch_size+xx] /=2;
 					}
-					 grayframe.at<uint8_t>(y+yy,x+xx) = 255; // uncomment to visualise picking
+#ifdef DRAWVIZS
+					if (*result_input2Mode == VIZ_histogram) {
+						grayframe.at<uint8_t>(y+yy,x+xx) = 255; // visualize sampling
+					}
+#endif
 				}
 			}
 
