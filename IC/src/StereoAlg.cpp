@@ -105,7 +105,7 @@ void stereoAlg::initGeigerParam() {
 #if defined(DELFLY)
 	param.subsampling = false;
     param.disp_min = 5;
-    param.disp_max = 64;
+	param.disp_max = 1;
     darksize = 0;
 #else
 	param.subsampling = true;
@@ -136,7 +136,7 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
 #endif
 
 	count_filestereo++;
-	if (avgDisparity<0)
+	if (avgDisparity<5) // minimum disparity
 		return false;
 	else
 		return true;

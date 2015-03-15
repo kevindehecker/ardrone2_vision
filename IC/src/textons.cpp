@@ -382,7 +382,7 @@ void Textons::drawGraph(std::string msg) {
 	s_mse << "mse trn: " << (int)_mse_trn << ", tst: " << (int)_mse_tst;
 	putText(graphFrame,s_mse.str(),cv::Point(0, 50),cv::FONT_HERSHEY_SIMPLEX,0.5,color_vert);
 
-	//TODO: move the following draw function out of the loop
+
 	//draw nn vision threshold:
 	cv::line(graphFrame, cv::Point(0, rows- threshold_nn*scaleY), cv::Point(graphFrame.cols, rows -  threshold_nn*scaleY),color_invert, line_width, 8, 0);
 	putText(graphFrame,"est.thresh.",cv::Point(0, rows- threshold_nn*scaleY+10),cv::FONT_HERSHEY_SIMPLEX,0.4,color_invert);
@@ -582,8 +582,11 @@ void Textons::setAutoThreshold() {
 
 }
 
+
+bool wtf = false;
+
 //calculates the histogram/distribution
-void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, bool activeLearning, int pauseVideo) {
+void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, bool activeLearning, int pauseVideo, bool stereoOK) {
 
     int middleid = floor((float)patch_size/2.0); // for gradient, asumes, texton size is odd!
     int16_t sample[patch_square_size];
@@ -690,6 +693,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 		hist.at<float>(j) /= sum_gr;
 	}
 
+	//calculate and concatenate entropy distribution
 	float entropy =0;
 	for (int i = 0 ; i < n_textons; i++) {
 		float f = hist.at<float>(i); // sum;
@@ -701,6 +705,15 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 	//std:: cout << "Entropy: " << entropy << std::endl;
 
 
+	//smooth gt, but exclude std filter from smoothing:
+//    if (avgdisp >0.1 ) {
+//        avgdisp_smoothed = gt_smoothed.addSample(avgdisp); // perform smoothing
+//    }
+//    else {
+//        avgdisp_smoothed = 0;
+//    }
+	avgdisp_smoothed = avgdisp; // no smoothing on gt
+
     //copy new data into learning buffer:
     cv::Mat M1 = distribution_buffer.row((distribution_buf_pointer+0) % distribution_buf_size) ;
     hist.convertTo(M1,cv::DataType<float>::type,1,0); // floats are needed for knn
@@ -710,16 +723,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
     //perform smoothing:
     nn = knn_smoothed.addSample(nn);
 
-    //smooth gt, but exclude std filter from smoothing:
-    if (avgdisp >0.1 ) {
-        avgdisp_smoothed = gt_smoothed.addSample(avgdisp); // perform smoothing
-    }
-    else {
-        avgdisp_smoothed = 0;
-    }
-    avgdisp_smoothed = avgdisp; // nah, nm
-
-	if (!pauseVideo) {
+	if (!pauseVideo && stereoOK) {
 		if (!activeLearning) {        //if not active learning, learn all samples
 			distribution_buf_pointer = (distribution_buf_pointer+1) % distribution_buf_size;
 		} else {            //otherwise, only learn errornous samples
@@ -739,8 +743,10 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 	//std::cout << "knn.disp.: " << nn << "  |  truth: " << avgdisp_smoothed << std::endl;
 
     //save values for visualisation	in graph
-    graph_buffer.at<float>((distribution_buf_pointer+0) % distribution_buf_size,0) = nn;
-    graph_buffer.at<float>(distribution_buf_pointer,1) = avgdisp_smoothed; // groundtruth
+	 if (stereoOK) {
+		 graph_buffer.at<float>((distribution_buf_pointer+0) % distribution_buf_size,0) = nn;
+		 graph_buffer.at<float>(distribution_buf_pointer,1) = avgdisp_smoothed; // groundtruth
+	 }
 
 #ifdef DRAWVIZS
 	if (*result_input2Mode == VIZ_histogram || *result_input2Mode == VIZ_texton_intensity_color_encoding || *result_input2Mode == VIZ_texton_gradient_color_encoding ) {

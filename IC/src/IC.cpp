@@ -207,14 +207,14 @@ void process_video() {
 			svcam.waitForImage();  //synchronized grab stereo frame:
 		}
 
-		bool stereoOK=true;
+		bool stereoOK=false;
 
 		if ((mode==stereo_only || mode==stereo_textons || mode==stereo_textons_active) && !pauseVideo) {
 			//stereo is turned on
 			stereoOK = stereo.calcDisparityMap(svcam.frameL_mat,svcam.frameR_mat); // calc the stereo groundtruth
 		}
-		if ((mode==stereo_textons_active || mode==stereo_textons && stereoOK) || mode==textons_only) {
-			textonizer.getTextonDistributionFromImage(svcam.frameL_mat,stereo.avgDisparity,mode==stereo_textons_active,pauseVideo);  //perform the texton stuff
+		if ((mode==stereo_textons_active || mode==stereo_textons ) || mode==textons_only) {
+			textonizer.getTextonDistributionFromImage(svcam.frameL_mat,stereo.avgDisparity,mode==stereo_textons_active,pauseVideo,stereoOK);  //perform the texton stuff
 			tcp.commdata_nn = textonizer.getLast_nn();
 		}
 		if (mode==stereo_only || mode==stereo_textons || stereo_textons_active) {
@@ -222,7 +222,7 @@ void process_video() {
 			tcp.commdata_gt_stdev = stereo.stddevDisparity;
 		}
 
-		if (mode==stereo_textons || mode==stereo_textons_active) {
+		if (stereoOK && (mode==stereo_textons || mode==stereo_textons_active)) {
 			textonizer.setAutoThreshold();
 		}
 
@@ -394,19 +394,6 @@ void handlekey() {
 		}else {
 			pauseVideo=1;
 		}
-
-		//		while (pauseVideo==1) {
-		//			usleep(1000);
-		//			key = cv::waitKey();
-		//			if (key == 32) { // next frame
-		//				key=0;
-		//				break;
-		//			}else if (key != 0) {
-		//				pauseVideo=0;
-		//				key=0;
-		//			}
-		//			break;
-		//		}
 #endif
 	} // end switch key
 
