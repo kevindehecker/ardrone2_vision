@@ -295,6 +295,11 @@ void Textons::drawGraph(std::string msg) {
     int negative_true=0;
     int negative_false=0;
 
+	float mse_tst = 0;
+	int mse_tst_cnt = 0;
+	float mse_trn = 0;
+	int mse_trn_cnt = 0;
+
     countsincelearn++; // keep track of training/test data	
 
     int learnborder =  (lastLearnedPosition+(distribution_buf_size-distribution_buf_pointer)) % distribution_buf_size; // make a sliding graph
@@ -309,15 +314,19 @@ void Textons::drawGraph(std::string msg) {
         nn = graph_buffer.at<float>(jj,0);
         gt = graph_buffer.at<float>(jj,1);
 
-        if (j > learnborder ) { // change color according to training/test data
-            color_nn= cv::Scalar(0,0,255); // red
-        } else {
-
-            color_nn= cv::Scalar(0,255,0); // green
-        }
-
 
         if (!(groundtruth_buffer.at<float>(jj) < 6.201 && groundtruth_buffer.at<float>(jj) > 6.199)) {
+
+			if (j > learnborder ) { // change color according to training/test data
+				color_nn= cv::Scalar(0,0,255); // red
+				mse_tst += (gt - nn) * (gt - nn);
+				mse_tst_cnt++;
+			} else {
+				color_nn= cv::Scalar(0,255,0); // green
+				mse_trn += (gt - nn) * (gt - nn);
+				mse_trn_cnt++;
+			}
+
 
 			//draw a small colored line above to indicate what the drone will do:
 			if (nn < threshold_nn && gt > threshold_gt) {
@@ -366,6 +375,12 @@ void Textons::drawGraph(std::string msg) {
         prev_gt = gt;
     }
 
+	// calc mean square errors
+	mse_tst /= mse_tst_cnt;
+	mse_trn /= mse_trn_cnt;
+	std::stringstream s_mse;
+	s_mse << "mse trn: " << (int)mse_trn << ", tst: " << (int)mse_tst;
+	putText(graphFrame,s_mse.str(),cv::Point(0, 60),cv::FONT_HERSHEY_SIMPLEX,0.5,color_vert);
 
 	//TODO: move the following draw function out of the loop
 	//draw nn vision threshold:
@@ -454,8 +469,7 @@ void Textons::setAutoThreshold() {
 		int negative_true=0;
 		int negative_false=0;
 
-		for (int j = filterwidth; j < distribution_buf_size ; j++)
-		{
+		for (int j = filterwidth; j < distribution_buf_size ; j++) {
 			float nn,gt;
 			int jj = (j+distribution_buf_pointer) % distribution_buf_size; // make it a sliding graph
 			nn = graph_buffer.at<float>(jj,0);
@@ -700,6 +714,39 @@ int Textons::getLast_gt() {
 int Textons::getLast_nn() {
     int nn = graph_buffer.at<float>(distribution_buf_pointer,0);
     return nn;
+}
+
+void Textons::updateMSE() {
+	float mse_tst = 0;
+	int mse_tst_cnt = 0;
+	float mse_trn = 0;
+	int mse_trn_cnt = 0;
+
+	int learnborder =  (lastLearnedPosition+(distribution_buf_size-distribution_buf_pointer)) % distribution_buf_size; // make a sliding graph
+		if ( countsincelearn > distribution_buf_size) {
+			learnborder=0;
+		}
+
+	for (int j = filterwidth; j < distribution_buf_size ; j++) {
+		float nn,gt;
+		int jj = (j+distribution_buf_pointer) % distribution_buf_size; // make it a sliding graph
+		nn = graph_buffer.at<float>(jj,0);
+		gt = graph_buffer.at<float>(jj,1);
+		if (!(groundtruth_buffer.at<float>(jj) < 6.201 && groundtruth_buffer.at<float>(jj) > 6.199)) {			
+			if (j > learnborder ) {
+				mse_tst += gt*gt - nn*nn;
+				mse_tst_cnt++;
+			} else {
+				mse_trn += gt*gt - nn*nn;
+				mse_trn_cnt++;
+			}
+
+		}
+	}
+	mse_tst /= mse_tst_cnt; // calc mean
+	mse_trn /= mse_trn_cnt; // calc mean
+
+
 }
 
 inline bool checkFileExist (const std::string& name) {

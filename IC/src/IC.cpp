@@ -420,7 +420,7 @@ void handlekey() {
 #ifndef VIDEORESULTS
 	if (key!=0) {
 		std::cout << "Terminal: "  << msg << std::endl;
-		msg = "";
+
 	}
 #endif
 	key=0;

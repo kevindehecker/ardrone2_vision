@@ -48,7 +48,7 @@ private:
 
     double getEuclDistance(int16_t sample[], int texton_id);
     int initTextons();
-    void drawTextonAnotatedImage(cv::Mat grayframe);
+    void drawTextonAnotatedImage(cv::Mat grayframe);	
     cv::Scalar getColor(int id);
 
 public:
@@ -104,7 +104,7 @@ public:
     int getLast_gt();
     void drawMeanHists(cv::Mat histimage);
 	void setAutoThreshold();
-
+	void updateMSE();
 
 
 }; 
