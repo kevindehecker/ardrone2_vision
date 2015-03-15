@@ -591,73 +591,81 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
     cv::Mat hist;
 	hist = cv::Mat::zeros(1, n_textons+1, cv::DataType<float>::type); // +1 -> entropy
 
-    for(int n=0;n<n_samples;n++){
+	int gridsize_x = (grayframe.cols-patch_size) / n_samples_sqrt;
+	int gridsize_y = (grayframe.rows-patch_size) / n_samples_sqrt;
+	for(int nx=0;nx<n_samples_sqrt;nx++){
+		for(int ny=0;ny<n_samples_sqrt;ny++){
 
-        //extract a random patch to a temporary vector
-        int x = rand() % (grayframe.cols-patch_size);
-        int y = rand() % (grayframe.rows-patch_size);
-        for (int xx=0;xx<patch_size;xx++) {
-            for (int yy=0;yy<patch_size;yy++) {
+			//extract a random patch to a temporary vector
+			//int x = rand() % (grayframe.cols-patch_size);
+			//int y = rand() % (grayframe.rows-patch_size);
 
-                //copy data to sample
-                sample[yy*patch_size+xx] = grayframe.at<uint8_t>(y+yy,x+xx);
+			//extract a patch from a grid to a temporary vector
+			int x = gridsize_x * nx + (gridsize_x>>1);
+			int y = gridsize_y * ny + (gridsize_x>>1);
 
-                //calculate x gradient into sample_dx:
-                if (xx>middleid ) {
-                    sample_dx[yy*patch_size+xx] = (int)(0x00ff &grayframe.at<uint8_t>(y+yy,x+xx)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx-1));
-                } else if ( xx < middleid ) {
-                    sample_dx[yy*patch_size+xx] = (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx+1)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx));
-                } else {
-                    sample_dx[yy*patch_size+xx] = (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx+1)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx));
-                    sample_dx[yy*patch_size+xx] += (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx-1));
-                    sample_dx[yy*patch_size+xx] /=2;
-                }
-				// grayframe.at<uint8_t>(y+yy,x+xx) = 255; // uncomment to visualise picking
-            }
-        }
+			for (int xx=0;xx<patch_size;xx++) {
+				for (int yy=0;yy<patch_size;yy++) {
 
-		//        if (n==0) { // visualise a patch
-		//            cv::Mat test((int)patch_size,(int)patch_size,CV_8UC1, *sample);
-		//            imshow("patch", test );
-		//        }
+					//copy data to sample
+					sample[yy*patch_size+xx] = grayframe.at<uint8_t>(y+yy,x+xx);
 
-		if (method==TEXTON_CUMULATIVE_DISTANCE) {
-			//get the and sum distances to this patch to the textons...
-
-			for(int j=0;j<n_textons;j++) {
-				if (j < n_textons_intensity) {
-					float dis = getEuclDistance(sample,j);
-					hist.at<float>(j) = hist.at<float>(j) + dis;
-				} else {
-					float dis = getEuclDistance(sample_dx,j);
-					hist.at<float>(j) = hist.at<float>(j) + dis;
+					//calculate x gradient into sample_dx:
+					if (xx>middleid ) {
+						sample_dx[yy*patch_size+xx] = (int)(0x00ff &grayframe.at<uint8_t>(y+yy,x+xx)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx-1));
+					} else if ( xx < middleid ) {
+						sample_dx[yy*patch_size+xx] = (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx+1)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx));
+					} else {
+						sample_dx[yy*patch_size+xx] = (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx+1)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx));
+						sample_dx[yy*patch_size+xx] += (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx-1));
+						sample_dx[yy*patch_size+xx] /=2;
+					}
+					 grayframe.at<uint8_t>(y+yy,x+xx) = 255; // uncomment to visualise picking
 				}
 			}
-			//move normalize uit for loop
-		}  else {
 
-			cv::Mat distances_gr = cv::Mat::zeros(n_textons_gradient,1,CV_32F);
-			cv::Mat distances_i = cv::Mat::zeros(n_textons_intensity,1,CV_32F);
+			//        if (n==0) { // visualise a patch
+			//            cv::Mat test((int)patch_size,(int)patch_size,CV_8UC1, *sample);
+			//            imshow("patch", test );
+			//        }
 
-			for(int j=0;j<n_textons;j++) {
-				if (j < n_textons_intensity) {
-					distances_i.at<float>(j,0) = getEuclDistance(sample,j);
-				} else {
-					distances_gr.at<float>(j-n_textons_intensity,0) = getEuclDistance(sample_dx,j);
+			if (method==TEXTON_CUMULATIVE_DISTANCE) {
+				//get the and sum distances to this patch to the textons...
+
+				for(int j=0;j<n_textons;j++) {
+					if (j < n_textons_intensity) {
+						float dis = getEuclDistance(sample,j);
+						hist.at<float>(j) = hist.at<float>(j) + dis;
+					} else {
+						float dis = getEuclDistance(sample_dx,j);
+						hist.at<float>(j) = hist.at<float>(j) + dis;
+					}
 				}
+				//move normalize uit for loop
+			}  else {
+
+				cv::Mat distances_gr = cv::Mat::zeros(n_textons_gradient,1,CV_32F);
+				cv::Mat distances_i = cv::Mat::zeros(n_textons_intensity,1,CV_32F);
+
+				for(int j=0;j<n_textons;j++) {
+					if (j < n_textons_intensity) {
+						distances_i.at<float>(j,0) = getEuclDistance(sample,j);
+					} else {
+						distances_gr.at<float>(j-n_textons_intensity,0) = getEuclDistance(sample_dx,j);
+					}
+				}
+				cv::Point min_element_gr,min_element_i;
+				cv::minMaxLoc(distances_i,NULL, NULL, &min_element_i,NULL);
+				cv::minMaxLoc(distances_gr,NULL, NULL, &min_element_gr,NULL);
+
+
+				hist.at<float>(min_element_i.y) = hist.at<float>(min_element_i.y) + hist_step;
+				hist.at<float>(min_element_gr.y + n_textons_intensity) = hist.at<float>(min_element_gr.y + n_textons_intensity) + hist_step;
+
+
 			}
-			cv::Point min_element_gr,min_element_i;
-			cv::minMaxLoc(distances_i,NULL, NULL, &min_element_i,NULL);
-			cv::minMaxLoc(distances_gr,NULL, NULL, &min_element_gr,NULL);
-
-
-			hist.at<float>(min_element_i.y) = hist.at<float>(min_element_i.y) + hist_step;
-			hist.at<float>(min_element_gr.y + n_textons_intensity) = hist.at<float>(min_element_gr.y + n_textons_intensity) + hist_step;
-
-
 		}
-    }
-
+	}
 
 	//normalize
 	//float sum = cv::sum(hist)(0);
@@ -772,11 +780,11 @@ inline bool checkFileExist (const std::string& name) {
 int Textons::initTextons() {
     std::cout << "Opening textons file\n";
 
-    if (!checkFileExist("../textons10_gradient.dat")) {std::cerr << "Error: gradient textons not available\n";return 0;}
-    if (!checkFileExist("../textons10_intensity.dat")) {std::cerr << "Error: intensity textons not available\n";return 0;}
+	if (!checkFileExist("../textons10_gradient_cubicle.dat")) {std::cerr << "Error: gradient textons not available\n";return 0;}
+	if (!checkFileExist("../textons10_intensity_cubicle.dat")) {std::cerr << "Error: intensity textons not available\n";return 0;}
 
-    std::ifstream input_gr("../textons10_gradient.dat", std::ios::binary );
-    std::ifstream input_i("../textons10_intensity.dat", std::ios::binary );
+	std::ifstream input_gr("../textons10_gradient_cubicle.dat", std::ios::binary );
+	std::ifstream input_i("../textons10_intensity_cubicle.dat", std::ios::binary );
     // copies all data into buffer
     std::vector<unsigned char> buffer_gr(( std::istreambuf_iterator<char>(input_gr)),(std::istreambuf_iterator<char>()));
     std::vector<unsigned char> buffer_i(( std::istreambuf_iterator<char>(input_i)),(std::istreambuf_iterator<char>()));
@@ -946,6 +954,7 @@ void Textons::printReport(float fps) {
 	std::cout << "kNN;                     k: " << k << std::endl;
 	std::cout << "Moving average width;     : " << filterwidth << std::endl;
 	std::cout << "Texton patch size;        : " << (int)patch_size << std::endl;
+	std::cout << "#patches per image;       : " << n_samples << std::endl;
 	std::cout << "#textons;        intensity: " << (int)n_textons_intensity << "  \tgradient: " <<  (int)n_textons_gradient << std::endl;
 	std::cout << "#Samples in buffer;  train: " << _mse_trn_cnt << "\ttest: " << _mse_tst_cnt << " --> " << tst_prc << "%" << std::endl ;
 	std::cout << "Mean square error;   train: " << _mse_trn << "\ttest: " << _mse_tst << std::endl;
