@@ -51,6 +51,7 @@ cv::VideoWriter outputVideo;
 cv::VideoWriter outputVideoResults;
 stopwatch_c stopWatch;
 modus_t mode;
+int frames = 0;
 
 #ifdef USE_TERMINAL_INPUT
 std::thread thread_TerminalInput;
@@ -197,8 +198,8 @@ void combineImage(cv::Mat resFrame, cv::Mat smallsourceimage, int x, int y,int w
  * the camera.
  */
 void process_video() {
+	std::cout << "Running...\n";
 	stopWatch.Start();
-	int frames = 0;
 	//main while loop:
 	while (key != 27 && svcam.cams_are_running) // ESC
 	{
@@ -255,9 +256,9 @@ void process_video() {
 		if (!pauseVideo) {
 			frames++;
 		}
-		//		if (frames == 1500) {
-		//			textonizer.retrainAll();
-		//		}
+		if (frames == 1948) {
+			textonizer.retrainAll();
+		}
 
 		//		if ((frames % 100) == 99) {
 		//			textonizer.retrainAll();
@@ -269,7 +270,7 @@ void process_video() {
 
 		float time = stopWatch.Read()/1000;
 		tcp.commdata_fps = frames /(time);
-		std::cout << "#" << frames << ", fps: " << tcp.commdata_fps << ", GT: " << tcp.commdata_gt << std::endl;
+		//std::cout << "#" << frames << ", fps: " << tcp.commdata_fps << ", GT: " << tcp.commdata_gt << std::endl;
 
 #ifdef USE_SOCKET
 		tcp.Unlock();
@@ -336,9 +337,11 @@ void handlekey() {
 		//    case 92: // [\]: save stereo image to bmp
 		//	  exporter.saveStereoPair();
 		//	  break;
-		//    case 114: // [r]: reset stopwatch
-		//	  frames=0;stopWatch.Restart();msg="Reset";
-		//	  break;
+	case 114: // [r]: reset stopwatch
+		frames=0;
+		stopWatch.Restart();
+		msg="fps Reset";
+		break;
 	case 97: // [a]: increase threshold nn
 		changeThresh_nn(1);
 		break;
@@ -433,10 +436,9 @@ void handlekey() {
 	}
 
 
-#ifndef VIDEORESULTS
+#ifndef HASSCREEN
 	if (key!=0) {
 		std::cout << "Terminal: "  << msg << std::endl;
-
 	}
 #endif
 	key=0;
@@ -610,11 +612,12 @@ int main( int argc, char **argv )
 	/* clear learning buffer instead of using old stuff */
 	textonizer.initLearner(true);
 
-	process_video();
+	process_video();	
+	textonizer.printReport(tcp.commdata_fps);
 	close();
 
 	/* auto save at the end */
-	textonizer.retrainAll();
+	//textonizer.retrainAll();
 	textonizer.saveRegression();
 
 	return 0;

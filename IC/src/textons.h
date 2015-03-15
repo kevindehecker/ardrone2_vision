@@ -27,6 +27,14 @@ private:
 
 	int countsincelearn;
 
+	float _mse_tst;
+	float _mse_trn;
+	int _mse_tst_cnt;
+	int _mse_trn_cnt;
+	float _tpr_trn;
+	float _fpr_trn;
+	float _tpr_tst;
+	float _fpr_tst;
 
     std::vector<std::vector<int16_t> > textons;
 #define TEXTON_CUMULATIVE_DISTANCE  0
@@ -68,13 +76,13 @@ public:
 
 	Textons() {
 
-		n_samples = 1000;
+		n_samples = 50;
 		hist_step = 1/(float)n_samples;
 		filterwidth = 5;
 		k = 5;
 		countsincelearn =0;
 		method = TEXTON_MINIMUM_DISTANCE;
-		distribution_buf_size = 2000;
+		distribution_buf_size = 2435;
 		distribution_buf_pointer =0;
 		threshold_nn = 150;
 		threshold_gt = 200;
@@ -91,6 +99,7 @@ public:
 	void getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, bool activeLearning, int pauseVideo);
     void saveRegression();
     void retrainAll();
+	void printReport(float fps);
 
     bool initLearner(bool nulltrain);
     int loadPreviousRegression();

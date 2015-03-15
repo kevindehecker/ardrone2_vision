@@ -295,10 +295,10 @@ void Textons::drawGraph(std::string msg) {
     int negative_true=0;
     int negative_false=0;
 
-	float mse_tst = 0;
-	int mse_tst_cnt = 0;
-	float mse_trn = 0;
-	int mse_trn_cnt = 0;
+	_mse_tst = 0;
+	_mse_tst_cnt = 0;
+	_mse_trn = 0;
+	_mse_trn_cnt = 0;
 
     countsincelearn++; // keep track of training/test data	
 
@@ -319,12 +319,12 @@ void Textons::drawGraph(std::string msg) {
 
 			if (j > learnborder ) { // change color according to training/test data
 				color_nn= cv::Scalar(0,0,255); // red
-				mse_tst += (gt - nn) * (gt - nn);
-				mse_tst_cnt++;
+				_mse_tst += (gt - nn) * (gt - nn);
+				_mse_tst_cnt++;
 			} else {
 				color_nn= cv::Scalar(0,255,0); // green
-				mse_trn += (gt - nn) * (gt - nn);
-				mse_trn_cnt++;
+				_mse_trn += (gt - nn) * (gt - nn);
+				_mse_trn_cnt++;
 			}
 
 
@@ -376,10 +376,10 @@ void Textons::drawGraph(std::string msg) {
     }
 
 	// calc mean square errors
-	mse_tst /= mse_tst_cnt;
-	mse_trn /= mse_trn_cnt;
+	_mse_tst /= _mse_tst_cnt;
+	_mse_trn /= _mse_trn_cnt;
 	std::stringstream s_mse;
-	s_mse << "mse trn: " << (int)mse_trn << ", tst: " << (int)mse_tst;
+	s_mse << "mse trn: " << (int)_mse_trn << ", tst: " << (int)_mse_tst;
 	putText(graphFrame,s_mse.str(),cv::Point(0, 50),cv::FONT_HERSHEY_SIMPLEX,0.5,color_vert);
 
 	//TODO: move the following draw function out of the loop
@@ -550,7 +550,12 @@ void Textons::setAutoThreshold() {
 
 	}
 
-	threshold_nn = best;	
+	threshold_nn = best;
+
+	_tpr_trn = tprs_trn.at<float>(best);
+	_fpr_trn = fprs_trn.at<float>(best);
+	_tpr_tst = tprs_tst.at<float>(best);
+	_fpr_tst = fprs_tst.at<float>(best);
 #ifdef DRAWVIZS
 	if (*result_input2Mode == VIZ_ROC ) {
 		std::stringstream s;
@@ -572,6 +577,7 @@ void Textons::setAutoThreshold() {
 
 	}
 #endif
+
 
 
 }
@@ -860,7 +866,7 @@ void Textons::retrainAll() {
 #ifdef _PC
     //redraw the graph and reinit the smoother
     //may take significant time if learning buffer is big, so don't perform onboard drone
-	std::cout << "Initialising smoother\n";
+	//std::cout << "Initialising smoother\n";
     for (int i=0; i<distribution_buf_size; i++) {
 
         int jj = (i+distribution_buf_pointer) % distribution_buf_size;
@@ -930,5 +936,22 @@ void Textons::reload() {
     loadPreviousRegression();
 }
 
+void Textons::printReport(float fps) {
 
+	drawGraph(""); // calc mse
+
+	int tst_prc = (int)round(((((float)_mse_tst_cnt)/((float)(_mse_trn_cnt+_mse_tst_cnt)))*100.0f));
+	std::cout << "\n*************************Report*************************\n";		
+	std::cout << "@fps;                     : " << fps << std::endl;
+	std::cout << "kNN;                     k: " << k << std::endl;
+	std::cout << "Moving average width;     : " << filterwidth << std::endl;
+	std::cout << "Texton patch size;        : " << (int)patch_size << std::endl;
+	std::cout << "#textons;        intensity: " << (int)n_textons_intensity << "  \tgradient: " <<  (int)n_textons_gradient << std::endl;
+	std::cout << "#Samples in buffer;  train: " << _mse_trn_cnt << "\ttest: " << _mse_tst_cnt << " --> " << tst_prc << "%" << std::endl ;
+	std::cout << "Mean square error;   train: " << _mse_trn << "\ttest: " << _mse_tst << std::endl;
+	std::cout << "True positive rate;  train: " << _tpr_trn << "\ttest: " << _tpr_tst << std::endl;
+	std::cout << "False positive rate; train: " << _fpr_trn << "\ttest: " << _fpr_tst << std::endl;
+	std::cout << "*********************************************************\n\n";
+
+}
 
