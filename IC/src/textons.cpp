@@ -332,22 +332,22 @@ void Textons::drawGraph(std::string msg) {
 			if (nn < threshold_nn && gt > threshold_gt) {
 				//false negative; drone should stop according to stereo, but didn't if textons were used
 				//white
-				negative_false++;
+				if (j > learnborder ) {negative_false++;}
 				cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(255,255,255), line_width, 8, 0);
 			} else if (nn > threshold_nn && gt < threshold_gt) {
 				//false positive; drone could have proceeded according to stereo, but stopped if textons were used
 				//black
-				positive_false++;
+				if (j > learnborder ) {positive_false++;}
 				cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,0,0), line_width, 8, 0);
 			} else if (nn > threshold_nn && gt > threshold_gt) {
 				//true positive; both stereo and textons agree, drone should stop
 				//red
-				negative_true++;
+				if (j > learnborder ) {negative_true++;}
 				cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,0,255), line_width, 8, 0);
 			} else {
 				//both stereo and textons agree, drone may proceed
 				//green
-				positive_true++;
+				if (j > learnborder ) {positive_true++;}
 				cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,255,0), line_width, 8, 0);
 			}
 
@@ -380,7 +380,7 @@ void Textons::drawGraph(std::string msg) {
 	mse_trn /= mse_trn_cnt;
 	std::stringstream s_mse;
 	s_mse << "mse trn: " << (int)mse_trn << ", tst: " << (int)mse_tst;
-	putText(graphFrame,s_mse.str(),cv::Point(0, 60),cv::FONT_HERSHEY_SIMPLEX,0.5,color_vert);
+	putText(graphFrame,s_mse.str(),cv::Point(0, 50),cv::FONT_HERSHEY_SIMPLEX,0.5,color_vert);
 
 	//TODO: move the following draw function out of the loop
 	//draw nn vision threshold:
@@ -410,8 +410,6 @@ void Textons::drawGraph(std::string msg) {
 }
 
 void Textons::setAutoThreshold() {
-
-
 
 #ifdef DRAWVIZS
 	int imsize = 400;
@@ -456,18 +454,32 @@ void Textons::setAutoThreshold() {
 #endif
 
 	bool done = false;
-	cv::Mat tprs(threshold_gt,1,CV_32F); // these two arrays could be optimised away, or used for nicer graph
-	cv::Mat fprs(threshold_gt,1,CV_32F);
+	cv::Mat tprs_trn(threshold_gt,1,CV_32F); // these two arrays could be optimised away, or used for nicer graph
+	cv::Mat fprs_trn(threshold_gt,1,CV_32F);
+	cv::Mat tprs_tst(threshold_gt,1,CV_32F);
+	cv::Mat fprs_tst(threshold_gt,1,CV_32F);
 
 	int best = 0;
-	float fpr_best_tmp = 99999999; //smaller is better, so start the search extremely high
+	float fpr_tst_best_tmp = 99999999; //smaller is better, so start the search extremely high
+	float fpr_trn_best_tmp = 99999999; //smaller is better, so start the search extremely high
+
+	int learnborder =  (lastLearnedPosition+(distribution_buf_size-distribution_buf_pointer)) % distribution_buf_size; // make a sliding graph
+	if ( countsincelearn > distribution_buf_size) {
+		learnborder=0;
+	}
 
 	for (int i = threshold_gt; i > 0; i-- ) {
 
-		int positive_true=0;
-		int positive_false=0;
-		int negative_true=0;
-		int negative_false=0;
+		int positive_true_trn=0;
+		int positive_false_trn=0;
+		int negative_true_trn=0;
+		int negative_false_trn=0;
+
+
+		int positive_true_tst=0;
+		int positive_false_tst=0;
+		int negative_true_tst=0;
+		int negative_false_tst=0;
 
 		for (int j = filterwidth; j < distribution_buf_size ; j++) {
 			float nn,gt;
@@ -476,57 +488,88 @@ void Textons::setAutoThreshold() {
 			gt = graph_buffer.at<float>(jj,1);
 
 
-			if (!(groundtruth_buffer.at<float>(jj) < 6.201 && groundtruth_buffer.at<float>(jj) > 6.199)) {
-
-				//draw a small colored line above to indicate what the drone will do:
-				if (nn < i && gt > threshold_gt) {
-					//false negative; drone should stop according to stereo, but didn't if textons were used (miss)
-					negative_false++;
-				} else if (nn > i && gt < threshold_gt) {
-					//false positive; drone could have proceeded according to stereo, but stopped if textons were used (false alarm)
-					positive_false++;
-				} else if (nn > i && gt > threshold_gt) {
-					//true positive; both stereo and textons agree, drone should stop
-					negative_true++;
+			if (!(groundtruth_buffer.at<float>(jj) < 6.201 && groundtruth_buffer.at<float>(jj) > 6.199)) {				
+				if (j > learnborder ) { //tst/trn
+					if (nn < i && gt > threshold_gt) {
+						//false negative; drone should stop according to stereo, but didn't if textons were used (miss)
+						negative_false_tst++;
+					} else if (nn > i && gt < threshold_gt) {
+						//false positive; drone could have proceeded according to stereo, but stopped if textons were used (false alarm)
+						positive_false_tst++;
+					} else if (nn > i && gt > threshold_gt) {
+						//true positive; both stereo and textons agree, drone should stop
+						negative_true_tst++;
+					} else {
+						//both stereo and textons agree, drone may proceed
+						positive_true_tst++;
+					}
 				} else {
-					//both stereo and textons agree, drone may proceed
-					positive_true++;
+					if (nn < i && gt > threshold_gt) {
+						//false negative; drone should stop according to stereo, but didn't if textons were used (miss)
+						negative_false_trn++;
+					} else if (nn > i && gt < threshold_gt) {
+						//false positive; drone could have proceeded according to stereo, but stopped if textons were used (false alarm)
+						positive_false_trn++;
+					} else if (nn > i && gt > threshold_gt) {
+						//true positive; both stereo and textons agree, drone should stop
+						negative_true_trn++;
+					} else {
+						//both stereo and textons agree, drone may proceed
+						positive_true_trn++;
+					}
 				}
 			}
 		}
 
 		//calculate fp/fn ratio
-		float tpr = (float)positive_true /(float)(positive_true+negative_false);
-		float fpr = (float)positive_false /(float)(negative_true+positive_false);
+		float tpr_trn = (float)positive_true_trn /(float)(positive_true_trn+negative_false_trn);
+		float fpr_trn = (float)positive_false_trn /(float)(negative_true_trn+positive_false_trn);
+		float tpr_tst = (float)positive_true_tst /(float)(positive_true_tst+negative_false_tst);
+		float fpr_tst = (float)positive_false_tst /(float)(negative_true_tst+positive_false_tst);
 
-		tprs.at<float>(i) = tpr;
-		fprs.at<float>(i) = fpr;
+		tprs_trn.at<float>(i) = tpr_trn;
+		fprs_trn.at<float>(i) = fpr_trn;
+		tprs_tst.at<float>(i) = tpr_tst;
+		fprs_tst.at<float>(i) = fpr_tst;
 
 
-		if (tpr > tpr_threshold && fpr < fpr_best_tmp) {
+		if (tpr_trn > tpr_threshold && fpr_trn < fpr_trn_best_tmp) {
 			best = i;
-			fpr_best_tmp = fprs.at<float>(best);
+			fpr_trn_best_tmp = fprs_trn.at<float>(best);
+			fpr_tst_best_tmp = fprs_tst.at<float>(best);
 		}
 
 
 #ifdef DRAWVIZS
 		if (*result_input2Mode == VIZ_ROC ) {
-			cv::line(graphframe,cv::Point(fpr*imsize,imsize- tpr*imsize),cv::Point(fpr*imsize, imsize-tpr*imsize),c, line_width, 8, 0);
+			cv::line(graphframe,cv::Point(fpr_trn*imsize,imsize- tpr_trn*imsize),cv::Point(fpr_trn*imsize, imsize-tpr_trn*imsize),cv::Scalar(0,255,0), line_width, 8, 0);
+			cv::line(graphframe,cv::Point(fpr_tst*imsize,imsize- tpr_tst*imsize),cv::Point(fpr_tst*imsize, imsize-tpr_tst*imsize),cv::Scalar(0,0,255), line_width, 8, 0);
 		}
 #endif
 
 
 	}
 
-	threshold_nn = best;
-	fpr_best = fpr_best_tmp;
+	threshold_nn = best;	
 #ifdef DRAWVIZS
 	if (*result_input2Mode == VIZ_ROC ) {
 		std::stringstream s;
 		s << "est.thresh. = " << best;
-		putText(graphframe,s.str(),cv::Point(fpr_best*imsize+5, imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(127,127,255));
+		putText(graphframe,s.str(),cv::Point(fpr_trn_best_tmp*imsize+5, imsize/2),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(127,127,255));
 		//draw fpr resulting threshold
-		cv::line(frame_ROC,cv::Point(fpr_best*imsize, 0),cv::Point(fpr_best*imsize, imsize),cv::Scalar(127,127,255), 1, 8, 0);
+		cv::line(graphframe,cv::Point(fpr_trn_best_tmp*imsize, 0),cv::Point(fpr_trn_best_tmp*imsize, imsize),cv::Scalar(127,127,255), 1, 8, 0);
+
+		std::stringstream s_trn;
+		if (fpr_trn_best_tmp <= 1) {
+			s_trn << "TPR: " << boost::format("%.2f")%tprs_trn.at<float>(best) << " -> FPR: " << boost::format("%.2f")%fprs_trn.at<float>(best);
+		} else {
+			s_trn << "TPR: " << boost::format("%.2f")%tpr_threshold << " -> FPR: -";
+		}		
+		std::stringstream s_tst;
+		s_tst << "TPR: " << boost::format("%.2f")%tprs_tst.at<float>(best) << " <> FPR: " << boost::format("%.2f")%fprs_tst.at<float>(best);
+		putText(graphframe,s_tst.str(),cv::Point(imsize-200 , imsize-12),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(0,0,255));
+		putText(graphframe,s_trn.str(),cv::Point(imsize-200 , imsize-34),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(0,255,0));
+
 	}
 #endif
 
@@ -534,7 +577,7 @@ void Textons::setAutoThreshold() {
 }
 
 //calculates the histogram/distribution
-void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, bool activeLearning) {
+void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, bool activeLearning, int pauseVideo) {
 
     int middleid = floor((float)patch_size/2.0); // for gradient, asumes, texton size is odd!
     int16_t sample[patch_square_size];
@@ -572,22 +615,16 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 		//            imshow("patch", test );
 		//        }
 
-		if (method==CUMULATIVE) {
+		if (method==TEXTON_CUMULATIVE_DISTANCE) {
 			//get the and sum distances to this patch to the textons...
-			std::vector<float> distances_gr(n_textons_gradient); // distances, TODO: float does not seem necessary -> int?
-			std::vector<float> distances_i(n_textons_intensity); // distances
-			float sum_i=0;
-			float sum_gr=0;
 
 			for(int j=0;j<n_textons;j++) {
 				if (j < n_textons_intensity) {
-					distances_i.at(j) = getEuclDistance(sample,j);
-					hist.at<float>(j) = hist.at<float>(j) + distances_i.at(j);
-					sum_i +=hist.at<float>(j);
+					float dis = getEuclDistance(sample,j);
+					hist.at<float>(j) = hist.at<float>(j) + dis;
 				} else {
-					distances_gr.at(j-n_textons_intensity) = getEuclDistance(sample_dx,j);
-					hist.at<float>(j) = hist.at<float>(j) + distances_gr.at(j-n_textons_intensity);
-					sum_gr +=hist.at<float>(j);
+					float dis = getEuclDistance(sample_dx,j);
+					hist.at<float>(j) = hist.at<float>(j) + dis;
 				}
 			}
 			//move normalize uit for loop
@@ -628,14 +665,12 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 
 
 	float sum_gr = 0;
-	for(int j=n_textons_intensity;j<n_textons_gradient;j++) {
+	for(int j=n_textons_intensity;j<n_textons;j++) {
 		sum_gr += hist.at<float>(j);
 	}
-	for(int j=n_textons_intensity;j<n_textons_gradient;j++) {
+	for(int j=n_textons_intensity;j<n_textons;j++) {
 		hist.at<float>(j) /= sum_gr;
 	}
-
-
 
 	float entropy =0;
 	for (int i = 0 ; i < n_textons; i++) {
@@ -666,19 +701,19 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
     }
     avgdisp_smoothed = avgdisp; // nah, nm
 
-
-    if (!activeLearning) {        //if not active learning, learn all samples
-        distribution_buf_pointer = (distribution_buf_pointer+1) % distribution_buf_size;
-    } else {            //otherwise, only learn errornous samples
-        if (nn < threshold_nn && avgdisp_smoothed > threshold_gt) {
-            //false negative; drone should stop according to stereo, but didn't if textons were used
-            distribution_buf_pointer = (distribution_buf_pointer+1) % distribution_buf_size;
-        } else if (nn > threshold_nn && avgdisp_smoothed < threshold_gt) {
-            //false positive; drone could have proceeded according to stereo, but stopped if textons were used
-            distribution_buf_pointer = (distribution_buf_pointer+1) % distribution_buf_size;
-        }
-    }
-
+	if (!pauseVideo) {
+		if (!activeLearning) {        //if not active learning, learn all samples
+			distribution_buf_pointer = (distribution_buf_pointer+1) % distribution_buf_size;
+		} else {            //otherwise, only learn errornous samples
+			if (nn < threshold_nn && avgdisp_smoothed > threshold_gt) {
+				//false negative; drone should stop according to stereo, but didn't if textons were used
+				distribution_buf_pointer = (distribution_buf_pointer+1) % distribution_buf_size;
+			} else if (nn > threshold_nn && avgdisp_smoothed < threshold_gt) {
+				//false positive; drone could have proceeded according to stereo, but stopped if textons were used
+				distribution_buf_pointer = (distribution_buf_pointer+1) % distribution_buf_size;
+			}
+		}
+	}
 	//std::cout << "hist" << distribution_buf_pointer << ": " << hist << std::endl;
 
 
@@ -714,39 +749,6 @@ int Textons::getLast_gt() {
 int Textons::getLast_nn() {
     int nn = graph_buffer.at<float>(distribution_buf_pointer,0);
     return nn;
-}
-
-void Textons::updateMSE() {
-	float mse_tst = 0;
-	int mse_tst_cnt = 0;
-	float mse_trn = 0;
-	int mse_trn_cnt = 0;
-
-	int learnborder =  (lastLearnedPosition+(distribution_buf_size-distribution_buf_pointer)) % distribution_buf_size; // make a sliding graph
-		if ( countsincelearn > distribution_buf_size) {
-			learnborder=0;
-		}
-
-	for (int j = filterwidth; j < distribution_buf_size ; j++) {
-		float nn,gt;
-		int jj = (j+distribution_buf_pointer) % distribution_buf_size; // make it a sliding graph
-		nn = graph_buffer.at<float>(jj,0);
-		gt = graph_buffer.at<float>(jj,1);
-		if (!(groundtruth_buffer.at<float>(jj) < 6.201 && groundtruth_buffer.at<float>(jj) > 6.199)) {			
-			if (j > learnborder ) {
-				mse_tst += gt*gt - nn*nn;
-				mse_tst_cnt++;
-			} else {
-				mse_trn += gt*gt - nn*nn;
-				mse_trn_cnt++;
-			}
-
-		}
-	}
-	mse_tst /= mse_tst_cnt; // calc mean
-	mse_trn /= mse_trn_cnt; // calc mean
-
-
 }
 
 inline bool checkFileExist (const std::string& name) {
