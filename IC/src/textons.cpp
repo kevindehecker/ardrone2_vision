@@ -37,16 +37,12 @@ bool Textons::init (int * result_input2Mode) {
 */
 double Textons::getEuclDistance(int16_t sample[], int texton_id) {
     int sum =0;
-
     std::vector<int16_t> v =textons[texton_id];
-
     std::vector<int16_t> sample_;
     sample_.assign(sample, sample + patch_square_size);
 
-    for(int i = 0; i < patch_square_size; i++)
-    {
+	for(int i = 0; i < patch_square_size; i++) {
         sum += pow(sample_[i] - v[i],2);
-
     }
     float distance = sqrt((float)sum);
 
@@ -582,9 +578,6 @@ void Textons::setAutoThreshold() {
 
 }
 
-
-bool wtf = false;
-
 //calculates the histogram/distribution
 void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, bool activeLearning, int pauseVideo, bool stereoOK) {
 
@@ -605,7 +598,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 
 			//extract a patch from a grid to a temporary vector
 			int x = gridsize_x * nx + (gridsize_x>>1);
-			int y = gridsize_y * ny + (gridsize_x>>1);
+			int y = gridsize_y * ny + (gridsize_y>>1);
 
 			for (int xx=0;xx<patch_size;xx++) {
 				for (int yy=0;yy<patch_size;yy++) {
@@ -614,20 +607,22 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 					sample[yy*patch_size+xx] = grayframe.at<uint8_t>(y+yy,x+xx);
 
 					//calculate x gradient into sample_dx:
-					if (xx>middleid ) {
+
+					if (xx==patch_size-1) {
 						sample_dx[yy*patch_size+xx] = (int)(0x00ff &grayframe.at<uint8_t>(y+yy,x+xx)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx-1));
-					} else if ( xx < middleid ) {
+						sample_dx[yy*patch_size+xx] <<=1; // increase integer precision instead of just dividing
+					} else if ( xx == 0 ) {
 						sample_dx[yy*patch_size+xx] = (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx+1)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx));
+						sample_dx[yy*patch_size+xx] <<=1; // increase integer precision instead of just dividing
 					} else {
-						sample_dx[yy*patch_size+xx] = (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx+1)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx));
-						sample_dx[yy*patch_size+xx] += (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx-1));
-						sample_dx[yy*patch_size+xx] /=2;
+						//this should normaly be divided by 2, but this is done through integer precision <<1 above, and divide by after distance calculation
+						sample_dx[yy*patch_size+xx] = (int)(0x00ff &grayframe.at<uint8_t>(y+yy,x+xx+1)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx-1));
 					}
 #ifdef DRAWVIZS
 					if (*result_input2Mode == VIZ_histogram) {
 						grayframe.at<uint8_t>(y+yy,x+xx) = 255; // visualize sampling
 					}
-#endif
+#endif					
 				}
 			}
 
@@ -635,6 +630,9 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 			//            cv::Mat test((int)patch_size,(int)patch_size,CV_8UC1, *sample);
 			//            imshow("patch", test );
 			//        }
+
+
+
 
 			if (method==TEXTON_CUMULATIVE_DISTANCE) {
 				//get the and sum distances to this patch to the textons...
@@ -644,7 +642,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 						float dis = getEuclDistance(sample,j);
 						hist.at<float>(j) = hist.at<float>(j) + dis;
 					} else {
-						float dis = getEuclDistance(sample_dx,j);
+						float dis = getEuclDistance(sample_dx,j)/4; // /4 = integer precision used in case of gradient patches
 						hist.at<float>(j) = hist.at<float>(j) + dis;
 					}
 				}
@@ -658,7 +656,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 					if (j < n_textons_intensity) {
 						distances_i.at<float>(j,0) = getEuclDistance(sample,j);
 					} else {
-						distances_gr.at<float>(j-n_textons_intensity,0) = getEuclDistance(sample_dx,j);
+						distances_gr.at<float>(j-n_textons_intensity,0) = getEuclDistance(sample_dx,j) /4; // /4 = integer precision used in case of gradient patches
 					}
 				}
 				cv::Point min_element_gr,min_element_i;
@@ -666,13 +664,15 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 				cv::minMaxLoc(distances_gr,NULL, NULL, &min_element_gr,NULL);
 
 
-				hist.at<float>(min_element_i.y) = hist.at<float>(min_element_i.y) + hist_step;
-				hist.at<float>(min_element_gr.y + n_textons_intensity) = hist.at<float>(min_element_gr.y + n_textons_intensity) + hist_step;
+				hist.at<float>(min_element_i.y)++;
+				hist.at<float>(min_element_gr.y + n_textons_intensity)++;
 
 
 			}
 		}
 	}
+
+
 
 	//normalize
 	//float sum = cv::sum(hist)(0);
@@ -681,7 +681,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 		sum_i += hist.at<float>(j);
 	}
 	for(int j=0;j<n_textons_intensity;j++) {
-		hist.at<float>(j) /= sum_i;
+		hist.at<float>(j) /= 2*sum_i; // /2 because two histrograms
 	}
 
 
@@ -690,15 +690,15 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 		sum_gr += hist.at<float>(j);
 	}
 	for(int j=n_textons_intensity;j<n_textons;j++) {
-		hist.at<float>(j) /= sum_gr;
+		hist.at<float>(j) /= 2*sum_gr; // /2 because two histrograms
 	}
 
 	//calculate and concatenate entropy distribution
 	float entropy =0;
 	for (int i = 0 ; i < n_textons; i++) {
-		float f = hist.at<float>(i); // sum;
+		float f = hist.at<float>(i);
 		if (f!=0) {
-			entropy  = entropy  - f * log(f)/log(2);
+			entropy  = entropy  - f * (log(f)/log(2));
 		}
 	}
 	hist.at<float>(n_textons) = entropy;
@@ -840,10 +840,10 @@ int Textons::initTextons() {
             uint8_t t1 = buffer_gr[counter+1];
             int16_t t = ((t1 << 8) & 0xff00) |  (t0 & 0x00ff);
             counter +=2;
-            v[j] = t;
+			v[j] = t *2; // *2 is for integer precision
 			//            if (j>0) {printf(", %d", v[j]);} else {printf(" %d", v[j]);}
         }
-        textons[i+n_textons_intensity] = v;
+		textons[i+n_textons_intensity] = v;
         input_gr.close();
 		//        std::cout << std::endl;
     }

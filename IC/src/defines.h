@@ -27,12 +27,12 @@
 
 
 //#define VIDEORESULTS // show the main results window
-#define DRAWVIZS    //show secundairy results (histograms and texton visulaisations
+//#define DRAWVIZS    //show secundairy results (histograms and texton visulaisations
 #ifndef FILESTEREO
 //#define EXPORT //create export.txt and seperate stereo pair png images
 #endif
 
-#define HASSCREEN // dont disable in qt debugger!
+//#define HASSCREEN // dont disable in qt debugger!
 #ifndef FILECAM
 //#define VIDEORAW // write the raw video footage from the camera to a video file
 #endif

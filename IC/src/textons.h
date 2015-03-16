@@ -15,7 +15,6 @@ private:
 	//visual words parameters
 	int n_samples;
 	int n_samples_sqrt;
-	float hist_step; // 1/n_samples for histogram sum ==1
 	int filterwidth; // moving average filter
 	int k;
 
@@ -77,14 +76,13 @@ public:
 
 	Textons() {
 
-		n_samples = 100;
+		n_samples = 50;
 		n_samples_sqrt = round(sqrt(n_samples ));
-		n_samples = n_samples_sqrt *n_samples_sqrt;
-		hist_step = 1/(float)n_samples;
+		n_samples = n_samples_sqrt *n_samples_sqrt;		
 		filterwidth = 5;
 		k = 5;
 		countsincelearn =0;
-		method = TEXTON_CUMULATIVE_DISTANCE;
+		method = TEXTON_MINIMUM_DISTANCE;
 		distribution_buf_size = 2435;
 		distribution_buf_pointer =0;
 		threshold_nn = 150;
