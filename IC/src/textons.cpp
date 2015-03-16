@@ -71,8 +71,8 @@ cv::Mat Textons::drawHistogram(cv::Mat hist,int bins, int maxY) {
 
 	//copy the normal histogram to the big image
 	std::stringstream s;
-	s << "Entropy: " << hist.at<float>(n_textons) ;
-	putText(canvas,s.str(),cv::Point(0, 20),cv::FONT_HERSHEY_SIMPLEX,0.3,cv::Scalar(255,255,255));
+	//s << "Entropy: " << hist.at<float>(n_textons) ;
+	//putText(canvas,s.str(),cv::Point(0, 20),cv::FONT_HERSHEY_SIMPLEX,0.3,cv::Scalar(255,255,255));
 	cv::line(canvas,cv::Point(canvas.cols/2,45),cv::Point(canvas.cols/2, canvas.rows ),cv::Scalar(180,180,180), 1, 8, 0);
 
     return canvas;
@@ -585,7 +585,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
     int16_t sample[patch_square_size];
     int16_t sample_dx[patch_square_size]; // gradient
     cv::Mat hist;
-	hist = cv::Mat::zeros(1, n_textons+1, cv::DataType<float>::type); // +1 -> entropy
+	hist = cv::Mat::zeros(1, n_textons, cv::DataType<float>::type);
 
 	int gridsize_x = (grayframe.cols-patch_size) / n_samples_sqrt;
 	int gridsize_y = (grayframe.rows-patch_size) / n_samples_sqrt;
@@ -694,14 +694,14 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 	}
 
 	//calculate and concatenate entropy distribution
-	float entropy =0;
-	for (int i = 0 ; i < n_textons; i++) {
-		float f = hist.at<float>(i);
-		if (f!=0) {
-			entropy  = entropy  - f * (log(f)/log(2));
-		}
-	}
-	hist.at<float>(n_textons) = entropy;
+//	float entropy =0;
+//	for (int i = 0 ; i < n_textons; i++) {
+//		float f = hist.at<float>(i);
+//		if (f!=0) {
+//			entropy  = entropy  - f * (log(f)/log(2));
+//		}
+//	}
+//	hist.at<float>(n_textons) = entropy;
 	//std:: cout << "Entropy: " << entropy << std::endl;
 
 
@@ -856,13 +856,13 @@ int Textons::initTextons() {
  */
 bool Textons::initLearner(bool nulltrain) {
     srand (time(NULL));
-	distribution_buffer = cv::Mat::zeros(distribution_buf_size, n_textons+1, cv::DataType<float>::type);
+	distribution_buffer = cv::Mat::zeros(distribution_buf_size, n_textons, cv::DataType<float>::type);
     groundtruth_buffer = cv::Mat::zeros(distribution_buf_size, 1, cv::DataType<float>::type);
     graph_buffer = cv::Mat::zeros(distribution_buf_size, 2, cv::DataType<float>::type);
     groundtruth_buffer = groundtruth_buffer +6.2; //for testing...
     distribution_buf_pointer = 0;
     knn_smoothed.init(filterwidth);
-    gt_smoothed.init(filterwidth);
+	//gt_smoothed.init(filterwidth);
     lastLearnedPosition = 0;
     countsincelearn=0;
     if (nulltrain) {
@@ -877,7 +877,9 @@ bool Textons::initLearner(bool nulltrain) {
  */
 void Textons::retrainAll() {
 	std::cout << "Training knn regression\n";
-    knn.train(distribution_buffer, groundtruth_buffer, cv::Mat(), true, 32, false );
+//	std::cout << distribution_buffer << std::endl;
+//	std::cout << groundtruth_buffer << std::endl;
+    knn.train(distribution_buffer, groundtruth_buffer, cv::Mat(), true, 32, false );	
     lastLearnedPosition = (distribution_buf_pointer +1 )% distribution_buf_size;
     countsincelearn=0;
 
@@ -886,12 +888,11 @@ void Textons::retrainAll() {
     //may take significant time if learning buffer is big, so don't perform onboard drone
 	//std::cout << "Initialising smoother\n";
     for (int i=0; i<distribution_buf_size; i++) {
-
         int jj = (i+distribution_buf_pointer) % distribution_buf_size;
         cv::Mat M1 = distribution_buffer.row(jj); // prevent smoothing filter discontinuity
         graph_buffer.at<float>(jj,0) = knn_smoothed.addSample(knn.find_nearest(M1,k,0,0,0,0));
-        gt_smoothed.addSample(graph_buffer.at<float>(jj,1)); // prepare the gt filter, not really necessary
-    }
+		//gt_smoothed.addSample(graph_buffer.at<float>(jj,1)); // prepare the gt filter, not really necessary
+    }	
 #endif
 }
 

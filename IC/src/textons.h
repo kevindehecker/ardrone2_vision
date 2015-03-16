@@ -52,7 +52,7 @@ private:
 
 	//moving average filters:
     Smoother knn_smoothed;
-    Smoother gt_smoothed;
+	//Smoother gt_smoothed;
 
     double getEuclDistance(int16_t sample[], int texton_id);
     int initTextons();
