@@ -97,6 +97,7 @@ public:
     bool close(void);
     cv::Mat drawHistogram(cv::Mat hist,int bins, int maxY);
     void drawGraph(std::string msg);
+	void getTextonDistributionFromImage(cv::Mat grayframe, cv::Mat avgdisps, bool activeLearning, int pauseVideo);
 	void getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, bool activeLearning, int pauseVideo, bool stereoOK);
     void saveRegression();
     void retrainAll();

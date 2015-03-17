@@ -578,6 +578,25 @@ void Textons::setAutoThreshold() {
 
 }
 
+void Textons::getTextonDistributionFromImage(cv::Mat grayframe, cv::Mat avgdisps, bool activeLearning, int pauseVideo) {
+
+	int quadrant_size_x = grayframe.cols>>2;
+	int quadrant_size_y = grayframe.rows>>2;
+	for (int y=0;y<2;y++) {
+		for (int x=0;x<2;x++) {
+			cv::Point p1(x*quadrant_size_x, y*quadrant_size_y);
+			cv::Point p2(x*quadrant_size_x+quadrant_size_x, y*quadrant_size_y+quadrant_size_y);
+			cv::Mat roi = cv::Mat(grayframe, cv::Rect(p1, p2));
+			getTextonDistributionFromImage(roi,avgdisps.at<float>(x,y),activeLearning,pauseVideo,avgdisps.at<float>(x,y)>5);
+			//hmm, what to do with the output, and the smoothing filter? Should probably instantiate 4 smoothers.
+
+			//ok, yeah split up getTextonDistributionFromImage, drawing part can go here below fors
+			//making define flag for 1/quad mode is then also easy
+			//1 mode still saved in array of smoothers, only of size 1
+		}
+	}
+}
+
 //calculates the histogram/distribution
 void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, bool activeLearning, int pauseVideo, bool stereoOK) {
 
@@ -706,12 +725,12 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 
 
 	//smooth gt, but exclude std filter from smoothing:
-//    if (avgdisp >0.1 ) {
-//        avgdisp_smoothed = gt_smoothed.addSample(avgdisp); // perform smoothing
-//    }
-//    else {
-//        avgdisp_smoothed = 0;
-//    }
+	//    if (avgdisp >0.1 ) {
+	//        avgdisp_smoothed = gt_smoothed.addSample(avgdisp); // perform smoothing
+	//    }
+	//    else {
+	//        avgdisp_smoothed = 0;
+	//    }
 	avgdisp_smoothed = avgdisp; // no smoothing on gt
 
     //copy new data into learning buffer:
@@ -743,10 +762,10 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 	//std::cout << "knn.disp.: " << nn << "  |  truth: " << avgdisp_smoothed << std::endl;
 
     //save values for visualisation	in graph
-	 if (stereoOK) {
-		 graph_buffer.at<float>((distribution_buf_pointer+0) % distribution_buf_size,0) = nn;
-		 graph_buffer.at<float>(distribution_buf_pointer,1) = avgdisp_smoothed; // groundtruth
-	 }
+	if (stereoOK) {
+		graph_buffer.at<float>((distribution_buf_pointer+0) % distribution_buf_size,0) = nn;
+		graph_buffer.at<float>(distribution_buf_pointer,1) = avgdisp_smoothed; // groundtruth
+	}
 
 #ifdef DRAWVIZS
 	if (*result_input2Mode == VIZ_histogram || *result_input2Mode == VIZ_texton_intensity_color_encoding || *result_input2Mode == VIZ_texton_gradient_color_encoding ) {
@@ -877,8 +896,6 @@ bool Textons::initLearner(bool nulltrain) {
  */
 void Textons::retrainAll() {
 	std::cout << "Training knn regression\n";
-//	std::cout << distribution_buffer << std::endl;
-//	std::cout << groundtruth_buffer << std::endl;
     knn.train(distribution_buffer, groundtruth_buffer, cv::Mat(), true, 32, false );	
     lastLearnedPosition = (distribution_buf_pointer +1 )% distribution_buf_size;
     countsincelearn=0;

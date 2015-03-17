@@ -49,13 +49,13 @@ bool stereoAlg::init (int im_width,int im_height) {
 #endif
 
 #ifdef SGM
-    #ifdef DELFLY
-        SGBM = cv::StereoSGBM (5, 32, 5 ,50,500,10,100,10,0,0,true);
-        dispScale = 512.0;
-	#else
-	    SGBM = cv::StereoSGBM (5, 256, 5) ; // ,50,500,10,100,10,0,0,false);
-		dispScale = 4096.0;
-	#endif
+#ifdef DELFLY
+	SGBM = cv::StereoSGBM (5, 32, 5 ,50,500,10,100,10,0,0,true);
+	dispScale = 512.0;
+#else
+	SGBM = cv::StereoSGBM (5, 256, 5) ; // ,50,500,10,100,10,0,0,false);
+	dispScale = 4096.0;
+#endif
 #endif
 
 #ifdef BM
@@ -101,11 +101,11 @@ bool stereoAlg::init (int im_width,int im_height) {
 }
 
 void stereoAlg::initGeigerParam() {
-	#ifdef GEIGER
+#ifdef GEIGER
 #if defined(DELFLY)
 	param.subsampling = false;
     param.disp_min = 5;
-	param.disp_max = 1;
+	param.disp_max = 64;
     darksize = 0;
 #else
 	param.subsampling = true;
@@ -145,35 +145,105 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
 	Elas elas(param);  //hmm moving this to init gives weird deleted function compile error...
 	DisparityMat = cv::Mat::zeros((dims[1])/GeigerSubSampling,dims[0]/GeigerSubSampling, cv::DataType<uint8_t>::type);
 	int res = elas.process((uint8_t*)frameL_mat.data,(uint8_t*)frameR_mat.data,D1_data,D2_data,dims);
-        // fix map and compute average disparity
+	// fix map and compute average disparity
 	avgDisparity=0;
 	if (res)  {
 
-            int okcount = 0; //keeps track how many pixels are OK (not 0 = NaN) in the disparity map
-            for (int i =0; i<dims[0]*(dims[1])/(GeigerSubSampling*GeigerSubSampling); i++) {
+#ifdef EXPORT
+		avgs = cv::Mat::zeros(2,2,CV_32F);
+		cv::Mat oks = cv::Mat::zeros(2,2,CV_32S);
 
-            	if (D1_data[i] <0) {
-            		D1_data[i] = 0;
-            	}
-            	else {
-            		okcount++;
-            		avgDisparity+=D1_data[i];
-            	}
-                //(*Disparity).imageData[i]=D1_data[i];
-            	DisparityMat.data[i] = D1_data[i]*GeigerHeatScaling;
-            }
-            avgDisparity /= okcount;
-            avgDisparity *=5; // heuristic scaling for better visualisation and smoother thresh config
+		for (int y =0; y<(dims[1]/GeigerSubSampling)/2; y++) {
+			int yy0 = y*dims[0]*GeigerSubSampling;
+			int yy1 = (y+dims[1]/2)*dims[0]*GeigerSubSampling;
+			for(int x=0; x<(dims[0]/GeigerSubSampling)/2;x++ ) {
+				int x1 = x + dims[0]/2;
 
-            res = (10*okcount > totdisppixels); //% of good pixels needed before ignoring the frame
-            if (!res) {	std::cout << "Blocked: #" << okcount << "/" << totdisppixels << "\n";   }
+				if (D1_data[yy0 + x] <= 0) {
+					D1_data[yy0 + x] = 0;
+				} else {
+					avgs.at<float>(0,0) = avgs.at<float>(0,0) + D1_data[yy0 + x];
+					oks.at<int>(0,0)++;
+				}
 
-			avgDisparity = (int) avgDisparity;
+				//D1_data[yy0 + x] = 20.5;
 
-			//std::cout << "#" << count_filestereo << ", GT: " << avgDisparity << std::endl;
+				if (D1_data[yy1 + x] <= 0) {
+					D1_data[yy1 + x] = 0;
+				} else {
+					avgs.at<float>(0,1) = avgs.at<float>(0,1) + D1_data[yy1 + x];
+					oks.at<int>(0,1)++;
+				}
+
+				//D1_data[yy1 + x] = 0.7;
+
+				if (D1_data[yy0 + x1] <= 0) {
+					D1_data[yy0 + x1] = 0;
+				} else {
+					avgs.at<float>(1,0) = avgs.at<float>(1,0) + D1_data[yy0 + x1];
+					oks.at<int>(1,0)++;
+				}
+
+				//D1_data[yy0 + x1] = 0.9;
+
+				if (D1_data[yy1 + x1] <= 0) {
+					D1_data[yy1 + x1] = 0;
+				} else {
+					avgs.at<float>(1,1) = avgs.at<float>(1,1) + D1_data[yy1 + x1];
+					oks.at<int>(1,1)++;
+				}
+
+				//D1_data[yy1 + x1] = 0;
+
+			}
+		}
+
+		if (oks.at<int>(0,0) > (totdisppixels>>16)) {
+			avgs.at<float>(0,0) /= oks.at<int>(0,0);
+			avgs.at<float>(0,0) *=5;
+		} else {avgs.at<float>(0,0) = -1;}
+		if (oks.at<int>(0,1) > (totdisppixels>>16)) {
+			avgs.at<float>(0,1) /= oks.at<int>(0,1);
+			avgs.at<float>(0,1) *=5;
+		} else {avgs.at<float>(0,1) = -1;}
+		if (oks.at<int>(1,0) > (totdisppixels>>16)) {
+			avgs.at<float>(1,0) /= oks.at<int>(1,0);
+			avgs.at<float>(1,0) *=5;
+		} else {avgs.at<float>(1,0) = -1;}
+		if (oks.at<int>(1,1) > (totdisppixels>>16)) {
+			avgs.at<float>(1,1) /= oks.at<int>(1,1);
+			avgs.at<float>(1,1) *=5;
+		} else {avgs.at<float>(1,1) = -1;}
+
+//		std::cout  << "GT: " << avgDisparity << std::endl;
+//		std::cout  << avgs << std::endl;
+//		std::cout  << oks << std::endl;
+#endif
+		int okcount = 0; //keeps track how many pixels are OK (not 0 = NaN) in the disparity map
+		for (int i =0; i<dims[0]*(dims[1])/(GeigerSubSampling*GeigerSubSampling); i++) {
+
+			if (D1_data[i] <0) {
+				D1_data[i] = 0;
+			}
+			else {
+				okcount++;
+				avgDisparity+=D1_data[i];
+			}
+			//(*Disparity).imageData[i]=D1_data[i];
+			DisparityMat.data[i] = D1_data[i]*GeigerHeatScaling;
+		}
+		avgDisparity /= okcount;
+		avgDisparity *=5; // heuristic scaling for better visualisation and smoother thresh config
+
+		res = (10*okcount > totdisppixels); //% of good pixels needed before ignoring the frame
+		if (!res) {	std::cout << "Blocked: #" << okcount << "/" << totdisppixels << "\n";   }
+
+		avgDisparity = (int) avgDisparity;
+
+		//std::cout << "#" << count_filestereo << ", GT: " << avgDisparity << std::endl;
 
 
-		} else {return false;}
+	} else {return false;}
 
 #else
 

@@ -8,7 +8,7 @@
 #include <sstream>
 
 #include <opencv2/highgui/highgui.hpp>
-
+#include <cv.h>
 
 /*
  * This class exports data to csv txt file, which may be imported in Matlab etc
@@ -31,7 +31,7 @@ public:
     /*  Function declarations  */
     void close();
     void init();
-    void write(int avgdisp_gt,int avgdisp_gt_stdev, int avgdisp_nn);
+	void write(int avgdisp_gt,int avgdisp_gt_stdev, int avgdisp_nn,cv::Mat quadavgdisp_gt);
     void saveStereoPair(cv::Mat frameL_mat,cv::Mat frameR_mat,cv::Mat DisparityMat);
 };
 #endif // EXPORT

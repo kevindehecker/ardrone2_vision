@@ -270,13 +270,13 @@ void process_video() {
 
 		float time = stopWatch.Read()/1000;
 		tcp.commdata_fps = frames /(time);
-		//std::cout << "#" << frames << ", fps: " << tcp.commdata_fps << ", GT: " << tcp.commdata_gt << std::endl;
+		std::cout << "#" << frames << ", fps: " << tcp.commdata_fps << ", GT: " << tcp.commdata_gt << std::endl;
 
 #ifdef USE_SOCKET
 		tcp.Unlock();
 #endif
 #ifdef EXPORT
-		exporter.write(tcp.commdata_gt,tcp.commdata_gt_stdev,tcp.commdata_nn);
+		exporter.write(tcp.commdata_gt,tcp.commdata_gt_stdev,tcp.commdata_nn,stereo.avgs);
 		exporter.saveStereoPair(svcam.frameL_mat,svcam.frameR_mat,stereo.DisparityMat);
 #endif
 
