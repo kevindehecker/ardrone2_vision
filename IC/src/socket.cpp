@@ -155,10 +155,10 @@ void Socket::commOutThread() {
         ICDataPackage out;
         out.avgdisp_gt = commdata_gt;
         out.avgdisp_gt_stdev = commdata_gt_stdev;
-        out.avgdisp_nn = commdata_nn;
+		out.avgdisp_est = commdata_est;
         out.fps = commdata_fps;
         out.endl = 0;
-        std::cout << "gt: " << out.avgdisp_gt << " nn: " << out.avgdisp_nn << std::endl;
+		std::cout << "gt: " << out.avgdisp_gt << " est: " << out.avgdisp_est << std::endl;
 
         char * c = (char *) (void *) &out; // struct in c++ will not come out of the kast.
         Write_socket(c, sizeof(out));

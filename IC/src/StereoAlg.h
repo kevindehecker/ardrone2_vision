@@ -29,7 +29,7 @@ private:
 
     void performLongSec(cv::Mat bw,cv::Mat * DisparityMat);
 #ifdef FILESTEREO
-	cv::Mat flst;
+	cv::Mat flst[4];
 	int count_filestereo;
 #endif
 #ifdef GEIGER

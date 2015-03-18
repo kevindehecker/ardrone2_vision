@@ -95,7 +95,7 @@ void TerminalInputThread();
 int main( int argc, char **argv);
 
 void changeThresh_gt(int value);
-void changeThresh_nn(int value);
+void changeThresh_est(int value);
 
 void combineImage(cv::Mat resFrame, cv::Mat smallsourceimage, int x, int y,int width, int height, bool convertRGB);
 void commOutThread();
@@ -214,8 +214,8 @@ void process_video() {
 			stereoOK = stereo.calcDisparityMap(svcam.frameL_mat,svcam.frameR_mat); // calc the stereo groundtruth
 		}
 		if ((mode==stereo_textons_active || mode==stereo_textons ) || mode==textons_only) {
-			textonizer.getTextonDistributionFromImage(svcam.frameL_mat,stereo.avgDisparity,mode==stereo_textons_active,pauseVideo,stereoOK);  //perform the texton stuff
-			tcp.commdata_nn = textonizer.getLast_nn();
+			textonizer.getTextonDistributionFromImage(svcam.frameL_mat,stereo.avgs,mode==stereo_textons_active,pauseVideo);  //perform the texton stuff
+			tcp.commdata_est = textonizer.getLast_est();
 		}
 		if (mode==stereo_only || mode==stereo_textons || stereo_textons_active) {
 			tcp.commdata_gt = stereo.avgDisparity;
@@ -276,7 +276,7 @@ void process_video() {
 		tcp.Unlock();
 #endif
 #ifdef EXPORT
-		exporter.write(tcp.commdata_gt,tcp.commdata_gt_stdev,tcp.commdata_nn,stereo.avgs);
+		exporter.write(tcp.commdata_gt,tcp.commdata_gt_stdev,tcp.commdata_est,stereo.avgs);
 		exporter.saveStereoPair(svcam.frameL_mat,svcam.frameR_mat,stereo.DisparityMat);
 #endif
 
@@ -342,11 +342,11 @@ void handlekey() {
 		stopWatch.Restart();
 		msg="fps Reset";
 		break;
-	case 97: // [a]: increase threshold nn
-		changeThresh_nn(1);
+	case 97: // [a]: increase threshold est
+		changeThresh_est(1);
 		break;
-	case 122: // [z]: decrease threshold nn
-		changeThresh_nn(-1);
+	case 122: // [z]: decrease threshold est
+		changeThresh_est(-1);
 		break;
 	case 65: // [A]: increase threshold gt
 		changeThresh_gt(1);
@@ -432,11 +432,11 @@ void handlekey() {
 
 }
 
-void changeThresh_nn(int value) {
-	textonizer.threshold_nn = textonizer.threshold_nn + value;
+void changeThresh_est(int value) {
+	textonizer.threshold_est = textonizer.threshold_est + value;
 #ifdef _PC
 	std::stringstream s;
-	s << "nn thresh: " << (textonizer.threshold_nn);
+	s << "est thresh: " << (textonizer.threshold_est);
 	msg=s.str();
 #endif
 }

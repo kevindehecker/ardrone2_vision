@@ -268,22 +268,22 @@ void Textons::drawTextonAnotatedImage(cv::Mat grayframe) {
 void Textons::drawGraph(std::string msg) {
 
     cv::Scalar color_gt= cv::Scalar(255,0,0); // blue
-    cv::Scalar color_nn= cv::Scalar(0,0,255); // red
+	cv::Scalar color_est= cv::Scalar(0,0,255); // red
     cv::Scalar color_vert= cv::Scalar(0,255,255); // orange
     cv::Scalar color_invert= cv::Scalar(255,255,0); // light blue
     int line_width = 1;
 
-    int stepX = distribution_buf_size/700;
+    int stepX = distribution_buf_size/700/4;
     int rows = 300;
 
-    graphFrame = cv::Mat::zeros(rows, (distribution_buf_size/stepX), CV_8UC3);
+    graphFrame = cv::Mat::zeros(rows, (distribution_buf_size/stepX/4), CV_8UC3);
 
     double max;
     cv::minMaxIdx(graph_buffer,NULL,&max,NULL,NULL);
     float scaleY = rows/max;
 
-    float nn,gt;
-    float prev_nn = 0, prev_gt = 0;
+	float est =0,gt =0;
+	float prev_est = 0, prev_gt = 0;
 
 
     int positive_true=0;
@@ -298,44 +298,50 @@ void Textons::drawGraph(std::string msg) {
 
     countsincelearn++; // keep track of training/test data	
 
-    int learnborder =  (lastLearnedPosition+(distribution_buf_size-distribution_buf_pointer)) % distribution_buf_size; // make a sliding graph
-    if ( countsincelearn > distribution_buf_size) {
+    int learnborder =  (lastLearnedPosition+((distribution_buf_size>>2)-(distribution_buf_pointer>>2))) % (distribution_buf_size>>2); // make a sliding graph
+    if ( countsincelearn > (distribution_buf_size>>2)) {
         learnborder=0;
     }
 
-    for (int j = filterwidth; j < distribution_buf_size ; j++)
+    for (int j = filterwidth; j < (distribution_buf_size>>2) ; j++)
     {
 
-        int jj = (j+distribution_buf_pointer) % distribution_buf_size; // make it a sliding graph
-        nn = graph_buffer.at<float>(jj,0);
-        gt = graph_buffer.at<float>(jj,1);
+        int jj = (j+(distribution_buf_pointer>>2)) % (distribution_buf_size>>2); // make it a sliding graph
 
 
-        if (!(groundtruth_buffer.at<float>(jj) < 6.201 && groundtruth_buffer.at<float>(jj) > 6.199)) {
+		for (int q = 0;q<3;q++) {
+			est += graph_buffer.at<float>(jj,q+4);
+			gt += graph_buffer.at<float>(jj,q);
+		}
+		est/=4;
+		gt/=4;
+
+
+        if (!(groundtruth_buffer.at<float>(jj<<2) < 6.201 && groundtruth_buffer.at<float>(jj<<2) > 6.199)) {
 
 			if (j > learnborder ) { // change color according to training/test data
-				color_nn= cv::Scalar(0,0,255); // red
-				_mse_tst += (gt - nn) * (gt - nn);
+				color_est= cv::Scalar(0,0,255); // red
+				_mse_tst += (gt - est) * (gt - est);
 				_mse_tst_cnt++;
 			} else {
-				color_nn= cv::Scalar(0,255,0); // green
-				_mse_trn += (gt - nn) * (gt - nn);
+				color_est= cv::Scalar(0,255,0); // green
+				_mse_trn += (gt - est) * (gt - est);
 				_mse_trn_cnt++;
 			}
 
 
 			//draw a small colored line above to indicate what the drone will do:
-			if (nn < threshold_nn && gt > threshold_gt) {
+			if (est < threshold_est && gt > threshold_gt) {
 				//false negative; drone should stop according to stereo, but didn't if textons were used
 				//white
 				if (j > learnborder ) {negative_false++;}
 				cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(255,255,255), line_width, 8, 0);
-			} else if (nn > threshold_nn && gt < threshold_gt) {
+			} else if (est > threshold_est && gt < threshold_gt) {
 				//false positive; drone could have proceeded according to stereo, but stopped if textons were used
 				//black
 				if (j > learnborder ) {positive_false++;}
 				cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,0,0), line_width, 8, 0);
-			} else if (nn > threshold_nn && gt > threshold_gt) {
+			} else if (est > threshold_est && gt > threshold_gt) {
 				//true positive; both stereo and textons agree, drone should stop
 				//red
 				if (j > learnborder ) {negative_true++;}
@@ -349,25 +355,20 @@ void Textons::drawGraph(std::string msg) {
 
         }
 
-
-        nn = graph_buffer.at<float>(jj,0)*scaleY;
-        gt = graph_buffer.at<float>(jj,1)*scaleY;
-
-
         if (j==filterwidth) { // fixes discontinuty at the start of the graph
-            prev_nn = nn;
+			prev_est = est;
             prev_gt = gt;
         }
 
         //draw knn result:
-        cv::line(graphFrame, cv::Point(j/stepX, rows- prev_nn), cv::Point((j+1)/stepX, rows -  nn), color_nn, line_width, 8, 0);
+		cv::line(graphFrame, cv::Point(j/stepX, rows- prev_est), cv::Point((j+1)/stepX, rows -  est), color_est, line_width, 8, 0);
         //draw stereo vision groundtruth:
         cv::line(graphFrame, cv::Point(j/stepX, rows- prev_gt), cv::Point((j+1)/stepX, rows -  gt),color_gt, line_width, 8, 0);
         //draw stereo vision threshold:
         //cv::line(graphFrame, cv::Point(j/stepX, rows- 90), cv::Point((j+1)/stepX, rows -  90),color_gt, line_width, 8, 0);
 
 
-        prev_nn = nn;
+		prev_est = est;
         prev_gt = gt;
     }
 
@@ -379,9 +380,9 @@ void Textons::drawGraph(std::string msg) {
 	putText(graphFrame,s_mse.str(),cv::Point(0, 50),cv::FONT_HERSHEY_SIMPLEX,0.5,color_vert);
 
 
-	//draw nn vision threshold:
-	cv::line(graphFrame, cv::Point(0, rows- threshold_nn*scaleY), cv::Point(graphFrame.cols, rows -  threshold_nn*scaleY),color_invert, line_width, 8, 0);
-	putText(graphFrame,"est.thresh.",cv::Point(0, rows- threshold_nn*scaleY+10),cv::FONT_HERSHEY_SIMPLEX,0.4,color_invert);
+	//draw est vision threshold:
+	cv::line(graphFrame, cv::Point(0, rows- threshold_est*scaleY), cv::Point(graphFrame.cols, rows -  threshold_est*scaleY),color_invert, line_width, 8, 0);
+	putText(graphFrame,"est.thresh.",cv::Point(0, rows- threshold_est*scaleY+10),cv::FONT_HERSHEY_SIMPLEX,0.4,color_invert);
 	//draw gt vision threshold:
 	cv::line(graphFrame, cv::Point(0, rows- threshold_gt*scaleY), cv::Point(graphFrame.cols, rows -  threshold_gt*scaleY),color_vert, line_width, 8, 0);
 	putText(graphFrame,"gt.thresh.",cv::Point(0, rows- threshold_gt*scaleY-10),cv::FONT_HERSHEY_SIMPLEX,0.4,color_vert);
@@ -477,22 +478,30 @@ void Textons::setAutoThreshold() {
 		int negative_true_tst=0;
 		int negative_false_tst=0;
 
-		for (int j = filterwidth; j < distribution_buf_size ; j++) {
-			float nn,gt;
-			int jj = (j+distribution_buf_pointer) % distribution_buf_size; // make it a sliding graph
-			nn = graph_buffer.at<float>(jj,0);
-			gt = graph_buffer.at<float>(jj,1);
+		for (int j = filterwidth; j < (distribution_buf_size>>2) ; j++)
+		{
+			float est =0,gt =0;
+			int jj = (j+(distribution_buf_pointer>>2)) % (distribution_buf_size>>2); // make it a sliding graph
 
 
-			if (!(groundtruth_buffer.at<float>(jj) < 6.201 && groundtruth_buffer.at<float>(jj) > 6.199)) {				
+			//hmm, a bit strange.. avering this for fpr/tpr calculation. Might be ok though
+			//also usig the graphbuffer... here??
+			for (int q = 0;q<3;q++) {
+				est += graph_buffer.at<float>(jj,q+4);
+				gt += graph_buffer.at<float>(jj,q);
+			}
+			est/=4;
+			gt/=4;
+
+			if (!(groundtruth_buffer.at<float>(jj<<2) < 6.201 && groundtruth_buffer.at<float>(jj<<2) > 6.199)) {
 				if (j > learnborder ) { //tst/trn
-					if (nn < i && gt > threshold_gt) {
+					if (est < i && gt > threshold_gt) {
 						//false negative; drone should stop according to stereo, but didn't if textons were used (miss)
 						negative_false_tst++;
-					} else if (nn > i && gt < threshold_gt) {
+					} else if (est > i && gt < threshold_gt) {
 						//false positive; drone could have proceeded according to stereo, but stopped if textons were used (false alarm)
 						positive_false_tst++;
-					} else if (nn > i && gt > threshold_gt) {
+					} else if (est > i && gt > threshold_gt) {
 						//true positive; both stereo and textons agree, drone should stop
 						negative_true_tst++;
 					} else {
@@ -500,13 +509,13 @@ void Textons::setAutoThreshold() {
 						positive_true_tst++;
 					}
 				} else {
-					if (nn < i && gt > threshold_gt) {
+					if (est < i && gt > threshold_gt) {
 						//false negative; drone should stop according to stereo, but didn't if textons were used (miss)
 						negative_false_trn++;
-					} else if (nn > i && gt < threshold_gt) {
+					} else if (est > i && gt < threshold_gt) {
 						//false positive; drone could have proceeded according to stereo, but stopped if textons were used (false alarm)
 						positive_false_trn++;
-					} else if (nn > i && gt > threshold_gt) {
+					} else if (est > i && gt > threshold_gt) {
 						//true positive; both stereo and textons agree, drone should stop
 						negative_true_trn++;
 					} else {
@@ -546,7 +555,7 @@ void Textons::setAutoThreshold() {
 
 	}
 
-	threshold_nn = best;
+	threshold_est = best;
 
 	_tpr_trn = tprs_trn.at<float>(best);
 	_fpr_trn = fprs_trn.at<float>(best);
@@ -587,18 +596,25 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, cv::Mat avgdisps
 			cv::Point p1(x*quadrant_size_x, y*quadrant_size_y);
 			cv::Point p2(x*quadrant_size_x+quadrant_size_x, y*quadrant_size_y+quadrant_size_y);
 			cv::Mat roi = cv::Mat(grayframe, cv::Rect(p1, p2));
-			getTextonDistributionFromImage(roi,avgdisps.at<float>(x,y),activeLearning,pauseVideo,avgdisps.at<float>(x,y)>5);
-			//hmm, what to do with the output, and the smoothing filter? Should probably instantiate 4 smoothers.
-
-			//ok, yeah split up getTextonDistributionFromImage, drawing part can go here below fors
-			//making define flag for 1/quad mode is then also easy
-			//1 mode still saved in array of smoothers, only of size 1
+			getTextonDistributionFromImage(roi,avgdisps.at<float>(x,y),activeLearning,pauseVideo,avgdisps.at<float>(x,y)>5,2*y+x);
 		}
 	}
+	
+	
+#ifdef DRAWVIZS
+	if (*result_input2Mode == VIZ_histogram || *result_input2Mode == VIZ_texton_intensity_color_encoding || *result_input2Mode == VIZ_texton_gradient_color_encoding ) {
+		frame_currentHist = drawHistogram(distribution_buffer.row(distribution_buf_pointer),n_textons,200); //only draws histogram of one of the quadrants!
+	}
+	//drawMeanHists(frame_currentHist);
+	if (*result_input2Mode == VIZ_texton_intensity_color_encoding || *result_input2Mode == VIZ_texton_gradient_color_encoding || *result_input2Mode == VIZ_texton_intensity_texton_encoding || *result_input2Mode == VIZ_texton_gradient_texton_encoding) {
+		drawTextonAnotatedImage(grayframe);
+	}
+#endif
+	
 }
 
 //calculates the histogram/distribution
-void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, bool activeLearning, int pauseVideo, bool stereoOK) {
+void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float gt, bool activeLearning, int pauseVideo, bool stereoOK, int q) {
 
     int middleid = floor((float)patch_size/2.0); // for gradient, asumes, texton size is odd!
     int16_t sample[patch_square_size];
@@ -721,35 +737,24 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 		}
 	}
 	hist.at<float>(n_textons) = entropy;
-	//std:: cout << "Entropy: " << entropy << std::endl;
-
-
-	//smooth gt, but exclude std filter from smoothing:
-	//    if (avgdisp >0.1 ) {
-	//        avgdisp_smoothed = gt_smoothed.addSample(avgdisp); // perform smoothing
-	//    }
-	//    else {
-	//        avgdisp_smoothed = 0;
-	//    }
-	avgdisp_smoothed = avgdisp; // no smoothing on gt
 
     //copy new data into learning buffer:
     cv::Mat M1 = distribution_buffer.row((distribution_buf_pointer+0) % distribution_buf_size) ;
     hist.convertTo(M1,cv::DataType<float>::type,1,0); // floats are needed for knn
-    groundtruth_buffer.at<float>((distribution_buf_pointer)% distribution_buf_size) = avgdisp_smoothed;
+	groundtruth_buffer.at<float>((distribution_buf_pointer)% distribution_buf_size) = gt;
     //run knn
-    float nn = knn.find_nearest(M1,k,0,0,0,0); // if segfault here, clear xmls!
+	float est = knn.find_nearest(M1,k,0,0,0,0); // if segfault here, clear xmls!
     //perform smoothing:
-    nn = knn_smoothed.addSample(nn);
+	est = est_smoothers[q].addSample(est);
 
 	if (!pauseVideo && stereoOK) {
 		if (!activeLearning) {        //if not active learning, learn all samples
 			distribution_buf_pointer = (distribution_buf_pointer+1) % distribution_buf_size;
 		} else {            //otherwise, only learn errornous samples
-			if (nn < threshold_nn && avgdisp_smoothed > threshold_gt) {
+			if (est < threshold_est && gt > threshold_gt) {
 				//false negative; drone should stop according to stereo, but didn't if textons were used
 				distribution_buf_pointer = (distribution_buf_pointer+1) % distribution_buf_size;
-			} else if (nn > threshold_nn && avgdisp_smoothed < threshold_gt) {
+			} else if (est > threshold_est && gt < threshold_gt) {
 				//false positive; drone could have proceeded according to stereo, but stopped if textons were used
 				distribution_buf_pointer = (distribution_buf_pointer+1) % distribution_buf_size;
 			}
@@ -757,41 +762,38 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, b
 	}
 	//std::cout << "hist" << distribution_buf_pointer << ": " << hist << std::endl;
 
-
-
-	//std::cout << "knn.disp.: " << nn << "  |  truth: " << avgdisp_smoothed << std::endl;
-
     //save values for visualisation	in graph
-	if (stereoOK) {
-		graph_buffer.at<float>((distribution_buf_pointer+0) % distribution_buf_size,0) = nn;
-		graph_buffer.at<float>(distribution_buf_pointer,1) = avgdisp_smoothed; // groundtruth
+	if (stereoOK) {		
+		graph_buffer.at<float>(distribution_buf_pointer>>2,q) = gt; // groundtruth
+		graph_buffer.at<float>((distribution_buf_pointer>>2+0) % distribution_buf_size,q+4) = est;
 	}
 
-#ifdef DRAWVIZS
-	if (*result_input2Mode == VIZ_histogram || *result_input2Mode == VIZ_texton_intensity_color_encoding || *result_input2Mode == VIZ_texton_gradient_color_encoding ) {
-		frame_currentHist = drawHistogram(hist,n_textons,200);
-	}
-	//drawMeanHists(frame_currentHist);
-	if (*result_input2Mode == VIZ_texton_intensity_color_encoding || *result_input2Mode == VIZ_texton_gradient_color_encoding || *result_input2Mode == VIZ_texton_intensity_texton_encoding || *result_input2Mode == VIZ_texton_gradient_texton_encoding) {
-		drawTextonAnotatedImage(grayframe);
-	}
-#endif
+	//std::cout << "knn.disp.: " << est << "  |  truth: " << avgdisp_smoothed << std::endl;
 }
 
 /*
  * Retrieves and returns the last added ground truth
  */
 int Textons::getLast_gt() {
-    int gt = graph_buffer.at<float>(distribution_buf_pointer,1);
+	float gt = 0;
+	for (int q = 0;q<3;q++) {
+		gt += graph_buffer.at<float>(distribution_buf_pointer>>2,q);
+	}
+	gt/=4;
     return gt;
 }
 
 /*
  * Retrieves and returns the last added texton result
  */
-int Textons::getLast_nn() {
-    int nn = graph_buffer.at<float>(distribution_buf_pointer,0);
-    return nn;
+int Textons::getLast_est() {
+	float est = 0;
+	for (int q = 0;q<3;q++) {
+		est += graph_buffer.at<float>(distribution_buf_pointer>>2,q+4);
+	}
+	est/=4;
+	return est;
+
 }
 
 inline bool checkFileExist (const std::string& name) {
@@ -877,11 +879,15 @@ bool Textons::initLearner(bool nulltrain) {
     srand (time(NULL));
 	distribution_buffer = cv::Mat::zeros(distribution_buf_size, n_textons+1, cv::DataType<float>::type); // +1 for entropy
     groundtruth_buffer = cv::Mat::zeros(distribution_buf_size, 1, cv::DataType<float>::type);
-    graph_buffer = cv::Mat::zeros(distribution_buf_size, 2, cv::DataType<float>::type);
+	graph_buffer = cv::Mat::zeros(distribution_buf_size>>2, 4*2, cv::DataType<float>::type);
     groundtruth_buffer = groundtruth_buffer +6.2; //for testing...
     distribution_buf_pointer = 0;
-    knn_smoothed.init(filterwidth);
-	//gt_smoothed.init(filterwidth);
+	est_smoothers[0].init(filterwidth);
+	est_smoothers[1].init(filterwidth);
+	est_smoothers[2].init(filterwidth);
+	est_smoothers[3].init(filterwidth);
+
+
     lastLearnedPosition = 0;
     countsincelearn=0;
     if (nulltrain) {
@@ -907,8 +913,7 @@ void Textons::retrainAll() {
     for (int i=0; i<distribution_buf_size; i++) {
         int jj = (i+distribution_buf_pointer) % distribution_buf_size;
         cv::Mat M1 = distribution_buffer.row(jj); // prevent smoothing filter discontinuity
-        graph_buffer.at<float>(jj,0) = knn_smoothed.addSample(knn.find_nearest(M1,k,0,0,0,0));
-		//gt_smoothed.addSample(graph_buffer.at<float>(jj,1)); // prepare the gt filter, not really necessary
+		graph_buffer.at<float>((int)floor(jj/4),(jj%4)+1) = est_smoothers[jj%4].addSample(knn.find_nearest(M1,k,0,0,0,0));
     }	
 #endif
 }

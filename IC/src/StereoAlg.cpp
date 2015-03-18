@@ -30,18 +30,25 @@ bool stereoAlg::init (int im_width,int im_height) {
 
 	if (flength==0) {return 0;}
 	//read the file into flst
-	flst = cv::Mat(flength ,1,CV_32S);
+	for (int j = 0; j < 4; j++) {
+		flst[j] = cv::Mat(flength ,1,CV_32F);
+	}
 	sfile.open(filename);
 	for (int i = 0; i<flength; ++i) {
 
 		std::getline(sfile, line);
 		auto start = 0U;
-		auto end = line.find(";" );
-		//std::cout << line.substr(start, end - start) << std::endl;
-		int d;
-		d = std::stoi(line, NULL,10);
-		//std::cout << d << std::endl;
-		flst.at<int>(i)  =d;
+		for (int j = 0; j < 4+3; j++) {
+			auto end = line.find(";",start );
+			//std::cout << line.substr(start, end - start) << std::endl;
+			float f;			
+			f = std::stof(line.substr(start, end - start), NULL);
+			std::cout << f << std::endl;
+			if (j>=3) {
+				flst[j-3].at<float>(i)  =f;
+			}
+			start = end+1;
+		}
 	}
 	sfile.close();
 	//std::cout << flst << std::endl;
@@ -126,9 +133,14 @@ void stereoAlg::initGeigerParam() {
 
 
 bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
-#ifdef FILESTEREO		
-	avgDisparity = flst.at<int>(count_filestereo);
-
+#ifdef FILESTEREO
+	avgs = cv::Mat::zeros(2,2,CV_32F);
+	for (int y = 0; y < 2; y++) {
+		for (int x = 0; x < 2; x++) {
+			avgs.at<float>(x,y) = flst[2*y+x].at<float>(count_filestereo);
+		}
+	}
+	//TODO: check if file input is equal to geiger results!
 #if defined(HASSCREEN) || defined(VIDEORESULTS)
 	std::stringstream s;
 	s <<  "../images/disp" << count_filestereo+1 << ".png";	
@@ -215,9 +227,9 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
 			avgs.at<float>(1,1) *=5;
 		} else {avgs.at<float>(1,1) = -1;}
 
-//		std::cout  << "GT: " << avgDisparity << std::endl;
-//		std::cout  << avgs << std::endl;
-//		std::cout  << oks << std::endl;
+		//		std::cout  << "GT: " << avgDisparity << std::endl;
+		//		std::cout  << avgs << std::endl;
+		//		std::cout  << oks << std::endl;
 #endif
 		int okcount = 0; //keeps track how many pixels are OK (not 0 = NaN) in the disparity map
 		for (int i =0; i<dims[0]*(dims[1])/(GeigerSubSampling*GeigerSubSampling); i++) {
