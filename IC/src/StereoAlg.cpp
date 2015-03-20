@@ -105,7 +105,7 @@ void stereoAlg::initGeigerParam() {
 #if defined(DELFLY)
 	param.subsampling = false;
     param.disp_min = 5;
-	param.disp_max = 1;
+	param.disp_max = 256;
     darksize = 0;
 #else
 	param.subsampling = true;
