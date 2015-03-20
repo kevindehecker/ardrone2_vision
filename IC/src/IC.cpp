@@ -260,11 +260,11 @@ void process_video() {
 		//	textonizer.retrainAll();
 		//}
 
-		if ((frames % 100) == 99) {
-			textonizer.retrainAll();
+		//if ((frames % 100) == 99) {
+		//	textonizer.retrainAll();
 			//textonizer.saveRegression();
 			//std::cout << "mod: " << frames % 100 << "\n|" ;
-		}
+		//}
 
 
 
@@ -560,7 +560,7 @@ int init(int argc, char **argv) {
 #endif
 
 	mode = RUNMODE;
-	result_input2Mode = VIZ_right_input_image;
+	//result_input2Mode = VIZ_right_input_image;
 	msg="";
 
 
