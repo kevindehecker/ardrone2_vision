@@ -38,14 +38,14 @@ FILE(GLOB MY_SRC_FILES "../src/*.cpp" "../src/*.h" "../src/*.c")
 
 # use sse3 instruction set for libelas and c11 for threading (among others)
 
-execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
-			OUTPUT_VARIABLE GCC_VERSION)
-if (GCC_VERSION VERSION_GREATER 4.7 )
-	  message(STATUS "GCC Version >= 4.7, setting c++11 flag")
+#execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
+#			OUTPUT_VARIABLE GCC_VERSION)
+#if (GCC_VERSION VERSION_GREATER 4.7 )
+#	  message(STATUS "GCC Version >= 4.7, setting c++11 flag")
 	  SET(CMAKE_CXX_FLAGS "-std=c++11 -msse3")
-else()
-	  SET(CMAKE_CXX_FLAGS "-std=c++0x -pthread -msse3")
-endif()
+#else()
+#	  SET(CMAKE_CXX_FLAGS "-std=c++0x -pthread -msse3")
+#endif()
 
 message(STATUS "Building for " ${CMAKE_BUILD_TYPE})
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
@@ -56,6 +56,7 @@ IF (NOT DEFINED _PC)
     SET(_PC TRUE)
 ENDIF()
 ADD_DEFINITIONS(-D_PC=${_PC})
+
 
 
 # build program
