@@ -96,7 +96,7 @@ public:
 
 	}
 
-	bool init (int * result_input2Mode);
+	int init (int * result_input2Mode);
     bool close(void);
     cv::Mat drawHistogram(cv::Mat hist,int bins, int maxY);
     void drawGraph(std::string msg);
@@ -106,7 +106,7 @@ public:
     void retrainAll();
 	void printReport(float fps);
 
-    bool initLearner(bool nulltrain);
+	int initLearner(bool nulltrain);
     int loadPreviousRegression();
     void reload();
     cv::Mat graphFrame;

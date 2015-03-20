@@ -256,15 +256,15 @@ void process_video() {
 		if (!pauseVideo) {
 			frames++;
 		}
-		if (frames == 1948) {
-			textonizer.retrainAll();
-		}
+//		if (frames == 1948) {
+//			textonizer.retrainAll();
+//		}
 
-		//		if ((frames % 100) == 99) {
-		//			textonizer.retrainAll();
-		//			//textonizer.saveRegression();
-		//			std::cout << "mod: " << frames % 100 << "\n|" ;
-		//		}
+				if ((frames % 100) == 99) {
+					textonizer.retrainAll();
+					//textonizer.saveRegression();
+					//std::cout << "mod: " << frames % 100 << "\n|" ;
+				}
 
 
 
@@ -490,7 +490,7 @@ int init(int argc, char **argv) {
 
 	/*****init the visual bag of words texton methode*****/
 	std::cout << "Initialising textonizer\n";
-	if (!textonizer.init(&result_input2Mode)) {return 1;}
+	if (textonizer.init(&result_input2Mode)) {return 1;}
 
 	/*****Start capturing images*****/
 	std::cout << "Start svcam\n";

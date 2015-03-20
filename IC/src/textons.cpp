@@ -17,11 +17,11 @@ float b[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 /*
  *Loads texton dictionary from  file, loads previously results from file, and learns them
  */
-bool Textons::init (int * result_input2Mode) {
+int Textons::init (int * result_input2Mode) {
 	this->result_input2Mode = result_input2Mode;
 
-    if (!initTextons()) {return false;}
-    if (!initLearner(true)) {return false;}
+	if (!initTextons()) {return 1;}
+	if (!initLearner(true)) {return 1;}
     loadPreviousRegression();
 
 
@@ -29,7 +29,7 @@ bool Textons::init (int * result_input2Mode) {
 	frame_ROC = cv::Mat::zeros(400,400,CV_8UC3);
 #endif
 
-    return true;
+	return 0;
 }
 
 /*
@@ -875,7 +875,7 @@ int Textons::initTextons() {
 /*
  * Clears and initialises the learned buffer. Can also train on null data, actively reseting knn
  */
-bool Textons::initLearner(bool nulltrain) {
+int Textons::initLearner(bool nulltrain) {
     srand (time(NULL));
 	distribution_buffer = cv::Mat::zeros(distribution_buf_size, n_textons+1, cv::DataType<float>::type); // +1 for entropy
     groundtruth_buffer = cv::Mat::zeros(distribution_buf_size, 1, cv::DataType<float>::type);
@@ -893,7 +893,7 @@ bool Textons::initLearner(bool nulltrain) {
     if (nulltrain) {
         return knn.train(distribution_buffer, groundtruth_buffer, cv::Mat(), true, 32, false );
     } else {
-        return true;
+		return 0;
     }
 }
 
