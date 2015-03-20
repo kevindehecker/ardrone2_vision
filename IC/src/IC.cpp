@@ -256,15 +256,15 @@ void process_video() {
 		if (!pauseVideo) {
 			frames++;
 		}
-		if (frames == 1948) {
-			textonizer.retrainAll();
-		}
+		//if (frames == 1948) {
+		//	textonizer.retrainAll();
+		//}
 
-		//		if ((frames % 100) == 99) {
-		//			textonizer.retrainAll();
-		//			//textonizer.saveRegression();
-		//			std::cout << "mod: " << frames % 100 << "\n|" ;
-		//		}
+		if ((frames % 100) == 99) {
+			textonizer.retrainAll();
+			//textonizer.saveRegression();
+			//std::cout << "mod: " << frames % 100 << "\n|" ;
+		}
 
 
 
