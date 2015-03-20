@@ -38,11 +38,18 @@ FILE(GLOB MY_SRC_FILES "../src/*.cpp" "../src/*.h" "../src/*.c")
 
 # use sse3 instruction set for libelas and c11 for threading (among others)
 
-#SET(CMAKE_CXX_FLAGS "-msse3 -std=c++11")
-SET(CMAKE_CXX_FLAGS "-msse3 -std=c++0x -pthread")
+execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
+			OUTPUT_VARIABLE GCC_VERSION)
+if (GCC_VERSION VERSION_GREATER 4.7 )
+	  message(STATUS "GCC Version >= 4.7, setting c++11 flag")
+	  SET(CMAKE_CXX_FLAGS "-std=c++11 -msse3")
+else()
+	  SET(CMAKE_CXX_FLAGS "-std=c++0x -pthread -msse3")
+endif()
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -og")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -o3")
+message(STATUS "Building for " ${CMAKE_BUILD_TYPE})
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 #detect whether we build for ARM drone or pc
 IF (NOT DEFINED _PC)
