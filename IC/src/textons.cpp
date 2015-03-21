@@ -939,6 +939,28 @@ int Textons::loadPreviousRegression() {
 
         std::cout << "Training...\n";
         //draw the training set results:
+
+		if (distribution_buf_pointer > distribution_buf_size) {
+			std::cout << "XML files distribution_buf_pointer error\n";
+			return 1;
+		}
+
+		if (groundtruth_buffer.rows != distribution_buf_size) {
+			std::cout << "XML files  groundtruth_buffer error\n";
+			return 1;
+		}
+
+		if (graph_buffer.rows != distribution_buf_size) {
+			std::cout << "XML files graph_buffer error\n";
+			return 1;
+		}
+
+		if (distribution_buffer.rows != distribution_buf_size) {
+			std::cout << "XML files distribution_buffer error\n";
+			return 1;
+		}
+
+
         retrainAll();
 
     } catch (int e) {
