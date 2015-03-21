@@ -1,5 +1,5 @@
 
-#include "DuoWebcam.h"
+#include "duowebcam.h"
 
 #include <stdio.h>
 #include <thread>
