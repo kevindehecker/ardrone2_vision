@@ -1,4 +1,4 @@
-#include "ARDroneCam.h"
+#include "ardronecam.h"
 #ifdef ARDRONEFRONTCAM
 #include <iostream>
 

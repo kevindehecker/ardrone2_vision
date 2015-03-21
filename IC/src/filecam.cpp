@@ -1,4 +1,4 @@
-#include "Filecam.h"
+#include "filecam.h"
 #ifdef FILECAM
 #include <iostream>
 #include <unistd.h> // sleep

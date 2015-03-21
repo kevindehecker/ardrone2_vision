@@ -2,24 +2,24 @@
 #include <thread>
 
 #include "defines.h"
-#include "StereoAlg.h"
+#include "stereoalg.h"
 #include "smoother.h"
 #include "socket.h"
 #include "textons.h"
 #ifdef FILECAM
-#include "Filecam.h"
+#include "filecam.h"
 #endif
 #ifdef DUOWEBCAM
-#include "DuoWebcam.h"
+#include "duoWebcam.h"
 #endif
 #ifdef DELFLY_WIFI
-#include "Delfly_wifi.h"
+#include "delfly_wifi.h"
 #endif
 #ifdef DELFLY
-#include "Delfly.h"
+#include "delfly.h"
 #endif
 #ifdef ARDRONEFRONTCAM
-#include "ARDroneCam.h"
+#include "ardroneCam.h"
 #endif
 #ifdef EXPORT
 #include "exporter.h"

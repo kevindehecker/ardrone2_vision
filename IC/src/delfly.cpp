@@ -1,4 +1,4 @@
-#include "Delfly.h"
+#include "delfly.h"
 #include <iostream>
 #include "rs232.h"
 

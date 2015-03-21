@@ -1,4 +1,4 @@
-#include "StereoAlg.h"
+#include "stereoalg.h"
 
 #include <stdio.h>
 #include <fstream>
