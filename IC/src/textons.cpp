@@ -922,7 +922,8 @@ void Textons::retrainAll() {
  *  Loads the learning buffer from xml file previously saved, also performs retrain
  */
 int Textons::loadPreviousRegression() {
-    try {
+	bool problem =false;
+	try {
         std::cout << "Opening memory files\n";
 
 
@@ -941,27 +942,36 @@ int Textons::loadPreviousRegression() {
         //draw the training set results:
 
 		if (distribution_buf_pointer > distribution_buf_size) {
-			std::cout << "XML files distribution_buf_pointer error\n";
-			return 1;
+			std::cout << "Warning: regressor xml files distribution_buf_pointer problem\n";
+			problem =true;
 		}
 
 		if (groundtruth_buffer.rows != distribution_buf_size) {
-			std::cout << "XML files  groundtruth_buffer error\n";
-			return 1;
+			std::cout << "Warning: regressor xml files  groundtruth_buffer problem.";
+			problem =true;
 		}
 
-		if (graph_buffer.rows != distribution_buf_size) {
-			std::cout << "XML files graph_buffer error\n";
-			return 1;
+		if (graph_buffer.cols != 2*4) {
+			std::cout << "Warning: regressor xml files  groundtruth_buffer problem. XML files not meant for quadrants mode?\n";
+			problem =true;
+		}
+
+		if (graph_buffer.rows != distribution_buf_size>>2) {
+			std::cout << "Warning: regressor xml files graph_buffer problem.";
+			problem =true;
 		}
 
 		if (distribution_buffer.rows != distribution_buf_size) {
-			std::cout << "XML files distribution_buffer error\n";
-			return 1;
+			std::cout << "Warning: regressor xml files distribution_buffer problem.";
+			problem =true;
 		}
 
-
-        retrainAll();
+		if (!problem) {
+			retrainAll();
+		} else {
+			std::cout << " Resetting memory." << std::endl;
+			initLearner(false);
+		}
 
     } catch (int e) {
         std::cout << "No previous regression memory could be openend.\n";
