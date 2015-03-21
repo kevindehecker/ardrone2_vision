@@ -23,7 +23,7 @@ void Exporter::write(int avgdisp_gt,int avgdisp_gt_stdev, int avgdisp_nn,cv::Mat
 }
 
 void Exporter::init() {
-    myfile.open ("export.txt");
+	myfile.open ("export_quad.txt");
     caffefile.open("data.txt");
 }
 

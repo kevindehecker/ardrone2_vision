@@ -15,7 +15,7 @@ bool stereoAlg::init (int im_width,int im_height) {
 #ifdef FILESTEREO
 	count_filestereo=0;
 	//create filename
-	std::string filename = "../images/export.txt";
+	std::string filename = "../images/export_quad.txt";
 
 	//get length of the file
 	std::ifstream sfile;
