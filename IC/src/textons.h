@@ -65,6 +65,7 @@ public:
 	int threshold_est;
 	int threshold_gt;
 	int *result_input2Mode;
+	int quad_VizChannel;
 
 	float tpr_threshold;
 	//float avgdisp_smoothed;
@@ -92,7 +93,7 @@ public:
 		threshold_gt = 200;
 
 		tpr_threshold = 0.98f;
-
+		quad_VizChannel=0;
 
 	}
 

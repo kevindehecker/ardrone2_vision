@@ -222,7 +222,7 @@ void process_video() {
 			tcp.commdata_gt_stdev = stereo.stddevDisparity;
 		}
 
-		if (stereoOK && (mode==stereo_textons || mode==stereo_textons_active)) {
+		if ((stereoOK || pause) && (mode==stereo_textons || mode==stereo_textons_active)) {
 			textonizer.setAutoThreshold();
 		}
 
@@ -260,17 +260,17 @@ void process_video() {
 //			textonizer.retrainAll();
 //		}
 
-				if ((frames % 100) == 99) {
-					textonizer.retrainAll();
+//				if ((frames % 100) == 99) {
+//					textonizer.retrainAll();
 					//textonizer.saveRegression();
 					//std::cout << "mod: " << frames % 100 << "\n|" ;
-				}
+//				}
 
 
 
 		float time = stopWatch.Read()/1000;
 		tcp.commdata_fps = frames /(time);
-		std::cout << "#" << frames << ", fps: " << tcp.commdata_fps << ", GT: " << tcp.commdata_gt << std::endl;
+		//std::cout << "#" << frames << ", fps: " << tcp.commdata_fps << ", GT: " << tcp.commdata_gt << std::endl;
 
 #ifdef USE_SOCKET
 		tcp.Unlock();
@@ -375,6 +375,21 @@ void handlekey() {
 	case 42: // [*]: show ROC curve
 		result_input2Mode=VIZ_ROC;;
 		break;
+	case -66: // [F1]: show quadrant 1
+		textonizer.quad_VizChannel = 1;
+		break;
+	case -65: // [F2]: show quadrant 2
+		textonizer.quad_VizChannel = 2;
+		break;
+	case -64: // [F3]: show quadrant 3
+		textonizer.quad_VizChannel = 3;
+		break;
+	case -63: // [F4]: show quadrant 4
+		textonizer.quad_VizChannel = 4;
+		break;
+	case -62: // [F5]: show all quadrants
+		textonizer.quad_VizChannel = 0;
+		break;
 #ifdef HASSCREEN
 	case '>': // fast forward filecam
 		svcam.fastforward=1;
@@ -394,7 +409,15 @@ void handlekey() {
 		}else {
 			pauseVideo=1;
 		}
+		break;
 #endif
+	case 0:
+		break;
+	case -1:
+		break;
+	default:
+		std::cout << "Unkown key: " << (int) key << std::endl;
+		break;
 	} // end switch key
 
 	//display a message on the image, informing which key has been pressed.
@@ -522,7 +545,7 @@ int init(int argc, char **argv) {
 #ifdef DUOWEBCAM
 	resFrame = cv::Mat::zeros(svcam.getImHeight(), svcam.getImWidth()*1.5,CV_8UC3);
 #else
-	resFrame = cv::Mat::zeros(500, 1100,CV_8UC3);
+	resFrame = cv::Mat::zeros(600, 1280,CV_8UC3);
 #endif
 #endif
 

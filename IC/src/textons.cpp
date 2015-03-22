@@ -271,18 +271,18 @@ void Textons::drawGraph(std::string msg) {
 	cv::Scalar color_est= cv::Scalar(0,0,255); // red
     cv::Scalar color_vert= cv::Scalar(0,255,255); // orange
     cv::Scalar color_invert= cv::Scalar(255,255,0); // light blue
-    int line_width = 1;
+	int line_width = 2;
 
-    int stepX = distribution_buf_size/700/4;
+	int stepX = (distribution_buf_size>>2)/700;
     int rows = 300;
 
-    graphFrame = cv::Mat::zeros(rows, (distribution_buf_size/stepX/4), CV_8UC3);
+	graphFrame = cv::Mat::zeros(rows, ((distribution_buf_size>>2)/stepX), CV_8UC3);
 
     double max;
     cv::minMaxIdx(graph_buffer,NULL,&max,NULL,NULL);
     float scaleY = rows/max;
 
-	float est =0,gt =0;
+
 	float prev_est = 0, prev_gt = 0;
 
 
@@ -296,9 +296,7 @@ void Textons::drawGraph(std::string msg) {
 	_mse_trn = 0;
 	_mse_trn_cnt = 0;
 
-    countsincelearn++; // keep track of training/test data	
-
-    int learnborder =  (lastLearnedPosition+((distribution_buf_size>>2)-(distribution_buf_pointer>>2))) % (distribution_buf_size>>2); // make a sliding graph
+	int learnborder =  ((lastLearnedPosition>>2)+((distribution_buf_size>>2)-(distribution_buf_pointer>>2))) % (distribution_buf_size>>2); // make a sliding graph
     if ( countsincelearn > (distribution_buf_size>>2)) {
         learnborder=0;
     }
@@ -308,13 +306,20 @@ void Textons::drawGraph(std::string msg) {
 
         int jj = (j+(distribution_buf_pointer>>2)) % (distribution_buf_size>>2); // make it a sliding graph
 
+		float est =0,gt =0;
+		if (quad_VizChannel == 0)  {
+			for (int q = 0;q<4;q++) {
+				est += graph_buffer.at<float>(jj,q+4);
+				gt += graph_buffer.at<float>(jj,q);
+			}
+			est/=4;
+			gt/=4;
 
-		for (int q = 0;q<3;q++) {
-			est += graph_buffer.at<float>(jj,q+4);
-			gt += graph_buffer.at<float>(jj,q);
+		} else {
+			est = graph_buffer.at<float>(jj,quad_VizChannel-1+4);
+			gt = graph_buffer.at<float>(jj,quad_VizChannel-1);
 		}
-		est/=4;
-		gt/=4;
+
 
 
         if (!(groundtruth_buffer.at<float>(jj<<2) < 6.201 && groundtruth_buffer.at<float>(jj<<2) > 6.199)) {
@@ -364,9 +369,6 @@ void Textons::drawGraph(std::string msg) {
 		cv::line(graphFrame, cv::Point(j/stepX, rows- prev_est), cv::Point((j+1)/stepX, rows -  est), color_est, line_width, 8, 0);
         //draw stereo vision groundtruth:
         cv::line(graphFrame, cv::Point(j/stepX, rows- prev_gt), cv::Point((j+1)/stepX, rows -  gt),color_gt, line_width, 8, 0);
-        //draw stereo vision threshold:
-        //cv::line(graphFrame, cv::Point(j/stepX, rows- 90), cv::Point((j+1)/stepX, rows -  90),color_gt, line_width, 8, 0);
-
 
 		prev_est = est;
         prev_gt = gt;
@@ -460,8 +462,8 @@ void Textons::setAutoThreshold() {
 	float fpr_tst_best_tmp = 99999999; //smaller is better, so start the search extremely high
 	float fpr_trn_best_tmp = 99999999; //smaller is better, so start the search extremely high
 
-	int learnborder =  (lastLearnedPosition+(distribution_buf_size-distribution_buf_pointer)) % distribution_buf_size; // make a sliding graph
-	if ( countsincelearn > distribution_buf_size) {
+	int learnborder =  ((lastLearnedPosition>>2)+((distribution_buf_size>>2)-(distribution_buf_pointer>>2))) % (distribution_buf_size>>2); // make a sliding graph
+	if ( countsincelearn > (distribution_buf_size>>2)) {
 		learnborder=0;
 	}
 
@@ -480,20 +482,27 @@ void Textons::setAutoThreshold() {
 
 		for (int j = filterwidth; j < (distribution_buf_size>>2) ; j++)
 		{
-			float est =0,gt =0;
+
 			int jj = (j+(distribution_buf_pointer>>2)) % (distribution_buf_size>>2); // make it a sliding graph
 
+			float est =0,gt =0;
+			if (quad_VizChannel == 0)  {
+				for (int q = 0;q<4;q++) {
+					est += graph_buffer.at<float>(jj,q+4);
+					gt += graph_buffer.at<float>(jj,q);
+				}
+				est/=4;
+				gt/=4;
 
-			//hmm, a bit strange.. avering this for fpr/tpr calculation. Might be ok though
-			//also usig the graphbuffer... here??
-			for (int q = 0;q<3;q++) {
-				est += graph_buffer.at<float>(jj,q+4);
-				gt += graph_buffer.at<float>(jj,q);
+			} else {
+				est = graph_buffer.at<float>(jj,quad_VizChannel-1+4);
+				gt = graph_buffer.at<float>(jj,quad_VizChannel-1);
 			}
-			est/=4;
-			gt/=4;
+
+
 
 			if (!(groundtruth_buffer.at<float>(jj<<2) < 6.201 && groundtruth_buffer.at<float>(jj<<2) > 6.199)) {
+
 				if (j > learnborder ) { //tst/trn
 					if (est < i && gt > threshold_gt) {
 						//false negative; drone should stop according to stereo, but didn't if textons were used (miss)
@@ -589,8 +598,8 @@ void Textons::setAutoThreshold() {
 
 void Textons::getTextonDistributionFromImage(cv::Mat grayframe, cv::Mat avgdisps, bool activeLearning, int pauseVideo) {
 
-	int quadrant_size_x = grayframe.cols>>2;
-	int quadrant_size_y = grayframe.rows>>2;
+	int quadrant_size_x = grayframe.cols>>1;
+	int quadrant_size_y = grayframe.rows>>1;
 	for (int y=0;y<2;y++) {
 		for (int x=0;x<2;x++) {
 			cv::Point p1(x*quadrant_size_x, y*quadrant_size_y);
@@ -600,7 +609,10 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, cv::Mat avgdisps
 		}
 	}
 	
-	
+	if(!pauseVideo) {
+		countsincelearn++; // keep track of training/test data
+	}
+
 #ifdef DRAWVIZS
 	if (*result_input2Mode == VIZ_histogram || *result_input2Mode == VIZ_texton_intensity_color_encoding || *result_input2Mode == VIZ_texton_gradient_color_encoding ) {
 		frame_currentHist = drawHistogram(distribution_buffer.row(distribution_buf_pointer),n_textons,200); //only draws histogram of one of the quadrants!
@@ -913,7 +925,7 @@ void Textons::retrainAll() {
     for (int i=0; i<distribution_buf_size; i++) {
         int jj = (i+distribution_buf_pointer) % distribution_buf_size;
         cv::Mat M1 = distribution_buffer.row(jj); // prevent smoothing filter discontinuity
-		graph_buffer.at<float>((int)floor(jj/4),(jj%4)+1) = est_smoothers[jj%4].addSample(knn.find_nearest(M1,k,0,0,0,0));
+		graph_buffer.at<float>(jj>>2,jj%4+4) = est_smoothers[jj%4].addSample(knn.find_nearest(M1,k,0,0,0,0));
     }	
 #endif
 }
@@ -942,27 +954,27 @@ int Textons::loadPreviousRegression() {
         //draw the training set results:
 
 		if (distribution_buf_pointer > distribution_buf_size) {
-			std::cout << "Warning: regressor xml files distribution_buf_pointer problem\n";
+			std::cout << "Warning: regressor xml files distribution_buf_pointer problem. ";
 			problem =true;
 		}
 
 		if (groundtruth_buffer.rows != distribution_buf_size) {
-			std::cout << "Warning: regressor xml files  groundtruth_buffer problem.";
+			std::cout << "Warning: regressor xml files  groundtruth_buffer problem. ";
 			problem =true;
 		}
 
 		if (graph_buffer.cols != 2*4) {
-			std::cout << "Warning: regressor xml files  groundtruth_buffer problem. XML files not meant for quadrants mode?\n";
+			std::cout << "Warning: regressor xml files  groundtruth_buffer problem. XML files not meant for quadrants mode? ";
 			problem =true;
 		}
 
 		if (graph_buffer.rows != distribution_buf_size>>2) {
-			std::cout << "Warning: regressor xml files graph_buffer problem.";
+			std::cout << "Warning: regressor xml files graph_buffer problem. ";
 			problem =true;
 		}
 
 		if (distribution_buffer.rows != distribution_buf_size) {
-			std::cout << "Warning: regressor xml files distribution_buffer problem.";
+			std::cout << "Warning: regressor xml files distribution_buffer problem. ";
 			problem =true;
 		}
 

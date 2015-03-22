@@ -43,7 +43,7 @@ bool stereoAlg::init (int im_width,int im_height) {
 			//std::cout << line.substr(start, end - start) << std::endl;
 			float f;			
 			f = std::stof(line.substr(start, end - start), NULL);
-			std::cout << f << std::endl;
+			//std::cout << f << std::endl;
 			if (j>=3) {
 				flst[j-3].at<float>(i)  =f;
 			}
@@ -133,14 +133,13 @@ void stereoAlg::initGeigerParam() {
 
 
 bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
-#ifdef FILESTEREO
+#ifdef FILESTEREO	
 	avgs = cv::Mat::zeros(2,2,CV_32F);
 	for (int y = 0; y < 2; y++) {
 		for (int x = 0; x < 2; x++) {
-			avgs.at<float>(x,y) = flst[2*y+x].at<float>(count_filestereo);
+			avgs.at<float>(x,y) = flst[2*x+y].at<float>(count_filestereo);
 		}
-	}
-	//TODO: check if file input is equal to geiger results!
+	}		
 #if defined(HASSCREEN) || defined(VIDEORESULTS)
 	std::stringstream s;
 	s <<  "../images/disp" << count_filestereo+1 << ".png";	
@@ -148,10 +147,7 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
 #endif
 
 	count_filestereo++;
-	if (avgDisparity<5) // minimum disparity
-		return false;
-	else
-		return true;
+	return true;
 #endif
 #ifdef GEIGER
 	Elas elas(param);  //hmm moving this to init gives weird deleted function compile error...
@@ -161,7 +157,7 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
 	avgDisparity=0;
 	if (res)  {
 
-#ifdef EXPORT
+
 		avgs = cv::Mat::zeros(2,2,CV_32F);
 		cv::Mat oks = cv::Mat::zeros(2,2,CV_32S);
 
@@ -227,10 +223,23 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
 			avgs.at<float>(1,1) *=5;
 		} else {avgs.at<float>(1,1) = -1;}
 
+//		bool diff = false;
+//		for (int y = 0; y < 2; y++) {
+//			for (int x = 0; x < 2; x++) {
+//				if (fabs(avgs_tmp.at<float>(x,y) - avgs.at<float>(x,y)) > 0.1) {
+//					diff=true;
+//				}
+//			}
+//		}
+//		if (diff) {
+//			std::cout << "o: " << avgs << std::endl;
+//			std::cout << "f: " << avgs_tmp << std::endl;
+//		}
+
 		//		std::cout  << "GT: " << avgDisparity << std::endl;
 		//		std::cout  << avgs << std::endl;
 		//		std::cout  << oks << std::endl;
-#endif
+
 		int okcount = 0; //keeps track how many pixels are OK (not 0 = NaN) in the disparity map
 		for (int i =0; i<dims[0]*(dims[1])/(GeigerSubSampling*GeigerSubSampling); i++) {
 
@@ -247,8 +256,8 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
 		avgDisparity /= okcount;
 		avgDisparity *=5; // heuristic scaling for better visualisation and smoother thresh config
 
-		res = (10*okcount > totdisppixels); //% of good pixels needed before ignoring the frame
-		if (!res) {	std::cout << "Blocked: #" << okcount << "/" << totdisppixels << "\n";   }
+//		res = (10*okcount > totdisppixels); //% of good pixels needed before ignoring the frame
+//		if (!res) {	std::cout << "Blocked: #" << okcount << "/" << totdisppixels << "\n";   }
 
 		avgDisparity = (int) avgDisparity;
 
@@ -313,7 +322,7 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
     double min,max;
     cv::minMaxIdx(DisparityMat, &min, &max);
 
-    std::cout << " mean/std: " << mean(0) << " / " << stddev(0) << std::endl;
+	//std::cout << " mean/std: " << mean(0) << " / " << stddev(0) << std::endl;
     //std::cout << " min/max: " << min << " / " << max << std::endl;
     DisparityMat.convertTo(DisparityMat,CV_8UC1, 256.0 / dispScale, 0.0); // expand range to 0..255.
 #endif
