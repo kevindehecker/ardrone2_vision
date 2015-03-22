@@ -51,7 +51,7 @@ private:
     CvKNearest knn;
 
 	//moving average filters:
-    Smoother knn_smoothed;
+	Smoother est_smoother;
 	//Smoother gt_smoothed;
 
     double getEuclDistance(int16_t sample[], int texton_id);
@@ -60,12 +60,12 @@ private:
     cv::Scalar getColor(int id);
 
 public:
-	int threshold_nn;
+	int threshold_est;
 	int threshold_gt;
 	int *result_input2Mode;
 
 	float tpr_threshold;
-    float avgdisp_smoothed;
+    //float avgdisp_smoothed;
 
     cv::Mat frame_Itextoncolor;
     cv::Mat frame_Itextontexton;
@@ -73,6 +73,7 @@ public:
     cv::Mat frame_Gtextontexton;
     cv::Mat frame_currentHist;
 	cv::Mat frame_ROC;
+	cv::Mat frame_regressGraph;
 
 	Textons() {
 
@@ -85,7 +86,7 @@ public:
 		method = TEXTON_MINIMUM_DISTANCE;
 		distribution_buf_size = 2435;
 		distribution_buf_pointer =0;
-		threshold_nn = 150;
+		threshold_est = 150;
 		threshold_gt = 200;
 
 		tpr_threshold = 0.98f;
@@ -93,20 +94,19 @@ public:
 
 	}
 
-	bool init (int * result_input2Mode);
+	int init (int * result_input2Mode);
     bool close(void);
     cv::Mat drawHistogram(cv::Mat hist,int bins, int maxY);
-    void drawGraph(std::string msg);
+	void drawRegressionGraph(std::string msg);
 	void getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, bool activeLearning, int pauseVideo, bool stereoOK);
     void saveRegression();
     void retrainAll();
 	void printReport(float fps);
 
-    bool initLearner(bool nulltrain);
+	int initLearner(bool nulltrain);
     int loadPreviousRegression();
-    void reload();
-    cv::Mat graphFrame;
-    int getLast_nn();
+    void reload();    
+	int getLast_est();
     int getLast_gt();
     void drawMeanHists(cv::Mat histimage);
 	void setAutoThreshold();

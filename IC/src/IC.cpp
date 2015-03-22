@@ -148,7 +148,7 @@ void combineAllImages() {
 		combineImage(resFrame,stereo.DisparityMat,sub_width*2,0,sub_width,sub_height,false);
 	}
 
-	combineImage(resFrame,textonizer.graphFrame,0,sub_height,im_width,sub_height,false);
+	combineImage(resFrame,textonizer.frame_regressGraph,0,sub_height,im_width,sub_height,false);
 #else
 	combineImage(resFrame,stereo.DisparityMat,svcam.getImWidth(),0,stereo.DisparityMat.cols,stereo.DisparityMat.rows,false);
 	combineImage(resFrame,svcam.frameL_mat,0,0,svcam.frameL_mat.cols/2,svcam.frameL_mat.rows/2,true);
@@ -215,7 +215,7 @@ void process_video() {
 		}
 		if ((mode==stereo_textons_active || mode==stereo_textons ) || mode==textons_only) {
 			textonizer.getTextonDistributionFromImage(svcam.frameL_mat,stereo.avgDisparity,mode==stereo_textons_active,pauseVideo,stereoOK);  //perform the texton stuff
-			tcp.commdata_nn = textonizer.getLast_nn();
+			tcp.commdata_nn = textonizer.getLast_est();
 		}
 		if (mode==stereo_only || mode==stereo_textons || stereo_textons_active) {
 			tcp.commdata_gt = stereo.avgDisparity;
@@ -241,7 +241,7 @@ void process_video() {
 #endif //VIDEORAW
 
 #if defined(HASSCREEN) || defined(VIDEORESULTS)
-		textonizer.drawGraph(msg);
+		textonizer.drawRegressionGraph(msg);
 		combineAllImages();
 #ifdef HASSCREEN
 		cv::imshow("Results", resFrame);
@@ -342,10 +342,10 @@ void handlekey() {
 		stopWatch.Restart();
 		msg="fps Reset";
 		break;
-	case 97: // [a]: increase threshold nn
+	case 97: // [a]: increase threshold est
 		changeThresh_nn(1);
 		break;
-	case 122: // [z]: decrease threshold nn
+	case 122: // [z]: decrease threshold est
 		changeThresh_nn(-1);
 		break;
 	case 65: // [A]: increase threshold gt
@@ -405,19 +405,19 @@ void handlekey() {
 
 		switch ( mode) {
 		case none:
-			msg= "none";
+			msg= "None";
 			break;
 		case textons_only:
-			msg= "textons";
+			msg= "Textons";
 			break;
 		case stereo_only:
-			msg= "stereo";
+			msg= "Stereo";
 			break;
 		case stereo_textons:
-			msg= "textons+stereo";
+			msg= "Textons+stereo";
 			break;
 		case stereo_textons_active:
-			msg= "stereo+textons active learning";
+			msg= "Stereo+textons active learning";
 			break;
 		}
 	}
@@ -433,10 +433,10 @@ void handlekey() {
 }
 
 void changeThresh_nn(int value) {
-	textonizer.threshold_nn = textonizer.threshold_nn + value;
+	textonizer.threshold_est = textonizer.threshold_est + value;
 #ifdef _PC
 	std::stringstream s;
-	s << "nn thresh: " << (textonizer.threshold_nn);
+	s << "est thresh: " << (textonizer.threshold_est);
 	msg=s.str();
 #endif
 }
@@ -490,7 +490,7 @@ int init(int argc, char **argv) {
 
 	/*****init the visual bag of words texton methode*****/
 	std::cout << "Initialising textonizer\n";
-	if (!textonizer.init(&result_input2Mode)) {return 1;}
+	if (textonizer.init(&result_input2Mode)) {return 1;}
 
 	/*****Start capturing images*****/
 	std::cout << "Start svcam\n";
@@ -597,7 +597,7 @@ int main( int argc, char **argv )
 	if (init(argc,argv)) {return 1;}
 
 	/* clear learning buffer instead of using old stuff */
-	textonizer.initLearner(true);
+	//textonizer.initLearner(true);
 
 	process_video();	
 	textonizer.printReport(tcp.commdata_fps);
