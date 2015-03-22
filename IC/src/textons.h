@@ -76,6 +76,7 @@ public:
     cv::Mat frame_Gtextontexton;
     cv::Mat frame_currentHist;
 	cv::Mat frame_ROC;
+	cv::Mat frame_regressGraph;
 
 	Textons() {
 
@@ -109,8 +110,7 @@ public:
 
 	int initLearner(bool nulltrain);
     int loadPreviousRegression();
-    void reload();
-    cv::Mat graphFrame;
+    void reload();    
 	int getLast_est();
     int getLast_gt();
     void drawMeanHists(cv::Mat histimage);

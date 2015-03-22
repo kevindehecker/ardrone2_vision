@@ -148,7 +148,7 @@ void combineAllImages() {
 		combineImage(resFrame,stereo.DisparityMat,sub_width*2,0,sub_width,sub_height,false);
 	}
 
-	combineImage(resFrame,textonizer.graphFrame,0,sub_height,im_width,sub_height,false);
+	combineImage(resFrame,textonizer.frame_regressGraph,0,sub_height,im_width,sub_height,false);
 #else
 	combineImage(resFrame,stereo.DisparityMat,svcam.getImWidth(),0,stereo.DisparityMat.cols,stereo.DisparityMat.rows,false);
 	combineImage(resFrame,svcam.frameL_mat,0,0,svcam.frameL_mat.cols/2,svcam.frameL_mat.rows/2,true);
@@ -428,19 +428,19 @@ void handlekey() {
 
 		switch ( mode) {
 		case none:
-			msg= "none";
+			msg= "None";
 			break;
 		case textons_only:
-			msg= "textons";
+			msg= "Textons";
 			break;
 		case stereo_only:
-			msg= "stereo";
+			msg= "Stereo";
 			break;
 		case stereo_textons:
-			msg= "textons+stereo";
+			msg= "Textons+stereo";
 			break;
 		case stereo_textons_active:
-			msg= "stereo+textons active learning";
+			msg= "Stereo+textons active learning";
 			break;
 		}
 	}
@@ -620,7 +620,7 @@ int main( int argc, char **argv )
 	if (init(argc,argv)) {return 1;}
 
 	/* clear learning buffer instead of using old stuff */
-	textonizer.initLearner(true);
+	//textonizer.initLearner(true);
 
 	process_video();	
 	textonizer.printReport(tcp.commdata_fps);

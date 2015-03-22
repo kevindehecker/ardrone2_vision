@@ -271,21 +271,27 @@ void Textons::drawGraph(std::string msg) {
 	cv::Scalar color_est= cv::Scalar(0,0,255); // red
     cv::Scalar color_vert= cv::Scalar(0,255,255); // orange
     cv::Scalar color_invert= cv::Scalar(255,255,0); // light blue
-	int line_width = 2;
+	int line_width = 1;
 
-	int stepX = (distribution_buf_size>>2)/700;
-    int rows = 300;
 
-	graphFrame = cv::Mat::zeros(rows, ((distribution_buf_size>>2)/stepX), CV_8UC3);
+	const int fsizex = 1280;
+	const int fsizey = 300;
+	const int barsize =10;
+	double max;
+	cv::minMaxIdx(graph_buffer,NULL,&max,NULL,NULL);
 
-    double max;
-    cv::minMaxIdx(graph_buffer,NULL,&max,NULL,NULL);
-    float scaleY = rows/max;
+	const float scaleX = (float)((fsizex))/(distribution_buf_size>>2);
+	const int rows = (fsizey-barsize);
+	const float scaleY = (rows)/max;
 
+	//frame_regressGraph = cv::Mat::zeros(300, ((distribution_buf_size>>2)*scaleX ), CV_8UC3);
+	frame_regressGraph = cv::Mat::zeros(fsizey, fsizex, CV_8UC3);
+
+	cv::Point p1(0,barsize);
+	cv::Point p2(frame_regressGraph.cols, frame_regressGraph.rows);
+	cv::Mat graphFrame = cv::Mat(frame_regressGraph, cv::Rect(p1, p2));
 
 	float prev_est = 0, prev_gt = 0;
-
-
     int positive_true=0;
     int positive_false=0;
     int negative_true=0;
@@ -320,7 +326,10 @@ void Textons::drawGraph(std::string msg) {
 			gt = graph_buffer.at<float>(jj,quad_VizChannel-1);
 		}
 
-
+		if (j==filterwidth) { // fixes discontinuty at the start of the graph
+			prev_est = est;
+			prev_gt = gt;
+		}
 
         if (!(groundtruth_buffer.at<float>(jj<<2) < 6.201 && groundtruth_buffer.at<float>(jj<<2) > 6.199)) {
 
@@ -340,54 +349,54 @@ void Textons::drawGraph(std::string msg) {
 				//false negative; drone should stop according to stereo, but didn't if textons were used
 				//white
 				if (j > learnborder ) {negative_false++;}
-				cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(255,255,255), line_width, 8, 0);
+				cv::line(frame_regressGraph,cv::Point(j*scaleX , 0),cv::Point(j*scaleX , barsize),cv::Scalar(255,255,255), line_width, 8, 0);
 			} else if (est > threshold_est && gt < threshold_gt) {
 				//false positive; drone could have proceeded according to stereo, but stopped if textons were used
 				//black
 				if (j > learnborder ) {positive_false++;}
-				cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,0,0), line_width, 8, 0);
+				cv::line(frame_regressGraph,cv::Point(j*scaleX , 0),cv::Point(j*scaleX  , barsize),cv::Scalar(0,0,0), line_width, 8, 0);
 			} else if (est > threshold_est && gt > threshold_gt) {
 				//true positive; both stereo and textons agree, drone should stop
 				//red
 				if (j > learnborder ) {negative_true++;}
-				cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,0,255), line_width, 8, 0);
+				cv::line(frame_regressGraph,cv::Point(j*scaleX , 0),cv::Point(j*scaleX , barsize),cv::Scalar(0,0,255), line_width, 8, 0);
 			} else {
 				//both stereo and textons agree, drone may proceed
 				//green
 				if (j > learnborder ) {positive_true++;}
-				cv::line(graphFrame,cv::Point(j/stepX, 0),cv::Point(j/stepX, 10),cv::Scalar(0,255,0), line_width, 8, 0);
+				cv::line(frame_regressGraph,cv::Point(j*scaleX , 0),cv::Point(j*scaleX , barsize),cv::Scalar(0,255,0), line_width, 8, 0);
 			}
 
-        }
 
-        if (j==filterwidth) { // fixes discontinuty at the start of the graph
+
+
+
+			//draw knn result:
+			cv::line(graphFrame, cv::Point(j*scaleX , rows- prev_est), cv::Point((j+1)*scaleX , rows -  est), color_est, line_width, CV_AA, 0);
+			//draw stereo vision groundtruth:
+			if (gt>5) { // ignore instances with unknown groundtruth (minDisparity >5). TODO: make minDispairty a const
+				cv::line(graphFrame, cv::Point(j*scaleX , rows- prev_gt), cv::Point((j+1)*scaleX , rows -  gt),color_gt, line_width, CV_AA, 0);
+				prev_gt = gt;
+			}
 			prev_est = est;
-            prev_gt = gt;
-        }
+		}
 
-        //draw knn result:
-		cv::line(graphFrame, cv::Point(j/stepX, rows- prev_est), cv::Point((j+1)/stepX, rows -  est), color_est, line_width, 8, 0);
-        //draw stereo vision groundtruth:
-        cv::line(graphFrame, cv::Point(j/stepX, rows- prev_gt), cv::Point((j+1)/stepX, rows -  gt),color_gt, line_width, 8, 0);
-
-		prev_est = est;
-        prev_gt = gt;
     }
 
 	// calc mean square errors
 	_mse_tst /= _mse_tst_cnt;
 	_mse_trn /= _mse_trn_cnt;
-	std::stringstream s_mse;
-	s_mse << "mse trn: " << (int)_mse_trn << ", tst: " << (int)_mse_tst;
-	putText(graphFrame,s_mse.str(),cv::Point(0, 50),cv::FONT_HERSHEY_SIMPLEX,0.5,color_vert);
+	//std::stringstream s_mse;
+	//s_mse << "mse trn: " << (int)_mse_trn << ", tst: " << (int)_mse_tst;
+	//putText(frame_regressGraph,s_mse.str(),cv::Point(0, 50),cv::FONT_HERSHEY_SIMPLEX,0.5,color_vert);
 
 
 	//draw est vision threshold:
-	cv::line(graphFrame, cv::Point(0, rows- threshold_est*scaleY), cv::Point(graphFrame.cols, rows -  threshold_est*scaleY),color_invert, line_width, 8, 0);
-	putText(graphFrame,"est.thresh.",cv::Point(0, rows- threshold_est*scaleY+10),cv::FONT_HERSHEY_SIMPLEX,0.4,color_invert);
+	cv::line(graphFrame, cv::Point(0, rows- threshold_est*scaleY), cv::Point(frame_regressGraph.cols, rows -  threshold_est*scaleY),color_invert, line_width, 8, 0);
+	putText(frame_regressGraph,"est",cv::Point(0, rows- threshold_est*scaleY+10+barsize),cv::FONT_HERSHEY_SIMPLEX,0.4,color_invert);
 	//draw gt vision threshold:
-	cv::line(graphFrame, cv::Point(0, rows- threshold_gt*scaleY), cv::Point(graphFrame.cols, rows -  threshold_gt*scaleY),color_vert, line_width, 8, 0);
-	putText(graphFrame,"gt.thresh.",cv::Point(0, rows- threshold_gt*scaleY-10),cv::FONT_HERSHEY_SIMPLEX,0.4,color_vert);
+	cv::line(graphFrame, cv::Point(0, rows- threshold_gt*scaleY), cv::Point(frame_regressGraph.cols, rows -  threshold_gt*scaleY),color_vert, line_width, 8, 0);
+	putText(frame_regressGraph,"gt.",cv::Point(0, rows- threshold_gt*scaleY-10+barsize),cv::FONT_HERSHEY_SIMPLEX,0.4,color_vert);
 
 
 
@@ -398,13 +407,14 @@ void Textons::drawGraph(std::string msg) {
 
     std::stringstream s;
 	s << msg << " TPR: " << boost::format("%.2f")%tpr << " --> FPR: " << boost::format("%.2f")%fpr;
+	s << ". MSE trn: " << (int)_mse_trn << ", tst: " << (int)_mse_tst;
     msg = s.str();
 
 #endif
 
 
     //draw text to inform about the mode and ratios or to notify user a key press was handled
-	putText(graphFrame,msg,cv::Point(0, 30),cv::FONT_HERSHEY_SIMPLEX,0.7,color_vert);
+	putText(frame_regressGraph,msg,cv::Point(0, rows+barsize-2),cv::FONT_HERSHEY_SIMPLEX,0.5,color_vert);
 
 }
 
@@ -501,7 +511,7 @@ void Textons::setAutoThreshold() {
 
 
 
-			if (!(groundtruth_buffer.at<float>(jj<<2) < 6.201 && groundtruth_buffer.at<float>(jj<<2) > 6.199)) {
+			if (!(groundtruth_buffer.at<float>(jj<<2) < 6.201 && groundtruth_buffer.at<float>(jj<<2) > 6.199) && gt > 5) {
 
 				if (j > learnborder ) { //tst/trn
 					if (est < i && gt > threshold_gt) {
