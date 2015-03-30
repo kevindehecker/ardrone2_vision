@@ -38,8 +38,8 @@ FILE(GLOB MY_SRC_FILES "../src/*.cpp" "../src/*.h" "../src/*.c")
 
 # use sse3 instruction set for libelas and c11 for threading (among others)
 
-SET(CMAKE_CXX_FLAGS "-msse3 -std=c++11")
-#SET(CMAKE_CXX_FLAGS "-msse3 -std=c++0x -pthread")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3 -std=c++11")
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3 -std=c++0x -pthread")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
