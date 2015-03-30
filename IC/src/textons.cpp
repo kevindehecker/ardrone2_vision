@@ -279,10 +279,12 @@ void Textons::drawGraph(std::string msg) {
 	const int barsize =10;
 	double max;
 	cv::minMaxIdx(graph_buffer,NULL,&max,NULL,NULL);
+	//max *=1.1; // give some extra room between bar and graph
 
 	const float scaleX = (float)((fsizex))/(distribution_buf_size>>2);
 	const int rows = (fsizey-barsize);
 	const float scaleY = (rows)/max;
+	//rows += 0.1*max;
 
 	//frame_regressGraph = cv::Mat::zeros(300, ((distribution_buf_size>>2)*scaleX ), CV_8UC3);
 	frame_regressGraph = cv::Mat::zeros(fsizey, fsizex, CV_8UC3);
@@ -367,15 +369,17 @@ void Textons::drawGraph(std::string msg) {
 				cv::line(frame_regressGraph,cv::Point(j*scaleX , 0),cv::Point(j*scaleX , barsize),cv::Scalar(0,255,0), line_width, 8, 0);
 			}
 
-
+//			if (est<10) {
+//				std::cout << "wtf" << std::endl;
+//			}
 
 
 
 			//draw knn result:
-			cv::line(graphFrame, cv::Point(j*scaleX , rows- prev_est), cv::Point((j+1)*scaleX , rows -  est), color_est, line_width, CV_AA, 0);
+			cv::line(graphFrame, cv::Point(j*scaleX , rows- prev_est+barsize), cv::Point((j+1)*scaleX , rows -  est+barsize), color_est, line_width, CV_AA, 0);
 			//draw stereo vision groundtruth:
 			if (gt>5) { // ignore instances with unknown groundtruth (minDisparity >5). TODO: make minDispairty a const
-				cv::line(graphFrame, cv::Point(j*scaleX , rows- prev_gt), cv::Point((j+1)*scaleX , rows -  gt),color_gt, line_width, CV_AA, 0);
+				cv::line(graphFrame, cv::Point(j*scaleX , rows- prev_gt+barsize), cv::Point((j+1)*scaleX , rows -  gt+barsize),color_gt, line_width, CV_AA, 0);
 				prev_gt = gt;
 			}
 			prev_est = est;
@@ -610,12 +614,16 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, cv::Mat avgdisps
 
 	int quadrant_size_x = grayframe.cols>>1;
 	int quadrant_size_y = grayframe.rows>>1;
+	cv::Mat hist = cv::Mat::zeros(1, n_textons+1, cv::DataType<float>::type); // +1 -> entropy
 	for (int y=0;y<2;y++) {
 		for (int x=0;x<2;x++) {
 			cv::Point p1(x*quadrant_size_x, y*quadrant_size_y);
 			cv::Point p2(x*quadrant_size_x+quadrant_size_x, y*quadrant_size_y+quadrant_size_y);
-			cv::Mat roi = cv::Mat(grayframe, cv::Rect(p1, p2));
-			getTextonDistributionFromImage(roi,avgdisps.at<float>(x,y),activeLearning,pauseVideo,avgdisps.at<float>(x,y)>5,2*y+x);
+			cv::Mat roi = cv::Mat(grayframe, cv::Rect(p1, p2));			
+			cv::Mat hist_q = getTextonDistributionFromImage(roi,avgdisps.at<float>(x,y),activeLearning,pauseVideo,avgdisps.at<float>(x,y)>5,2*y+x);
+#ifdef DRAWVIZS
+			hist+=hist_q;
+#endif
 		}
 	}
 	
@@ -623,11 +631,17 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, cv::Mat avgdisps
 		countsincelearn++; // keep track of training/test data
 	}
 
-#ifdef DRAWVIZS
+#ifdef DRAWVIZS	
+
 	if (*result_input2Mode == VIZ_histogram || *result_input2Mode == VIZ_texton_intensity_color_encoding || *result_input2Mode == VIZ_texton_gradient_color_encoding ) {
-		frame_currentHist = drawHistogram(distribution_buffer.row(distribution_buf_pointer),n_textons,200); //only draws histogram of one of the quadrants!
+		if (quad_VizChannel == 0) {
+			//sum the 4 quadrants to draw hist of the whole image
+			hist/=4;
+			frame_currentHist = drawHistogram(hist,n_textons,200);
+			//drawMeanHists(frame_currentHist);
+		}
 	}
-	//drawMeanHists(frame_currentHist);
+
 	if (*result_input2Mode == VIZ_texton_intensity_color_encoding || *result_input2Mode == VIZ_texton_gradient_color_encoding || *result_input2Mode == VIZ_texton_intensity_texton_encoding || *result_input2Mode == VIZ_texton_gradient_texton_encoding) {
 		drawTextonAnotatedImage(grayframe);
 	}
@@ -636,7 +650,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, cv::Mat avgdisps
 }
 
 //calculates the histogram/distribution
-void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float gt, bool activeLearning, int pauseVideo, bool stereoOK, int q) {
+cv::Mat Textons::getTextonDistributionFromImage(cv::Mat grayframe, float gt, bool activeLearning, int pauseVideo, bool stereoOK, int q) {
 
     int middleid = floor((float)patch_size/2.0); // for gradient, asumes, texton size is odd!
     int16_t sample[patch_square_size];
@@ -676,7 +690,7 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float gt, bool a
 						sample_dx[yy*patch_size+xx] = (int)(0x00ff &grayframe.at<uint8_t>(y+yy,x+xx+1)) - (int)(0x00ff & grayframe.at<uint8_t>(y+yy,x+xx-1));
 					}
 #ifdef DRAWVIZS
-					if (*result_input2Mode == VIZ_histogram) {
+					if (*result_input2Mode == VIZ_histogram && (quad_VizChannel-1 == q || quad_VizChannel == 0)) {
 						grayframe.at<uint8_t>(y+yy,x+xx) = 255; // visualize sampling
 					}
 #endif					
@@ -760,12 +774,23 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float gt, bool a
 	}
 	hist.at<float>(n_textons) = entropy;
 
+
+#ifdef DRAWVIZS
+			if (*result_input2Mode == VIZ_histogram || *result_input2Mode == VIZ_texton_intensity_color_encoding || *result_input2Mode == VIZ_texton_gradient_color_encoding ) {
+				if (quad_VizChannel-1 == q) {
+					frame_currentHist = drawHistogram(hist,n_textons,200); //only draws histogram of one of the quadrants!
+					//drawMeanHists(frame_currentHist);
+				}
+			}
+#endif
+
+
     //copy new data into learning buffer:
     cv::Mat M1 = distribution_buffer.row((distribution_buf_pointer+0) % distribution_buf_size) ;
     hist.convertTo(M1,cv::DataType<float>::type,1,0); // floats are needed for knn
 	groundtruth_buffer.at<float>((distribution_buf_pointer)% distribution_buf_size) = gt;
     //run knn
-	float est = knn.find_nearest(M1,k,0,0,0,0); // if segfault here, clear xmls!
+	float est = knn.find_nearest(M1,k,0,0,0,0);
     //perform smoothing:
 	est = est_smoothers[q].addSample(est);
 
@@ -787,10 +812,14 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float gt, bool a
     //save values for visualisation	in graph
 	if (stereoOK) {		
 		graph_buffer.at<float>(distribution_buf_pointer>>2,q) = gt; // groundtruth
+		if (est <7) {
+			std::cout << "wtf;" <<std::endl;
+		}
 		graph_buffer.at<float>((distribution_buf_pointer>>2+0) % distribution_buf_size,q+4) = est;
 	}
 
 	//std::cout << "knn.disp.: " << est << "  |  truth: " << avgdisp_smoothed << std::endl;
+	return hist;
 }
 
 /*

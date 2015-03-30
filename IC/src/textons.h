@@ -48,6 +48,7 @@ private:
     int lastLearnedPosition;
 	int distribution_buf_size;
 	int distribution_buf_pointer;
+	int graph_buf_pointer;
 	int graph_buf_size;
     CvKNearest knn;
 
@@ -103,7 +104,7 @@ public:
     cv::Mat drawHistogram(cv::Mat hist,int bins, int maxY);
     void drawGraph(std::string msg);
 	void getTextonDistributionFromImage(cv::Mat grayframe, cv::Mat avgdisps, bool activeLearning, int pauseVideo);
-	void getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, bool activeLearning, int pauseVideo, bool stereoOK,int q);
+	cv::Mat getTextonDistributionFromImage(cv::Mat grayframe, float avgdisp, bool activeLearning, int pauseVideo, bool stereoOK,int q);
     void saveRegression();
     void retrainAll();
 	void printReport(float fps);
