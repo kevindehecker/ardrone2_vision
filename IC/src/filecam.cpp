@@ -9,7 +9,7 @@
 
 bool FileCam::init () {
 	scaleFactor = 1;
-	video = cv::VideoCapture("/home/goggles/Desktop/LeftRight.avi");
+	video = cv::VideoCapture("/home/goggles/Desktop/LeftRight_glasstablemanualhfps.avi");
 //    video = cv::VideoCapture("/home/houjebek/AfstudeerData/Experiments/CyberZoo/Walks/video_dsp.avi");
 
     if (!video.isOpened()) {
@@ -61,7 +61,7 @@ void FileCam::workerThread() {
     cv::Mat frameR = cv::Mat::zeros(im_height,im_width, CV_8UC1);
     stopWatch.Start();
 
-    int skipstart = 250;
+	int skipstart = SKIPFRAMES_START;
     //skip start
     for (int i =0; i < skipstart;i++)
         video >> frameC;

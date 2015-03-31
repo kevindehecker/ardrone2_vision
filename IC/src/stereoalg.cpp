@@ -32,7 +32,7 @@ bool stereoAlg::init (int im_width,int im_height) {
 	//read the file into flst
 	flst = cv::Mat(flength ,1,CV_32S);
 	sfile.open(filename);
-	for (int i = 0; i<flength; ++i) {
+	for (int i = SKIPFRAMES_START; i<flength; ++i) {
 
 		std::getline(sfile, line);
 		auto start = 0U;
@@ -41,7 +41,8 @@ bool stereoAlg::init (int im_width,int im_height) {
 		int d;
 		d = std::stoi(line, NULL,10);
 		//std::cout << d << std::endl;
-		flst.at<int>(i)  =d;
+		if (i-SKIPFRAMES_START >= 0)
+		flst.at<int>(i-SKIPFRAMES_START)  =d;
 	}
 	sfile.close();
 	//std::cout << flst << std::endl;

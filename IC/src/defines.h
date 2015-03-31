@@ -18,8 +18,8 @@
 //#define DELFLY_WIFI // use the delfly stereo cam, while it is connected to the ardrone2, streaming over wifi
 #define FILECAM // use a video as source instead of the camera. The file name is defined in filecam.cpp
 
-//#define FILESTEREO
-#define GEIGER // use libelas Geiger stereo algorithm
+#define FILESTEREO
+//#define GEIGER // use libelas Geiger stereo algorithm
 //#define SGM  //use OpenCV Semi Global Matching stereo algorithm
 //#define BM currently not completely implemented
 //#define LONGSEC // use Kirk's implementation of LONGSEC stereo algorithm
@@ -32,7 +32,7 @@
 #define EXPORT //create export.txt and seperate stereo pair png images
 #endif
 
-//#define HASSCREEN // dont disable in qt debugger!
+#define HASSCREEN // dont disable in qt debugger!
 #ifndef FILECAM
 //#define VIDEORAW // write the raw video footage from the camera to a video file
 #endif

@@ -260,11 +260,11 @@ void process_video() {
 		//	textonizer.retrainAll();
 		//}
 
-		//if ((frames % 100) == 99) {
-		//	textonizer.retrainAll();
-			//textonizer.saveRegression();
-			//std::cout << "mod: " << frames % 100 << "\n|" ;
-		//}
+		if ((frames % 200) == 199) {
+			textonizer.retrainAll();
+			textonizer.saveRegression();
+			std::cout << "mod: " << frames % 200 << "\n|" ;
+		}
 
 
 
