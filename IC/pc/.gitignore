@@ -4,4 +4,4 @@ graph_buffer.xml
 groundtruth_buffer.xml
 distribution_buf_size.xml
 
-images
+images*
