@@ -453,7 +453,6 @@ void Textons::setAutoThreshold() {
 	int line_width=2;
 #endif
 
-	bool done = false;
 	cv::Mat tprs_trn(threshold_gt,1,CV_32F); // these two arrays could be optimised away, or used for nicer graph
 	cv::Mat fprs_trn(threshold_gt,1,CV_32F);
 	cv::Mat tprs_tst(threshold_gt,1,CV_32F);
@@ -586,7 +585,7 @@ void Textons::setAutoThreshold() {
 //calculates the histogram/distribution
 void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float gt, bool activeLearning, int pauseVideo, bool stereoOK) {
 
-    int middleid = floor((float)patch_size/2.0); // for gradient, asumes, texton size is odd!
+	//int middleid = floor((float)patch_size/2.0); // for gradient, asumes, texton size is odd!
     int16_t sample[patch_square_size];
     int16_t sample_dx[patch_square_size]; // gradient
     cv::Mat hist;
@@ -783,65 +782,70 @@ inline bool checkFileExist (const std::string& name) {
  * Loads the texton dictionaries from file
  */
 int Textons::initTextons() {
-    std::cout << "Opening textons file\n";
+	std::cout << "Opening textons file\n";
 
-	if (!checkFileExist("../textons10_gradient_cubicle.dat")) {std::cerr << "Error: gradient textons not available\n";return 1;}
-	if (!checkFileExist("../textons10_intensity_cubicle.dat")) {std::cerr << "Error: intensity textons not available\n";return 1;}
+	std::string path = "../";
 
-	std::ifstream input_gr("../textons10_gradient_cubicle.dat", std::ios::binary );
-	std::ifstream input_i("../textons10_intensity_cubicle.dat", std::ios::binary );
-    // copies all data into buffer
-    std::vector<unsigned char> buffer_gr(( std::istreambuf_iterator<char>(input_gr)),(std::istreambuf_iterator<char>()));
-    std::vector<unsigned char> buffer_i(( std::istreambuf_iterator<char>(input_i)),(std::istreambuf_iterator<char>()));
+	std::string text_gr = "textons10_gradient_cubicle.dat";
+	std::string text_i = "textons10_intensity_cubicle.dat";
+	std::cout << path + text_gr << std::endl;
+	if (!checkFileExist(path + text_gr)) {std::cerr << "Error: gradient textons not available\n";return 1;}
+	if (!checkFileExist(path + text_i)) {std::cerr << "Error: intensity textons not available\n";return 1;}
 
-    n_textons_gradient = buffer_gr[0];
-    n_textons_intensity = buffer_i[0];
-    n_textons =  n_textons_gradient  + n_textons_intensity;
+	std::ifstream input_gr(path + text_gr, std::ios::binary );
+	std::ifstream input_i(path + text_i, std::ios::binary );
+	// copies all data into buffer
+	std::vector<unsigned char> buffer_gr(( std::istreambuf_iterator<char>(input_gr)),(std::istreambuf_iterator<char>()));
+	std::vector<unsigned char> buffer_i(( std::istreambuf_iterator<char>(input_i)),(std::istreambuf_iterator<char>()));
+
+	n_textons_gradient = buffer_gr[0];
+	n_textons_intensity = buffer_i[0];
+	n_textons =  n_textons_gradient  + n_textons_intensity;
 
 	if (buffer_gr[1] != buffer_i[1]) {std::cerr << "Error: patch sizes don't match\n";return 1;}
-    patch_size = buffer_gr[1];
-    patch_square_size = patch_size*patch_size;
+	patch_size = buffer_gr[1];
+	patch_square_size = patch_size*patch_size;
 
 
-    textons.resize(n_textons);
-    printf("#textons: %d, Patch size: %d, #samples: %d\n",n_textons,patch_size,n_samples );
+	textons.resize(n_textons);
+	printf("#textons: %d, Patch size: %d, #samples: %d\n",n_textons,patch_size,n_samples );
 
-    int counter =2; // skip first two bytes, as they contain other info
-    for (int i = 0;i<n_textons_intensity;i++) {
-        std::vector<int16_t> v(patch_square_size);
+	int counter =2; // skip first two bytes, as they contain other info
+	for (int i = 0;i<n_textons_intensity;i++) {
+		std::vector<int16_t> v(patch_square_size);
 		//        printf("texton[%d]:", i);
-        for (int j=0;j<patch_square_size;j++) {
+		for (int j=0;j<patch_square_size;j++) {
 
-            uint8_t t0 = buffer_i[counter];
-            uint8_t t1 = buffer_i[counter+1];
-            int16_t t = ((t1 << 8) & 0xff00) |  (t0 & 0x00ff);
-            counter +=2;
-            v[j] = t;
+			uint8_t t0 = buffer_i[counter];
+			uint8_t t1 = buffer_i[counter+1];
+			int16_t t = ((t1 << 8) & 0xff00) |  (t0 & 0x00ff);
+			counter +=2;
+			v[j] = t;
 			//            if (j>0) {printf(", %d", v[j]);} else {printf(" %d", v[j]);}
-        }
-        textons[i] = v;
-        input_i.close();
+		}
+		textons[i] = v;
+		input_i.close();
 		//        std::cout << std::endl;
-    }
+	}
 
 
-    counter =2; // skip first two bytes, as they contain other info
-    for (int i = 0;i<n_textons_gradient;i++) {
-        std::vector<int16_t> v(patch_square_size);
+	counter =2; // skip first two bytes, as they contain other info
+	for (int i = 0;i<n_textons_gradient;i++) {
+		std::vector<int16_t> v(patch_square_size);
 		//        printf("texton_gr[%d]:", i+buffer_i[0]);
-        for (int j=0;j<patch_square_size;j++) {
+		for (int j=0;j<patch_square_size;j++) {
 
-            uint8_t t0 = buffer_gr[counter];
-            uint8_t t1 = buffer_gr[counter+1];
-            int16_t t = ((t1 << 8) & 0xff00) |  (t0 & 0x00ff);
-            counter +=2;
+			uint8_t t0 = buffer_gr[counter];
+			uint8_t t1 = buffer_gr[counter+1];
+			int16_t t = ((t1 << 8) & 0xff00) |  (t0 & 0x00ff);
+			counter +=2;
 			v[j] = t *2; // *2 is for integer precision
 			//            if (j>0) {printf(", %d", v[j]);} else {printf(" %d", v[j]);}
-        }
+		}
 		textons[i+n_textons_intensity] = v;
-        input_gr.close();
+		input_gr.close();
 		//        std::cout << std::endl;
-    }
+	}
 
 	return 0;
 }
@@ -916,7 +920,9 @@ int Textons::loadPreviousRegression() {
 
     } catch (int e) {
         std::cout << "No previous regression memory could be openend.\n";
+		return 1;
     }
+	return 0;
 }
 
 /*

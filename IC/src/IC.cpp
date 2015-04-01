@@ -107,57 +107,48 @@ void handlekey();
 /*
  * Combines the stereo image and the learning graph to one big image
  */
-void combineAllImages() {
-
-#if defined(DELFLY)
+void combineAllImages(cv::Mat DisparityMat, cv::Mat frameL_mat, cv::Mat frameR_mat) {
 
 	int im_width = resFrame.cols;
 	int im_height = resFrame.rows;
 	int sub_width = im_width/3;
 	int sub_height = im_height/2;
 
-	combineImage(resFrame,svcam.frameL_mat,0,0,sub_width,sub_height,true);
-
+	combineImage(resFrame,frameL_mat,0,0,sub_width,sub_height,true);
 
 	//select which result image will be shown next to input image:
 	if (result_input2Mode == VIZ_right_input_image) { //right input image
-		combineImage(resFrame,svcam.frameR_mat,sub_width,0,sub_width,sub_height,true);
-		if (!pauseVideo) {cv::applyColorMap(stereo.DisparityMat,stereo.DisparityMat,2);}
-		combineImage(resFrame,stereo.DisparityMat,sub_width*2,0,sub_width,sub_height,false);
+		combineImage(resFrame,frameR_mat,sub_width,0,sub_width,sub_height,true);
+		if (!pauseVideo) {cv::applyColorMap(DisparityMat,DisparityMat,2);}
+		combineImage(resFrame,DisparityMat,sub_width*2,0,sub_width,sub_height,false);
 	} else if (result_input2Mode == VIZ_texton_intensity_color_encoding) { //texton intensity color encoding
 		combineImage(resFrame,textonizer.frame_Itextoncolor,sub_width,0,sub_width,sub_height,false);
 		combineImage(resFrame,textonizer.frame_currentHist,sub_width*2,0,sub_width,sub_height,false);
 	} else if (result_input2Mode == VIZ_texton_intensity_texton_encoding) {// texton intensity texton encoding
 		combineImage(resFrame,textonizer.frame_Itextontexton,sub_width,0,sub_width,sub_height,true);
-		if (!pauseVideo) {cv::applyColorMap(stereo.DisparityMat,stereo.DisparityMat,2);}
-		combineImage(resFrame,stereo.DisparityMat,sub_width*2,0,sub_width,sub_height,false);
+		if (!pauseVideo) {cv::applyColorMap(DisparityMat,DisparityMat,2);}
+		combineImage(resFrame,DisparityMat,sub_width*2,0,sub_width,sub_height,false);
 	} else if (result_input2Mode == VIZ_texton_gradient_color_encoding) { //texton gradient color encoding
 		combineImage(resFrame,textonizer.frame_Gtextoncolor,sub_width,0,sub_width,sub_height,false);
 		combineImage(resFrame,textonizer.frame_currentHist,sub_width*2,0,sub_width,sub_height,false);
 	} else if (result_input2Mode == VIZ_texton_gradient_texton_encoding) {// texton gradient,  press shift 6
 		combineImage(resFrame,textonizer.frame_Gtextontexton,sub_width,0,sub_width,sub_height,false);
-		if (!pauseVideo) {cv::applyColorMap(stereo.DisparityMat,stereo.DisparityMat,2);}
-		combineImage(resFrame,stereo.DisparityMat,sub_width*2,0,sub_width,sub_height,false);
+		if (!pauseVideo) {cv::applyColorMap(DisparityMat,DisparityMat,2);}
+		combineImage(resFrame,DisparityMat,sub_width*2,0,sub_width,sub_height,false);
 	} else if (result_input2Mode == VIZ_histogram) {// histogram       , but press shift 7!
 		combineImage(resFrame,textonizer.frame_currentHist,sub_width,0,sub_width,sub_height,false);
-		if (!pauseVideo) {cv::applyColorMap(stereo.DisparityMat,stereo.DisparityMat,2);}
-		combineImage(resFrame,stereo.DisparityMat,sub_width*2,0,sub_width,sub_height,false);
+		if (!pauseVideo) {cv::applyColorMap(DisparityMat,DisparityMat,2);}
+		combineImage(resFrame,DisparityMat,sub_width*2,0,sub_width,sub_height,false);
 	} else if (result_input2Mode == VIZ_ROC) {// ROC       , but press shift 8!
 		combineImage(resFrame,textonizer.frame_ROC,sub_width,0,sub_width,sub_height,false);
-		if (!pauseVideo) {cv::applyColorMap(stereo.DisparityMat,stereo.DisparityMat,2);}
-		combineImage(resFrame,stereo.DisparityMat,sub_width*2,0,sub_width,sub_height,false);
+		if (!pauseVideo) {cv::applyColorMap(DisparityMat,DisparityMat,2);}
+		combineImage(resFrame,DisparityMat,sub_width*2,0,sub_width,sub_height,false);
 	}
 
 	combineImage(resFrame,textonizer.frame_regressGraph,0,sub_height,im_width,sub_height,false);
-#else
-	combineImage(resFrame,stereo.DisparityMat,svcam.getImWidth(),0,stereo.DisparityMat.cols,stereo.DisparityMat.rows,false);
-	combineImage(resFrame,svcam.frameL_mat,0,0,svcam.frameL_mat.cols/2,svcam.frameL_mat.rows/2,true);
-	combineImage(resFrame,svcam.frameR_mat,svcam.getImWidth()/2,0,svcam.getImWidth()/2,svcam.getImHeight()/2,true);
-	combineImage(resFrame,textonizer.graphFrame,0,svcam.getImHeight()/2,svcam.getImWidth()*1.5,svcam.getImHeight()/2,false);
-#endif
+
 
 }
-
 /*
  * Puts one image into the big image
  */
@@ -242,7 +233,7 @@ void process_video() {
 
 #if defined(HASSCREEN) || defined(VIDEORESULTS)
 		textonizer.drawRegressionGraph(msg);
-		combineAllImages();
+		combineAllImages(stereo.DisparityMat, svcam.frameL_mat, svcam.frameR_mat);
 #ifdef HASSCREEN
 		cv::imshow("Results", resFrame);
 #endif
