@@ -51,7 +51,7 @@ cv::VideoWriter outputVideo;
 cv::VideoWriter outputVideoResults;
 stopwatch_c stopWatch;
 modus_t mode;
-int frames = 0;
+int imgcount = 0;
 
 #ifdef USE_TERMINAL_INPUT
 std::thread thread_TerminalInput;
@@ -95,12 +95,12 @@ void TerminalInputThread();
 int main( int argc, char **argv);
 
 void changeThresh_gt(int value);
-void changeThresh_nn(int value);
+void changeThresh_est(int value);
 
 void combineImage(cv::Mat resFrame, cv::Mat smallsourceimage, int x, int y,int width, int height, bool convertRGB);
 void commOutThread();
 void commInThread();
-void handlekey();
+void handleKey();
 
 /************ code ***********/
 
@@ -242,26 +242,26 @@ void process_video() {
 #endif
 #endif
 
-		handlekey();
+		handleKey();
 
 		if (!pauseVideo) {
-			frames++;
+			imgcount++;
 		}
-		//if (frames == 1948) {
+		//if (imgcount == 1948) {
 		//	textonizer.retrainAll();
 		//}
 
-		if ((frames % 200) == 199) {
+		if ((imgcount % 200) == 199) {
 			textonizer.retrainAll();
 			textonizer.saveRegression();
-			std::cout << "mod: " << frames % 200 << "\n|" ;
+			std::cout << "mod: " << imgcount % 200 << "\n|" ;
 		}
 
 
 
 		float time = stopWatch.Read()/1000;
-		tcp.commdata_fps = frames /(time);
-		//std::cout << "#" << frames << ", fps: " << tcp.commdata_fps << ", GT: " << tcp.commdata_gt << std::endl;
+		tcp.commdata_fps = imgcount /(time);
+		//std::cout << "#" << imgcount << ", fps: " << tcp.commdata_fps << ", GT: " << tcp.commdata_gt << std::endl;
 
 #ifdef USE_SOCKET
 		tcp.Unlock();
@@ -278,7 +278,7 @@ void process_video() {
 #endif
 }
 
-void handlekey() {
+void handleKey() {
 
 #ifdef HASSCREEN
 	key = cv::waitKey(10);
@@ -329,15 +329,15 @@ void handlekey() {
 		//	  exporter.saveStereoPair();
 		//	  break;
 	case 114: // [r]: reset stopwatch
-		frames=0;
+		imgcount=0;
 		stopWatch.Restart();
 		msg="fps Reset";
 		break;
 	case 97: // [a]: increase threshold est
-		changeThresh_nn(1);
+		changeThresh_est(1);
 		break;
 	case 122: // [z]: decrease threshold est
-		changeThresh_nn(-1);
+		changeThresh_est(-1);
 		break;
 	case 65: // [A]: increase threshold gt
 		changeThresh_gt(1);
@@ -364,7 +364,7 @@ void handlekey() {
 		result_input2Mode=VIZ_histogram;
 		break;
 	case 42: // [*]: show ROC curve
-		result_input2Mode=VIZ_ROC;;
+		result_input2Mode=VIZ_ROC;
 		break;
 #ifdef HASSCREEN
 	case '>': // fast forward filecam
@@ -423,7 +423,7 @@ void handlekey() {
 
 }
 
-void changeThresh_nn(int value) {
+void changeThresh_est(int value) {
 	textonizer.threshold_est = textonizer.threshold_est + value;
 #ifdef _PC
 	std::stringstream s;
@@ -594,8 +594,7 @@ int main( int argc, char **argv )
 	textonizer.printReport(tcp.commdata_fps);
 	close();
 
-	/* auto save at the end */
-	//textonizer.retrainAll();
+	/* auto save at the end */	
 	textonizer.saveRegression();
 
 	return 0;
