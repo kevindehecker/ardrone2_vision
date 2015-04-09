@@ -363,10 +363,10 @@ void Textons::drawRegressionGraph(std::string msg) {
 
 
 			//draw knn result:
-			cv::line(graphFrame, cv::Point(j*scaleX , rows- prev_est), cv::Point((j+1)*scaleX , rows -  est), color_est, line_width, CV_AA, 0);
+			cv::line(graphFrame, cv::Point(j*scaleX , rows- prev_est*scaleY), cv::Point((j+1)*scaleX , rows -  est*scaleY), color_est, line_width, CV_AA, 0);
 			//draw stereo vision groundtruth:
 			if (gt>5) { // ignore instances with unknown groundtruth (minDisparity >5). TODO: make minDispairty a const
-				cv::line(graphFrame, cv::Point(j*scaleX , rows- prev_gt), cv::Point((j+1)*scaleX , rows -  gt),color_gt, line_width, CV_AA, 0);
+				cv::line(graphFrame, cv::Point(j*scaleX , rows- prev_gt*scaleY), cv::Point((j+1)*scaleX , rows -  gt*scaleY),color_gt, line_width, CV_AA, 0);
 				prev_gt = gt;
 			}
 			prev_est = est;
