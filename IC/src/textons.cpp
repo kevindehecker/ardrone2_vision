@@ -5,9 +5,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/contrib/contrib.hpp>
 
-#ifdef _PC
-#include <boost/math/special_functions/round.hpp>
-#endif
+#include <iomanip>
 
 //from HSV colorspace:
 float r[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.9523809523809526, 0.8571428571428568, 0.7619047619047614, 0.6666666666666665, 0.5714285714285716, 0.4761904761904763, 0.3809523809523805, 0.2857142857142856, 0.1904761904761907, 0.0952380952380949, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.09523809523809557, 0.1904761904761905, 0.2857142857142854, 0.3809523809523809, 0.4761904761904765, 0.5714285714285714, 0.6666666666666663, 0.7619047619047619, 0.8571428571428574, 0.9523809523809523, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
@@ -362,7 +360,7 @@ void Textons::drawRegressionGraph(std::string msg) {
 
 
 
-			//draw knn result:
+			//draw knn est result:
 			cv::line(graphFrame, cv::Point(j*scaleX , rows- prev_est*scaleY), cv::Point((j+1)*scaleX , rows -  est*scaleY), color_est, line_width, CV_AA, 0);
 			//draw stereo vision groundtruth:
 			if (gt>5) { // ignore instances with unknown groundtruth (minDisparity >5). TODO: make minDispairty a const
@@ -391,17 +389,17 @@ void Textons::drawRegressionGraph(std::string msg) {
 
 
 
-#ifdef _PC
     //calculate fp/fn ratio
     float tpr = (float)positive_true /(float)(positive_true+negative_false);
 	float fpr = (float)positive_false /(float)(negative_true+positive_false);
 
-    std::stringstream s;
-	s << msg << " TPR: " << boost::format("%.2f")%tpr << " --> FPR: " << boost::format("%.2f")%fpr;
+	std::stringstream s;
+	s << std::fixed << std::showpoint;
+	s << std::setprecision(1);
+	s << msg << " TPR: " << tpr << " --> FPR: " << fpr;
 	s << ". MSE trn: " << (int)_mse_trn << ", tst: " << (int)_mse_tst;
-    msg = s.str();
+	msg = s.str();
 
-#endif
 
 
     //draw text to inform about the mode and ratios or to notify user a key press was handled
@@ -448,8 +446,7 @@ void Textons::setAutoThreshold() {
 
 
 
-	}
-	cv::Scalar c = getColor(2);
+	}	
 	int line_width=2;
 #endif
 
@@ -458,8 +455,7 @@ void Textons::setAutoThreshold() {
 	cv::Mat tprs_tst(threshold_gt,1,CV_32F);
 	cv::Mat fprs_tst(threshold_gt,1,CV_32F);
 
-	int best = 0;
-	float fpr_tst_best_tmp = 99999999; //smaller is better, so start the search extremely high
+	int best = 0;	
 	float fpr_trn_best_tmp = 99999999; //smaller is better, so start the search extremely high
 
 	int learnborder =  (lastLearnedPosition+(distribution_buf_size-distribution_buf_pointer)) % distribution_buf_size; // make a sliding graph
@@ -535,8 +531,7 @@ void Textons::setAutoThreshold() {
 
 		if (tpr_trn > tpr_threshold && fpr_trn < fpr_trn_best_tmp) {
 			best = i;
-			fpr_trn_best_tmp = fprs_trn.at<float>(best);
-			fpr_tst_best_tmp = fprs_tst.at<float>(best);
+			fpr_trn_best_tmp = fprs_trn.at<float>(best);			
 		}
 
 
@@ -565,13 +560,17 @@ void Textons::setAutoThreshold() {
 		cv::line(graphframe,cv::Point(fpr_trn_best_tmp*imsize, 0),cv::Point(fpr_trn_best_tmp*imsize, imsize),cv::Scalar(127,127,255), 1, 8, 0);
 
 		std::stringstream s_trn;
+		s_trn << std::fixed << std::showpoint;
+		s_trn << std::setprecision(2);
 		if (fpr_trn_best_tmp <= 1) {
-			s_trn << "TPR: " << boost::format("%.2f")%tprs_trn.at<float>(best) << " -> FPR: " << boost::format("%.2f")%fprs_trn.at<float>(best);
+			s_trn << "TPR: " << tprs_trn.at<float>(best) << " -> FPR: " << fprs_trn.at<float>(best);
 		} else {
-			s_trn << "TPR: " << boost::format("%.2f")%tpr_threshold << " -> FPR: -";
-		}		
+			s_trn << "TPR: " << tpr_threshold << " -> FPR: -";
+		}
 		std::stringstream s_tst;
-		s_tst << "TPR: " << boost::format("%.2f")%tprs_tst.at<float>(best) << " <> FPR: " << boost::format("%.2f")%fprs_tst.at<float>(best);
+		s_tst << std::fixed << std::showpoint;
+		s_tst << std::setprecision(2);
+		s_tst << "TPR: " << tprs_tst.at<float>(best) << " <-> FPR: " << fprs_tst.at<float>(best);
 		putText(graphframe,s_tst.str(),cv::Point(imsize-200 , imsize-12),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(0,0,255));
 		putText(graphframe,s_trn.str(),cv::Point(imsize-200 , imsize-34),cv::FONT_HERSHEY_SIMPLEX,0.5,cv::Scalar(0,255,0));
 
@@ -581,6 +580,27 @@ void Textons::setAutoThreshold() {
 
 
 }
+
+
+void Textons::getDisparity(int mode,float *disparity, float *threshold) {
+
+	if (mode == ROC_BASED_RESULT) {
+		if (_tpr_trn > tpr_threshold && _fpr_trn < fpr_threshold ) {
+			*disparity = getLast_est();
+			 *threshold=threshold_est;
+		} else {
+			*disparity = getLast_gt();
+			*threshold=threshold_gt;
+		}
+	} else if (mode == ESTIMATE_BASED_RESULT) {
+		*disparity = getLast_est();
+		*threshold=threshold_est;
+	} else if (mode == STEREO_BASED_RESULT) {
+		*disparity = getLast_gt();
+		*threshold=threshold_gt;
+	}
+}
+
 
 //calculates the histogram/distribution
 void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float gt, bool activeLearning, int pauseVideo, bool stereoOK) {
@@ -717,6 +737,17 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float gt, bool a
     //perform smoothing:
 	est = est_smoother.addSample(est);
 
+	//save values for visualisation	in graph
+	if (stereoOK) {
+		graph_buffer.at<float>((distribution_buf_pointer+0) % distribution_buf_size,0) = est;
+		graph_buffer.at<float>(distribution_buf_pointer,1) = gt;
+	} else { // delete to be sure, should not matter
+		graph_buffer.at<float>((distribution_buf_pointer+0) % distribution_buf_size,0) = 0;
+		graph_buffer.at<float>(distribution_buf_pointer,1) = 0;
+		groundtruth_buffer.at<float>((distribution_buf_pointer)% distribution_buf_size) = 6.2;
+		 distribution_buffer.row((distribution_buf_pointer+0) % distribution_buf_size).setTo(0);
+	}
+
 	if (!pauseVideo && stereoOK) {
 		if (!activeLearning) {        //if not active learning, learn all samples
 			distribution_buf_pointer = (distribution_buf_pointer+1) % distribution_buf_size;
@@ -730,17 +761,6 @@ void Textons::getTextonDistributionFromImage(cv::Mat grayframe, float gt, bool a
 			}
 		}
 	}
-	//std::cout << "hist" << distribution_buf_pointer << ": " << hist << std::endl;
-
-
-
-	//std::cout << "knn.disp.: " << est << "  |  truth: " << avgdisp_smoothed << std::endl;
-
-    //save values for visualisation	in graph
-	 if (stereoOK) {
-		 graph_buffer.at<float>((distribution_buf_pointer+0) % distribution_buf_size,0) = est;
-		 graph_buffer.at<float>(distribution_buf_pointer,1) = gt;
-	 }
 
 #ifdef DRAWVIZS
 	if (*result_input2Mode == VIZ_histogram || *result_input2Mode == VIZ_texton_intensity_color_encoding || *result_input2Mode == VIZ_texton_gradient_color_encoding ) {

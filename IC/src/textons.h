@@ -8,6 +8,10 @@
 #include "defines.h"
 #include "smoother.h"
 
+#define ROC_BASED_RESULT 1
+#define ESTIMATE_BASED_RESULT 2
+#define STEREO_BASED_RESULT 3
+
 class Textons{
 
 
@@ -65,6 +69,7 @@ public:
 	int *result_input2Mode;
 
 	float tpr_threshold;
+	float fpr_threshold; //only used to determine when to switch est/gt
     //float avgdisp_smoothed;
 
     cv::Mat frame_Itextoncolor;
@@ -89,7 +94,8 @@ public:
 		threshold_est = 150;
 		threshold_gt = 200;
 
-		tpr_threshold = 0.98f;
+		tpr_threshold = 0.95f;
+		fpr_threshold = 0.4f;
 
 
 	}
@@ -102,6 +108,7 @@ public:
     void saveRegression();
     void retrainAll();
 	void printReport(float fps);
+	void getDisparity(int mode, float *disparity, float *threshold);
 
 	int initLearner(bool nulltrain);
     int loadPreviousRegression();
