@@ -366,7 +366,7 @@ void handleKey() {
 	case 42: // [*]: show ROC curve
 		result_input2Mode=VIZ_ROC;
 		break;
-#ifdef HASSCREEN
+#ifdef FILESTEREO
 	case '>': // fast forward filecam
 		svcam.fastforward=1;
 		svcam.rewind=0;
@@ -525,8 +525,8 @@ int init(int argc, char **argv) {
 	//outputVideo.open("appsrc ! ffmpegcolorspace ! ffenc_mpeg4 ! avimux ! filesink location=video_wifi.avi",CV_FOURCC('H','O','E','R'),VIDEOFPS,size,false);
 	outputVideo.open("video_wifi.avi",CV_FOURCC('M','P','E','G'),VIDEOFPS,size,false);
 #else
-	//outputVideo.open("appsrc ! ffmpegcolorspace ! dspmp4venc mode=1 ! rtpmp4vpay config-interval=2 ! udpsink host=192.168.1.2 port=5000",CV_FOURCC('H','O','E','R'),VIDEOFPS,size,false);
-	outputVideo.open("appsrc ! ffmpegcolorspace ! dspmp4venc mode=0 ! avimux ! filesink location=video_dsp.avi",CV_FOURCC('H','O','E','R'),VIDEOFPS,size,false);
+    outputVideo.open("appsrc ! ffmpegcolorspace ! dspmp4venc mode=1 ! rtpmp4vpay config-interval=2 ! udpsink host=192.168.1.2 port=5000",CV_FOURCC('H','O','E','R'),VIDEOFPS,size,false);
+    //outputVideo.open("appsrc ! ffmpegcolorspace ! dspmp4venc mode=0 ! avimux ! filesink location=video_dsp.avi",CV_FOURCC('H','O','E','R'),VIDEOFPS,size,false);
 #endif
 
 	if (!outputVideo.isOpened())

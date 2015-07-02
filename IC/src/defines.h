@@ -15,12 +15,12 @@
 #define DELFLY //use the Delfly stereo cam over usb2serial
 //#define DUOWEBCAM // use the double webcam stereo set up
 
-//#define DELFLY_WIFI // use the delfly stereo cam, while it is connected to the ardrone2, streaming over wifi
-#define FILECAM // use a video as source instead of the camera. The file name is defined in filecam.cpp
+#define DELFLY_WIFI // use the delfly stereo cam, while it is connected to the ardrone2, streaming over wifi
+//#define FILECAM // use a video as source instead of the camera. The file name is defined in filecam.cpp
 
 //#define FILESTEREO
-#define GEIGER // use libelas Geiger stereo algorithm
-//#define SGM  //use OpenCV Semi Global Matching stereo algorithm
+//#define GEIGER // use libelas Geiger stereo algorithm
+#define SGM  //use OpenCV Semi Global Matching stereo algorithm
 //#define BM currently not completely implemented
 //#define LONGSEC // use Kirk's implementation of LONGSEC stereo algorithm
 
@@ -30,7 +30,7 @@
 #define VIDEORESULTS // show the main results window
 #define DRAWVIZS    //show secundairy results (histograms and texton visulaisations
 #ifndef FILESTEREO
-  #define EXPORT //create export.txt and seperate stereo pair png images
+//  #define EXPORT //create export.txt and seperate stereo pair png images
   #ifdef EXPORT
 	#define SKIPFRAMES_START 0
   #endif

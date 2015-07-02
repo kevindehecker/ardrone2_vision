@@ -525,3 +525,11 @@ void DelFly::workerThread() {
 }
 
 #endif
+
+int DelFly::getImHeight() {
+    return im_height;
+}
+
+int DelFly::getImWidth() {
+    return im_width;
+}

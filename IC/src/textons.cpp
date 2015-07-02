@@ -393,17 +393,17 @@ void Textons::drawRegressionGraph(std::string msg) {
     float tpr = (float)positive_true /(float)(positive_true+negative_false);
 	float fpr = (float)positive_false /(float)(negative_true+positive_false);
 
-	std::stringstream s;
-	s << std::fixed << std::showpoint;
-	s << std::setprecision(1);
-	s << msg << " TPR: " << tpr << " --> FPR: " << fpr;
-	s << ". MSE trn: " << (int)_mse_trn << ", tst: " << (int)_mse_tst;
-	msg = s.str();
+    std::stringstream s;
+    s << std::fixed << std::showpoint;
+    s << std::setprecision(1);
+    s << msg << " TPR: " << tpr << " --> FPR: " << fpr;
+    s << ". MSE trn: " << (int)_mse_trn << ", tst: " << (int)_mse_tst;
+    //msg = s.str();
 
 
 
     //draw text to inform about the mode and ratios or to notify user a key press was handled
-	putText(frame_regressGraph,msg,cv::Point(0, rows+barsize-2),cv::FONT_HERSHEY_SIMPLEX,0.5,color_vert);
+    putText(frame_regressGraph,s.str(),cv::Point(0, rows+barsize-2),cv::FONT_HERSHEY_SIMPLEX,0.5,color_vert);
 
 }
 
@@ -806,66 +806,66 @@ int Textons::initTextons() {
 
 	std::string path = "../";
 
-	std::string text_gr = "textons10_gradient_cubicle.dat";
-	std::string text_i = "textons10_intensity_cubicle.dat";
-	std::cout << path + text_gr << std::endl;
-	if (!checkFileExist(path + text_gr)) {std::cerr << "Error: gradient textons not available\n";return 1;}
-	if (!checkFileExist(path + text_i)) {std::cerr << "Error: intensity textons not available\n";return 1;}
+    std::string text_gr = "textons10_gradient_flightarena.dat";
+    std::string text_i = "textons10_intensity_flightarena.dat";
+    std::cout << path + text_gr << std::endl;
+    if (!checkFileExist(path + text_gr)) {std::cerr << "Error: gradient textons not available\n";return 1;}
+    if (!checkFileExist(path + text_i)) {std::cerr << "Error: intensity textons not available\n";return 1;}
 
-	std::ifstream input_gr(path + text_gr, std::ios::binary );
-	std::ifstream input_i(path + text_i, std::ios::binary );
-	// copies all data into buffer
-	std::vector<unsigned char> buffer_gr(( std::istreambuf_iterator<char>(input_gr)),(std::istreambuf_iterator<char>()));
-	std::vector<unsigned char> buffer_i(( std::istreambuf_iterator<char>(input_i)),(std::istreambuf_iterator<char>()));
+    std::ifstream input_gr((path + text_gr).c_str(), std::ios::binary );
+    std::ifstream input_i((path + text_i).c_str(), std::ios::binary );
+    // copies all data into buffer
+    std::vector<unsigned char> buffer_gr(( std::istreambuf_iterator<char>(input_gr)),(std::istreambuf_iterator<char>()));
+    std::vector<unsigned char> buffer_i(( std::istreambuf_iterator<char>(input_i)),(std::istreambuf_iterator<char>()));
 
-	n_textons_gradient = buffer_gr[0];
-	n_textons_intensity = buffer_i[0];
-	n_textons =  n_textons_gradient  + n_textons_intensity;
+    n_textons_gradient = buffer_gr[0];
+    n_textons_intensity = buffer_i[0];
+    n_textons =  n_textons_gradient  + n_textons_intensity;
 
-	if (buffer_gr[1] != buffer_i[1]) {std::cerr << "Error: patch sizes don't match\n";return 1;}
-	patch_size = buffer_gr[1];
-	patch_square_size = patch_size*patch_size;
-
-
-	textons.resize(n_textons);
-	printf("#textons: %d, Patch size: %d, #samples: %d\n",n_textons,patch_size,n_samples );
-
-	int counter =2; // skip first two bytes, as they contain other info
-	for (int i = 0;i<n_textons_intensity;i++) {
-		std::vector<int16_t> v(patch_square_size);
-		//        printf("texton[%d]:", i);
-		for (int j=0;j<patch_square_size;j++) {
-
-			uint8_t t0 = buffer_i[counter];
-			uint8_t t1 = buffer_i[counter+1];
-			int16_t t = ((t1 << 8) & 0xff00) |  (t0 & 0x00ff);
-			counter +=2;
-			v[j] = t;
-			//            if (j>0) {printf(", %d", v[j]);} else {printf(" %d", v[j]);}
-		}
-		textons[i] = v;
-		input_i.close();
-		//        std::cout << std::endl;
-	}
+    if (buffer_gr[1] != buffer_i[1]) {std::cerr << "Error: patch sizes don't match\n";return 1;}
+    patch_size = buffer_gr[1];
+    patch_square_size = patch_size*patch_size;
 
 
-	counter =2; // skip first two bytes, as they contain other info
-	for (int i = 0;i<n_textons_gradient;i++) {
-		std::vector<int16_t> v(patch_square_size);
-		//        printf("texton_gr[%d]:", i+buffer_i[0]);
-		for (int j=0;j<patch_square_size;j++) {
+    textons.resize(n_textons);
+    printf("#textons: %d, Patch size: %d, #samples: %d\n",n_textons,patch_size,n_samples );
 
-			uint8_t t0 = buffer_gr[counter];
-			uint8_t t1 = buffer_gr[counter+1];
-			int16_t t = ((t1 << 8) & 0xff00) |  (t0 & 0x00ff);
-			counter +=2;
-			v[j] = t *2; // *2 is for integer precision
-			//            if (j>0) {printf(", %d", v[j]);} else {printf(" %d", v[j]);}
-		}
-		textons[i+n_textons_intensity] = v;
-		input_gr.close();
-		//        std::cout << std::endl;
-	}
+    int counter =2; // skip first two bytes, as they contain other info
+    for (int i = 0;i<n_textons_intensity;i++) {
+        std::vector<int16_t> v(patch_square_size);
+        //        printf("texton[%d]:", i);
+        for (int j=0;j<patch_square_size;j++) {
+
+            uint8_t t0 = buffer_i[counter];
+            uint8_t t1 = buffer_i[counter+1];
+            int16_t t = ((t1 << 8) & 0xff00) |  (t0 & 0x00ff);
+            counter +=2;
+            v[j] = t;
+            //            if (j>0) {printf(", %d", v[j]);} else {printf(" %d", v[j]);}
+        }
+        textons[i] = v;
+        input_i.close();
+        //        std::cout << std::endl;
+    }
+
+
+    counter =2; // skip first two bytes, as they contain other info
+    for (int i = 0;i<n_textons_gradient;i++) {
+        std::vector<int16_t> v(patch_square_size);
+        //        printf("texton_gr[%d]:", i+buffer_i[0]);
+        for (int j=0;j<patch_square_size;j++) {
+
+            uint8_t t0 = buffer_gr[counter];
+            uint8_t t1 = buffer_gr[counter+1];
+            int16_t t = ((t1 << 8) & 0xff00) |  (t0 & 0x00ff);
+            counter +=2;
+            v[j] = t *2; // *2 is for integer precision
+            //            if (j>0) {printf(", %d", v[j]);} else {printf(" %d", v[j]);}
+        }
+        textons[i+n_textons_intensity] = v;
+        input_gr.close();
+        //        std::cout << std::endl;
+    }
 
 	return 0;
 }

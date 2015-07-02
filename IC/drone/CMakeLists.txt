@@ -9,7 +9,7 @@ set ( CMAKE_PREFIX_PATH /opt/arm_light/gst)
 FILE(GLOB MY_SRC_FILES "../src/*.cpp" "../src/*.h" "../src/*.c")
 
 #set compile flags, for threading
-SET(CMAKE_CXX_FLAGS "-std=c++0x -pthread ")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -pthread")
 
 # add packages
 set(OpenCV_DIR "/opt/arm_light/gst/")

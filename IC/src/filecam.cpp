@@ -9,9 +9,9 @@
 
 bool FileCam::init () {
 	scaleFactor = 1;
-	video = cv::VideoCapture("/home/goggles/Desktop/cubicle_walk/LeftRight.avi");
+//	video = cv::VideoCapture("/home/goggles/Desktop/cubicle_walk/LeftRight.avi");
 	//video = cv::VideoCapture("/home/goggles/Desktop/LeftRight_glasstablemanualhfps.avi");
-//    video = cv::VideoCapture("/home/houjebek/AfstudeerData/Experiments/CyberZoo/Walks/video_dsp.avi");
+    video = cv::VideoCapture("/home/houjebek/AfstudeerData/Experiments/CyberZoo/Walks/video_dsp.avi");
 
     if (!video.isOpened()) {
         std::cerr << "Error opening video file!\n";

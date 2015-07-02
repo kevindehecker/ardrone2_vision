@@ -96,3 +96,10 @@ void Delfly_WiFi::splitIm(cv::Mat frameC, cv::Mat * frameL,cv::Mat * frameR ) {
     *frameR = cv::Mat(frameC,cv::Rect(frameC.cols/2,0,frameC.cols/2,frameC.rows));
 }
 
+int Delfly_WiFi::getImHeight() {
+    return im_height;
+}
+
+int Delfly_WiFi::getImWidth() {
+    return im_width;
+}

@@ -60,7 +60,8 @@ public:
 	void start (void) ;
 	void waitForImage(void);
 	void close (void);
-	
+    int getImHeight();
+    int getImWidth();
 
 
 };
