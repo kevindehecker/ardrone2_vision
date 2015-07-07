@@ -119,7 +119,7 @@ void combineAllImages(cv::Mat DisparityMat, cv::Mat frameL_mat, cv::Mat frameR_m
 	//select which result image will be shown next to input image:
 	if (result_input2Mode == VIZ_right_input_image) { //right input image
 		combineImage(resFrame,frameR_mat,sub_width,0,sub_width,sub_height,true);
-		if (!pauseVideo) {cv::applyColorMap(DisparityMat,DisparityMat,2);}
+        if (!pauseVideo) {cv::applyColorMap(DisparityMat,DisparityMat,2);}
 		combineImage(resFrame,DisparityMat,sub_width*2,0,sub_width,sub_height,false);
 	} else if (result_input2Mode == VIZ_texton_intensity_color_encoding) { //texton intensity color encoding
 		combineImage(resFrame,textonizer.frame_Itextoncolor,sub_width,0,sub_width,sub_height,false);

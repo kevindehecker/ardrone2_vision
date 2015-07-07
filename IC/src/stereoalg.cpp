@@ -73,7 +73,7 @@ bool stereoAlg::init (int im_width,int im_height) {
 #endif
 
 #ifdef LONGSEC
-    dispScale = 32;
+    dispScale = 256;
 #endif
 
     dims[0] = im_width;
@@ -196,7 +196,7 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
 #ifdef LONGSEC    
     DisparityMat = cv::Mat::zeros((dims[1]),dims[0], cv::DataType<uint16_t>::type);
     combineImage(frameL_mat,frameR_mat);
-    performLongSec(frameC_mat,&DisparityMat );
+    performSparseMatching(frameC_mat,&DisparityMat );
 #endif
 
     //avgDisparity = cv::mean(DisparityMat)(0);
@@ -354,4 +354,82 @@ void stereoAlg::performLongSec(cv::Mat grayframe,cv::Mat * DisparityMat)
 
 }
 
+void stereoAlg::performSparseMatching(cv::Mat grayframe,cv::Mat * DisparityMat) {
+    //uint32_t image_width_bytes = image_width * 2; 					// number of bytes of 2 interlaced image lines
+    // TODO check if disparity_min is still required
 
+    uint _width = dims[0];
+    uint _height = dims[1];
+
+    int vertical_block_size = 5; // vertical size of SAD-window
+    int horizontal_block_size = 5; // horizontal size of SAD-window
+    int GRADIENT_THRESHOLD = 3; // defines if image gradient indicates sufficient texture
+    int PKRN_THRESHOLD = 130; // defines if best match is significantly better than second best match [in % to deal with fixed point (120 means a difference of 20%)]
+
+    int half_vertical_block_size = (vertical_block_size - 1)/2;     // = 2
+    int half_horizontal_block_size = (horizontal_block_size - 1)/2; // = 2
+
+    // Stereo parameters:
+    uint32_t disparity_range = 16; // at a distance of 1m, disparity is 7-8
+    uint32_t disparity_min = 0;
+    uint32_t disparity_max =  disparity_range - disparity_min - 1;	// set disparity_range = 15;
+    uint32_t disparity_scale = 255/disparity_range;
+
+    uint sum_abs_diff;
+    uint min1;
+    uint min1_d;
+    uint min2;
+
+    // loop over all image lines (excluding borders)
+    for ( uint l = half_vertical_block_size; l < _height - half_vertical_block_size; l++ ) {
+        uint8_t p1,p2,p3;
+        uint diff_left,diff_mid,diff_right;
+
+        // start by computing first two gradient terms for this image line (taking into account borders)
+        p1 = grayframe.at<uint8_t>(l, half_horizontal_block_size+disparity_max-1);
+        p2 = grayframe.at<uint8_t>(l, half_horizontal_block_size+disparity_max);
+        p3 = grayframe.at<uint8_t>(l, half_horizontal_block_size+disparity_max+1);
+
+        diff_left = std::abs( p1-p2 );
+        diff_mid =  std::abs( p2-p3 );
+
+        // loop over image line (excluding borders)
+        for (uint p = half_horizontal_block_size+disparity_max; p < _width-half_horizontal_block_size ; p++)  {
+            // compute the third image gradient
+            diff_right = abs( grayframe.at<uint8_t>(l,p+1) - grayframe.at<uint8_t>(l,p+2));
+
+            // now check if the gradient for this pixel p (diff_mid) is a local peak (higher than diff_left and diff_right) and exceeds minimum-threshold
+            if ( diff_mid > diff_left     &&     diff_mid > diff_right     &&     diff_mid > GRADIENT_THRESHOLD ) {
+                min1 = 10000;
+                min2 = 10000;
+
+                // perform SAD calculation for pixel p
+                for ( uint d = 0; d < disparity_range; d++ ) {
+                    sum_abs_diff = 0;
+                    for (uint x = p - half_horizontal_block_size; x < p + half_horizontal_block_size; x++)  {
+                        for (uint y = l - half_vertical_block_size; y < l + half_vertical_block_size; y++) {
+                            sum_abs_diff += abs( grayframe.at<uint8_t>(y,  x + _width) - grayframe.at<uint8_t>(y,  x + d) );
+                        }
+                    }
+
+                    // keep track of minimum cost (+ corresponding index) and also of second best minimum cost
+                    if ( sum_abs_diff < min1 ) {
+                        min2  = min1;
+                        min1_d = d;
+                        min1 = sum_abs_diff;
+                    } else if ( sum_abs_diff < min2 ) {
+                        min2 = sum_abs_diff;
+                    }
+                }
+
+                // check if the ratio between first and second minimum cost exceeds minimum ratio
+                if ( min2*100/(min1+1) > PKRN_THRESHOLD ) {
+                    (*DisparityMat).at<uint16_t>(l, p) =  min1_d*disparity_scale; // scaling is purely for visualization
+                }
+            }
+
+            diff_left = diff_mid;
+            diff_mid = diff_right;
+        }
+    }
+}

@@ -28,6 +28,7 @@ private:
 
 
     void performLongSec(cv::Mat bw,cv::Mat * DisparityMat);
+    void performSparseMatching(cv::Mat grayframe,cv::Mat * DisparityMat);
 #ifdef FILESTEREO
 	cv::Mat flst;
 	int count_filestereo;
