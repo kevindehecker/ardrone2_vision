@@ -197,8 +197,38 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
     DisparityMat = cv::Mat::zeros((dims[1]),dims[0], cv::DataType<uint16_t>::type);
     combineImage(frameL_mat,frameR_mat);
     performSparseMatching(frameC_mat,&DisparityMat );
-#endif
 
+//    //create histogram of the disparities
+//    cv::Mat hist = cv::Mat::zeros(15,1,CV_16UC1);
+//    for (int i=0; i<DisparityMat.cols;i++ ) {
+//        for (int j=0; j<DisparityMat.rows;j++ ) {
+
+//            int tmp = DisparityMat.at<uint16_t>(j, i);
+//            tmp = tmp>>4;
+//            hist.at<uint16_t>(tmp)++;
+//        }
+//    }
+//    avgDisparity = hist.at<uint16_t>(14)*8 + hist.at<uint16_t>(13)*4 + hist.at<uint16_t>(12)*2 + hist.at<uint16_t>(11)*2+ hist.at<uint16_t>(10)*1+ hist.at<uint16_t>(9)*1;
+//    stddevDisparity=0;
+
+    avgDisparity=0;
+    int okcount = 0; //keeps track how many pixels are OK (not 0 = NaN) in the disparity map
+    for (int i=0; i<DisparityMat.cols;i++ ) {
+        for (int j=0; j<DisparityMat.rows;j++ ) {
+            int tmp = DisparityMat.at<uint16_t>(j, i);
+            if (tmp >0) {
+                okcount++;
+                avgDisparity+=tmp;
+            }
+        }
+    }
+
+    avgDisparity /= okcount;
+    avgDisparity *=5; // heuristic scaling for better visualisation and smoother thresh config
+
+    avgDisparity = (int) avgDisparity;
+
+#else
     //avgDisparity = cv::mean(DisparityMat)(0);
 
     cv::Scalar mean,stddev;
@@ -207,6 +237,9 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
     stddevDisparity = stddev(0);
     avgDisparity = mean(0);
     stddevDisparity = (stddevDisparity/avgDisparity ) * 100;
+#endif
+
+
 
 #ifdef SGM
     if (stddevDisparity  > 55) {
@@ -235,7 +268,7 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
     double min,max;
     cv::minMaxIdx(DisparityMat, &min, &max);
 
-    std::cout << " mean/std: " << mean(0) << " / " << stddev(0) << std::endl;
+    std::cout << " mean/std: " << avgDisparity << " / " << stddevDisparity << std::endl;
     //std::cout << " min/max: " << min << " / " << max << std::endl;
     DisparityMat.convertTo(DisparityMat,CV_8UC1, 256.0 / dispScale, 0.0); // expand range to 0..255.
 #endif
