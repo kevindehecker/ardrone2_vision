@@ -40,8 +40,10 @@ int Socket::initSocket(unsigned int tcpport) {
 	/*  Bind our socket addresss to the 
 	listening socket, and call listen()  */
 
-    if ( bind(list_s, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0 ) {
-        fprintf(stderr, "tcp server: Error calling bind()\n");
+    int retcode = bind(list_s, (struct sockaddr *) &servaddr, sizeof(servaddr)) ;
+    if (retcode) {
+        std::cerr << "tcp server: Error calling bind() code: " << retcode << std::endl ;
+        //fprintf(stderr, "tcp server: Error calling bind()\n");
         exit(EXIT_FAILURE);
     }
 
@@ -66,7 +68,7 @@ bool Socket::Read_socket(char * c, size_t maxlen) {
     int n = 0;
     while (n<maxlen) {
         int tmpn = read(conn_s, c+n, maxlen-n);
-        n+=tmpn;
+        n+=tmpn;        
     }
     return true;
 }
@@ -84,7 +86,7 @@ bool Socket::Write_socket(char * c, size_t n) {
                 return false;
         }
         n -= nwritten;
-        c += nwritten;
+        c += nwritten;        
     }
 }
 
@@ -93,11 +95,13 @@ void Socket::Unlock() {
 }
 
 void Socket::Init(char *keyp, bool *cams_are_running) {
+    std::cout << "Initting socket\n";
     closeThreads = false;
     thread_comm  = std::thread(&Socket::commOutThread,this);
     g_lockComm.unlock();
 	this->cams_are_running = cams_are_running;
     key = keyp;
+    //std::cout << "Initted socket\n";
 
 }
 
@@ -151,6 +155,7 @@ void Socket::commOutThread() {
     while (*cams_are_running) {
 
         g_lockComm.lock();
+        //usleep(100000000);
 
         ICDataPackage out;
         out.avgdisp_gt = commdata_gt;
@@ -158,6 +163,16 @@ void Socket::commOutThread() {
         out.avgdisp_nn = commdata_nn;
         out.fps = commdata_fps;
         out.endl = 0;
+
+        //tmp test!
+//        out.avgdisp_gt = 66;
+//        out.avgdisp_gt_stdev = 67;
+//        out.avgdisp_nn = 68;
+//        out.fps = 69;
+//        out.endl = 0;
+
+
+
         std::cout << "gt: " << out.avgdisp_gt << " nn: " << out.avgdisp_nn << std::endl;
 
         char * c = (char *) (void *) &out; // struct in c++ will not come out of the kast.
