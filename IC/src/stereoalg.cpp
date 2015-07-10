@@ -198,35 +198,45 @@ bool stereoAlg::calcDisparityMap(cv::Mat frameL_mat,cv::Mat frameR_mat) {
     combineImage(frameL_mat,frameR_mat);
     performSparseMatching(frameC_mat,&DisparityMat );
 
-//    //create histogram of the disparities
-//    cv::Mat hist = cv::Mat::zeros(15,1,CV_16UC1);
-//    for (int i=0; i<DisparityMat.cols;i++ ) {
-//        for (int j=0; j<DisparityMat.rows;j++ ) {
-
-//            int tmp = DisparityMat.at<uint16_t>(j, i);
-//            tmp = tmp>>4;
-//            hist.at<uint16_t>(tmp)++;
-//        }
-//    }
-//    avgDisparity = hist.at<uint16_t>(14)*8 + hist.at<uint16_t>(13)*4 + hist.at<uint16_t>(12)*2 + hist.at<uint16_t>(11)*2+ hist.at<uint16_t>(10)*1+ hist.at<uint16_t>(9)*1;
-//    stddevDisparity=0;
-
-    avgDisparity=0;
-    int okcount = 0; //keeps track how many pixels are OK (not 0 = NaN) in the disparity map
+    //create histogram of the disparities
+    cv::Mat hist = cv::Mat::zeros(15,1,CV_16UC1);
     for (int i=0; i<DisparityMat.cols;i++ ) {
         for (int j=0; j<DisparityMat.rows;j++ ) {
+
             int tmp = DisparityMat.at<uint16_t>(j, i);
-            if (tmp >0) {
-                okcount++;
-                avgDisparity+=tmp;
-            }
+            tmp = tmp>>4;
+            hist.at<uint16_t>(tmp)++;
+        }
+    }
+    // avgDisparity = hist.at<uint16_t>(14)*8 + hist.at<uint16_t>(13)*4 + hist.at<uint16_t>(12)*2 + hist.at<uint16_t>(11)*2+ hist.at<uint16_t>(10)*1+ hist.at<uint16_t>(9)*1;
+    // stddevDisparity=0;
+    int sum = 0;
+    avgDisparity=0;
+    for (int i=14; i>0;i-- ) {
+        sum +=  hist.at<uint16_t>(i);
+        if (sum>75) {
+            avgDisparity = i;
+            break;
         }
     }
 
-    avgDisparity /= okcount;
-    avgDisparity *=5; // heuristic scaling for better visualisation and smoother thresh config
 
-    avgDisparity = (int) avgDisparity;
+
+//    avgDisparity=0;
+//    int okcount = 0; //keeps track how many pixels are OK (not 0 = NaN) in the disparity map
+//    for (int i=0; i<DisparityMat.cols;i++ ) {
+//        for (int j=0; j<DisparityMat.rows;j++ ) {
+//            int tmp = DisparityMat.at<uint16_t>(j, i);
+//            if (tmp >0) {
+//                okcount++;
+//                avgDisparity+=tmp;
+//            }
+//        }
+//    }
+
+//    avgDisparity /= okcount;
+//    avgDisparity *=5; // heuristic scaling for better visualisation and smoother thresh config
+//    avgDisparity = (int) avgDisparity;
 
 #else
     //avgDisparity = cv::mean(DisparityMat)(0);
