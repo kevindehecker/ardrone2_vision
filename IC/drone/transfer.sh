@@ -1,3 +1,8 @@
+telnet 192.168.1.1 <<script2
+
+killall -9 IC
+script2
+
 
 ftp 192.168.1.1 <<script
 
