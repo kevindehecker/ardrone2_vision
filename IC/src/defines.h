@@ -15,7 +15,7 @@
 #define DELFLY //use the Delfly stereo cam over usb2serial
 //#define DUOWEBCAM // use the double webcam stereo set up
 
-//#define DELFLY_WIFI // use the delfly stereo cam, while it is connected to the ardrone2, streaming over wifi
+#define DELFLY_WIFI // use the delfly stereo cam, while it is connected to the ardrone2, streaming over wifi
 //#define FILECAM // use a video as source instead of the camera. The file name is defined in filecam.cpp
 
 //#define FILESTEREO
@@ -55,13 +55,13 @@
 
 //#define VIDEORESULTS
 
-#define SGM
-// #define LONGSEC // use Sjoerds improved sparse stereo algorithm
+//#define SGM
+#define LONGSEC // use Sjoerds improved sparse stereo algorithm
 
-#define VIDEOFPS 10.0f // setting this lower than 5 will crash the drone...
+#define VIDEOFPS 5.0f // setting this lower than 5 will crash the drone...
 
-//#define USE_TERMINAL_INPUT // using this disables running in background
-#define USE_SOCKET
+#define USE_TERMINAL_INPUT // using this disables running in background
+//#define USE_SOCKET
 #endif // pc/drone
 
 #endif //DEFINES_H

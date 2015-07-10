@@ -355,7 +355,6 @@ void DelFly::workerThread() {
                         frameR.copyTo(frameR_2ndbuf);
                         copyNewImage =true;
                         g_lockWaitForImage.unlock();
-
                    // }
 //                        frameL.copyTo(frameL_mat);
 //                        frameR.copyTo(frameR_mat);
