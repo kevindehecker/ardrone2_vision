@@ -60,8 +60,8 @@
 
 #define VIDEOFPS 5.0f // setting this lower than 5 will crash the drone...
 
-#define USE_TERMINAL_INPUT // using this disables running in background
-//#define USE_SOCKET
+//#define USE_TERMINAL_INPUT // using this disables running in background
+#define USE_SOCKET
 #endif // pc/drone
 
 #endif //DEFINES_H
